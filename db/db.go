@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -21,6 +22,7 @@ func InitDB() {
 		if err != nil && count <= 0 {
 			panic("cannot connect to the database")
 		}
+		time.Sleep(2 * time.Second)
 	}
 
 	DB.SetMaxOpenConns(10)
