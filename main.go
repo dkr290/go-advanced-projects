@@ -3,11 +3,14 @@ package main
 import (
 	"net/http"
 
+	"github.com/dkr290/go-events-booking-api/db"
 	"github.com/dkr290/go-events-booking-api/models"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
+
+	db.InitDB()
 
 	server := gin.Default()
 
@@ -21,7 +24,13 @@ func main() {
 
 func getEvents(c *gin.Context) {
 
-	events := models.GetAllEvents()
+	events, err := models.GetAllEvents()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Could not fetch events. Try again later.",
+		})
+		return
+	}
 	c.JSON(http.StatusOK, events)
 
 }
@@ -38,7 +47,14 @@ func createEvent(c *gin.Context) {
 	event.ID = 1
 	event.UserID = 1
 
-	event.Save()
+	err := event.Save()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Could not save events. Try again later.",
+			"error":   err.Error(),
+		})
+		return
+	}
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Event created",
