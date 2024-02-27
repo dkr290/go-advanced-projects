@@ -22,10 +22,32 @@ func InitDB() {
 		if err != nil && count <= 0 {
 			panic("cannot connect to the database")
 		}
+		if err == nil {
+			break
+		}
 		time.Sleep(2 * time.Second)
 	}
 
 	DB.SetMaxOpenConns(10)
 	DB.SetMaxIdleConns(5)
 
+	createTables()
+
+}
+
+func createTables() {
+	createEventsTable := `
+	   CREATE TABLE IF NOT EXISTS events (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL,
+		description TEXT NOT NULL,
+		location TEXT NOT NULL,
+		datetime DATETIME NOT NULL,
+		user_id INTEGER
+	   )
+	`
+	_, err := DB.Exec(createEventsTable)
+	if err != nil {
+		panic("could not create events table")
+	}
 }

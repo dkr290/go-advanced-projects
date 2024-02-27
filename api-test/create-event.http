@@ -6,4 +6,4 @@ Content-Type: "application/json"
   "description": "A test event",
   "location": "A test location",
   "datetime": "2025-01-01T15:30:00.000Z"  
-}
+},
