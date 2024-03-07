@@ -12,9 +12,9 @@ import (
 type Database interface {
 	InitDB()
 	CreateTables()
-	Save() error
-	Update() error
-	Delete() error
+	Save(event models.Event) error
+	Update(event models.Event) error
+	Delete(event *models.Event) error
 	GetAllEvents() ([]models.Event, error)
 	GetEventById(id int64) (*models.Event, error)
 }
