@@ -18,6 +18,7 @@ type Database interface {
 	Delete(event *models.Event) error
 	GetAllEvents() ([]models.Event, error)
 	GetEventById(id int64) (*models.Event, error)
+	SaveUser(u models.User) error 
 }
 
 type MySQLDatabase struct {
