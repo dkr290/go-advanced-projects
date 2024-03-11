@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	
 	"github.com/dkr290/events-bookings-new/models"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -50,6 +51,20 @@ func (m *MySQLDatabase) InitDB() {
 }
 
 func (m MySQLDatabase) CreateTables() {
+
+    createUsersTable := `
+       CREATE TABLE IF NOT EXISTS users(
+       	id INTEGER PRIMARY KEY AUTOINCREMENT,
+       	email TEXT NOT NULL UNIQUE,
+       	password TEXT NOT NULL
+
+       )  
+    `
+    _, err := m.DB.Exec(createUsersTable)
+    if err != nil {
+		panic("could not create users table")
+	}
+
 	createEventsTable := `
 	   CREATE TABLE IF NOT EXISTS events (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -57,10 +72,11 @@ func (m MySQLDatabase) CreateTables() {
 		description TEXT NOT NULL,
 		location TEXT NOT NULL,
 		datetime DATETIME NOT NULL,
-		user_id INTEGER
-	   )
+		user_id INTEGER,
+		FOREIGN KEY(user_id) REFERENCES users(id)
+	)
 	`
-	_, err := m.DB.Exec(createEventsTable)
+	_, err = m.DB.Exec(createEventsTable)
 	if err != nil {
 		panic("could not create events table")
 	}
@@ -172,5 +188,28 @@ func (m *MySQLDatabase) Delete(event *models.Event) error {
 
 	_, err = stmt.Exec(event.ID)
 	return err
+
+}
+
+func (m *MySQLDatabase) SaveUser(u models.User) error{
+	query := "INSERT INTO users(email,password) VALUES (?, ?)"
+	stmt, err := m.DB.Prepare(query)
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+
+	result ,err := stmt.Exec(
+		u.Email,
+		u.Password)
+   if err != nil {
+   	return err
+   }
+
+  userId ,err := result.LastInsertId()
+
+  u.ID = userId
+  return err //if it dont have error this is nil so exatly what is needed
 
 }
