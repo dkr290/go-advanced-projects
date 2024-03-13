@@ -2,10 +2,10 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
-	
 	"github.com/dkr290/events-bookings-new/models"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -18,12 +18,11 @@ type Database interface {
 	Delete(event *models.Event) error
 	GetAllEvents() ([]models.Event, error)
 	GetEventById(id int64) (*models.Event, error)
-	SaveUser(u models.User) error 
+	SaveUser(u models.User) error
 }
 
 type MySQLDatabase struct {
 	DB *sql.DB
-	
 }
 
 func (m *MySQLDatabase) InitDB() {
@@ -53,7 +52,7 @@ func (m *MySQLDatabase) InitDB() {
 
 func (m MySQLDatabase) CreateTables() {
 
-    createUsersTable := `
+	createUsersTable := `
        CREATE TABLE IF NOT EXISTS users(
        	id INTEGER PRIMARY KEY AUTOINCREMENT,
        	email TEXT NOT NULL UNIQUE,
@@ -61,8 +60,8 @@ func (m MySQLDatabase) CreateTables() {
 
        )  
     `
-    _, err := m.DB.Exec(createUsersTable)
-    if err != nil {
+	_, err := m.DB.Exec(createUsersTable)
+	if err != nil {
 		panic("could not create users table")
 	}
 
@@ -157,7 +156,7 @@ func (m *MySQLDatabase) GetEventById(id int64) (*models.Event, error) {
 
 }
 
-func(m *MySQLDatabase) Update(event models.Event) error {
+func (m *MySQLDatabase) Update(event models.Event) error {
 	query := `
 	  UPDATE events
 	  SET name = ? , description = ?, location = ? , dateTime = ? 
@@ -192,7 +191,7 @@ func (m *MySQLDatabase) Delete(event *models.Event) error {
 
 }
 
-func (m *MySQLDatabase) SaveUser(u models.User) error{
+func (m *MySQLDatabase) SaveUser(u models.User) error {
 	query := "INSERT INTO users(email,password) VALUES (?, ?)"
 	stmt, err := m.DB.Prepare(query)
 	if err != nil {
@@ -200,17 +199,43 @@ func (m *MySQLDatabase) SaveUser(u models.User) error{
 	}
 
 	defer stmt.Close()
+	// hashedPassword, err := utils.HashPassword(u.Password)
+	// if err != nil {
+	// 	return err
+	// }
 
-	result ,err := stmt.Exec(
+	result, err := stmt.Exec(
 		u.Email,
 		u.Password)
-   if err != nil {
-   	return err
-   }
+	if err != nil {
+		return err
+	}
 
-  userId ,err := result.LastInsertId()
+	userId, err := result.LastInsertId()
 
-  u.ID = userId
-  return err //if it dont have error this is nil so exatly what is needed
+	u.ID = userId
+	return err //if it dont have error this is nil so exatly what is needed
+
+}
+
+func (m *MySQLDatabase) ValidateCredentials(u models.User) error {
+
+	query := "SELECT email, password FROM Users WHERE email = ?"
+	row := m.DB.QueryRow(query, u.Email)
+
+	var retreivedPassword string
+	err := row.Scan(&retreivedPassword)
+
+	if err != nil {
+		return errors.New("credentials invalid")
+	}
+
+	//passwordIsValid := utils.CheckPasswordHash(u.Password, retreivedPassword)
+
+	if !(u.Password == retreivedPassword) {
+		return errors.New("credentials invalid")
+	}
+
+	return nil
 
 }

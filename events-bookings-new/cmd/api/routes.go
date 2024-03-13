@@ -7,8 +7,6 @@ import (
 )
 
 func RegisterRoutes(server *gin.Engine) {
-	
-
 
 	db := db.MySQLDatabase{}
 	h := handlers.New(db)
@@ -20,5 +18,6 @@ func RegisterRoutes(server *gin.Engine) {
 	server.GET("/events/:id", h.GetEvent) ///events/1 , /events/5
 	server.PUT("/events/:id", h.UpdateEvent)
 	server.DELETE("/events/:id", h.DeleteEvent)
-	server.POST("/signup",h.Signup)
+	server.POST("/signup", h.Signup)
+	server.POST("/login", h.Login)
 }
