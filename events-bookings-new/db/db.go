@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/dkr290/events-bookings-new/models"
+	"github.com/dkr290/events-bookings-new/utils"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -199,14 +200,14 @@ func (m *MySQLDatabase) SaveUser(u models.User) error {
 	}
 
 	defer stmt.Close()
-	// hashedPassword, err := utils.HashPassword(u.Password)
-	// if err != nil {
-	// 	return err
-	// }
+	hashedPassword, err := utils.HashPassword(u.Password)
+	if err != nil {
+		return err
+	}
 
 	result, err := stmt.Exec(
 		u.Email,
-		u.Password)
+		hashedPassword)
 	if err != nil {
 		return err
 	}
@@ -220,22 +221,46 @@ func (m *MySQLDatabase) SaveUser(u models.User) error {
 
 func (m *MySQLDatabase) ValidateCredentials(u models.User) error {
 
-	query := "SELECT email, password FROM Users WHERE email = ?"
+	query := "SELECT id, password FROM users WHERE email = ?"
 	row := m.DB.QueryRow(query, u.Email)
 
 	var retreivedPassword string
-	err := row.Scan(&retreivedPassword)
+	err := row.Scan(&u.ID, &retreivedPassword)
 
 	if err != nil {
 		return errors.New("credentials invalid")
 	}
 
-	//passwordIsValid := utils.CheckPasswordHash(u.Password, retreivedPassword)
+	passwordIsValid := utils.CheckPasswordHash(u.Password, retreivedPassword)
 
-	if !(u.Password == retreivedPassword) {
+	if !passwordIsValid {
 		return errors.New("credentials invalid")
 	}
 
 	return nil
 
+}
+
+func (m *MySQLDatabase) GetAllUsers() ([]models.User, error) {
+
+	query := "SELECT * FROM Users"
+	rows, err := m.DB.Query(query)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var allUsers []models.User
+
+	for rows.Next() {
+		var user models.User
+		err := rows.Scan(&user.ID, &user.Email, &user.Password)
+		if err != nil {
+			return nil, err
+		}
+		allUsers = append(allUsers, user)
+	}
+
+	return allUsers, nil
 }

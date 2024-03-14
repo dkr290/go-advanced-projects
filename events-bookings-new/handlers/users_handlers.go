@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/dkr290/events-bookings-new/models"
+	"github.com/dkr290/events-bookings-new/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -53,5 +54,30 @@ func (h *Handlers) Login(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "login sucessfull"})
+	token, err := utils.GenerateToken(user.Email, user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "could not authenticate user",
+			"error":   err.Error(),
+		})
+
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "login sucessfull",
+		"token":   token,
+	})
+}
+
+func (h *Handlers) GetUsers(c *gin.Context) {
+
+	users, err := h.DB.GetAllUsers()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Could not fetch users. Try again later.",
+		})
+		return
+	}
+	c.JSON(http.StatusOK, users)
+
 }
