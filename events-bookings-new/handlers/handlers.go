@@ -20,6 +20,7 @@ func New(db db.MySQLDatabase) *Handlers {
 	}
 }
 
+// get all events
 func (h *Handlers) GetEvents(c *gin.Context) {
 
 	events, err := h.DB.GetAllEvents()
@@ -33,6 +34,7 @@ func (h *Handlers) GetEvents(c *gin.Context) {
 
 }
 
+// Create events and require login before
 func (h *Handlers) CreateEvent(c *gin.Context) {
 
 	token := c.Request.Header.Get("Authorization")
