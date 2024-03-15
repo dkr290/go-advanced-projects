@@ -45,7 +45,7 @@ func (h *Handlers) Login(c *gin.Context) {
 
 	}
 
-	err := h.DB.ValidateCredentials(user)
+	err := h.DB.ValidateCredentials(&user)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"message": "clould not authenticate user",

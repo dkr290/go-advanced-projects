@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 d7a8a5370c3206394662c85aa61d54fad2e28c9b d_krasiirov@yahoo.com <d_krasiirov@yahoo.com> 1710361519 +0100	clone: from https://github.com/dkr290/go-events-booking-api.git
+d7a8a5370c3206394662c85aa61d54fad2e28c9b 3ae3b07f4a241f8d135bb016c444591d4adcc844 d_krasiirov@yahoo.com <d_krasiirov@yahoo.com> 1710365840 +0100	commit: login logout
+3ae3b07f4a241f8d135bb016c444591d4adcc844 764bb16ce07aa4a84bd092176339ac813bf158df d_krasiirov@yahoo.com <d_krasiirov@yahoo.com> 1710366012 +0100	commit: login logout
+764bb16ce07aa4a84bd092176339ac813bf158df 1f1bf32d63e2ae20abe9e7f2a42eb102d550c75f d_krasiirov@yahoo.com <d_krasiirov@yahoo.com> 1710448725 +0100	commit: fixing issues with authentication and token

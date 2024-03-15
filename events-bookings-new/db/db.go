@@ -83,7 +83,7 @@ func (m MySQLDatabase) CreateTables() {
 	}
 }
 
-func (m *MySQLDatabase) Save(event models.Event) error {
+func (m *MySQLDatabase) Save(event *models.Event) error {
 	// adding to the database
 
 	query := `
@@ -219,7 +219,7 @@ func (m *MySQLDatabase) SaveUser(u models.User) error {
 
 }
 
-func (m *MySQLDatabase) ValidateCredentials(u models.User) error {
+func (m *MySQLDatabase) ValidateCredentials(u *models.User) error {
 
 	query := "SELECT id, password FROM users WHERE email = ?"
 	row := m.DB.QueryRow(query, u.Email)
