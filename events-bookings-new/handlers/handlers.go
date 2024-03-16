@@ -6,7 +6,6 @@ import (
 
 	"github.com/dkr290/events-bookings-new/db"
 	"github.com/dkr290/events-bookings-new/models"
-	"github.com/dkr290/events-bookings-new/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -37,24 +36,14 @@ func (h *Handlers) GetEvents(c *gin.Context) {
 // Create events and require login before
 func (h *Handlers) CreateEvent(c *gin.Context) {
 
-	token := c.Request.Header.Get("Authorization")
-	if token == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "not authorized"})
-		return
-	}
-
-	userId, err := utils.VerifyToken(token)
+	var event models.Event
+	err := c.ShouldBindJSON(&event)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": " unauthorized"})
-	}
-
-	var event = models.Event{}
-	if err := c.ShouldBindJSON(&event); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "could not parse request data " + err.Error()})
+		c.JSON(http.StatusBadRequest,gin.H{"message": "could not parse reauest data"})
 		return
-
 	}
-
+    // taking the value from the context
+    userId := c.GetInt64("userId")
 	//this should be the used id of the user who did the event
 	event.UserID = userId
 
