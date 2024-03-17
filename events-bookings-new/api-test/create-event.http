@@ -1,10 +1,10 @@
 POST http://localhost:8080/events
 Content-Type: "application/json"
-Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3QzM0BleGFtcGxlLmNvbSIsImV4cCI6MTcxMDYzMzA1NCwidXNlcklkIjo0fQ.rNn87YM-QJEPvA4K3aIVLrhLUtEUP8nhf_Fi_p3Qw7o
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3QzM0BleGFtcGxlLmNvbSIsImV4cCI6MTcxMDcxNDk0NywidXNlcklkIjo0fQ.W3huKrFS6cy4Ihj4d9qsr3JvCxYAitXEAtazNu0Jvqk
 
 {
   "name": "Text Event!!!",
   "description": "Another test 332!event",
   "location": "A test location332!",
   "datetime": "2025-01-01T15:30:00.000Z"  
-},
+}
