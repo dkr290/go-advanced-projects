@@ -20,6 +20,9 @@ type Database interface {
 	GetAllEvents() ([]models.Event, error)
 	GetEventById(id int64) (*models.Event, error)
 	SaveUser(u models.User) error
+	ValidateCredentials(u *models.User) error
+	GetAllUsers() ([]models.User, error)
+	Register(userId, int64,event *models.Event) error
 }
 
 type MySQLDatabase struct {
@@ -277,4 +280,19 @@ func (m *MySQLDatabase) GetAllUsers() ([]models.User, error) {
 	}
 
 	return allUsers, nil
+}
+
+
+func (m *MySQLDatabase) Register(userId int64, event *models.Event) error {
+	query := "INSERT INTO registrations(event_id,user_id) VALUES (?, ?)"
+	stmt,err := m.DB.Prepare(query)
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+
+    _, err = stmt.Exec(event.ID, userId)
+
+    return err
 }

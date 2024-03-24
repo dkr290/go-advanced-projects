@@ -39,7 +39,7 @@ func (h *Handlers) CreateEvent(c *gin.Context) {
 	var event models.Event
 	err := c.ShouldBindJSON(&event)
 	if err != nil {
-		c.JSON(http.StatusBadRequest,gin.H{"message": "could not parse reauest data"})
+		c.JSON(http.StatusBadRequest,gin.H{"message": "could not parse request data"})
 		return
 	}
     // taking the value from the context

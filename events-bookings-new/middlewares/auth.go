@@ -18,7 +18,11 @@ func Authenticate(c *gin.Context){
 
 	userId, err := utils.VerifyToken(token)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": " unauthorized"})
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"message": " unauthorized error",
+			"error": err.Error(),
+
+		})
 	}
 
 	//set the userId to pass it with the contect if needed in events
