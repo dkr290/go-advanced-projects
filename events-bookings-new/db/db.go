@@ -296,3 +296,19 @@ func (m *MySQLDatabase) Register(userId int64, event *models.Event) error {
 
     return err
 }
+
+func (m *MySQLDatabase) CancelRegister(eventId,userId int64) error {
+
+	query := "DELETE FROM registrations WHERE event_id = ? AND user_id = ?"
+	stmt,err := m.DB.Prepare(query)
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+
+    _, err = stmt.Exec(eventId, userId)
+
+    return err
+
+}
