@@ -1,14 +1,19 @@
 package main
 
 import (
+	"embed"
 	"log"
 	"log/slog"
 	"net/http"
 	"os"
 
+	"github.com/dkr290/go-events-booking-api/pic-dream-api/handlers"
 	"github.com/go-chi/chi/v5"
 	"github.com/joho/godotenv"
 )
+
+//embed public
+var FS embed.FS
 
 func main(){
 
@@ -18,7 +23,9 @@ func main(){
 
 	router := chi.NewMux()
 
-	//router.Get("/")
+
+    router.Handle("/*", http.StripPrefix("/", http.FileServer(http.FS(FS))))
+	router.Get("/",handlers.MakeHandler(handlers.HandleHomeIndex))
 
     port := os.Getenv("HTTP_LISTEN_ADDR")
     slog.Info("application is running","port",port)
