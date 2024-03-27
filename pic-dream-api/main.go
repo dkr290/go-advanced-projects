@@ -1,7 +1,7 @@
 package main
 
 import (
-	"embed"
+	"fmt"
 	"log"
 	"log/slog"
 	"net/http"
@@ -12,32 +12,32 @@ import (
 	"github.com/joho/godotenv"
 )
 
-//embed public
-var FS embed.FS
+// embed public
+//var FS embed.FS
 
-func main(){
+func main() {
 
-	if err := getEnv(); err != nil{
+	if err := getEnv(); err != nil {
 		log.Fatal(err)
 	}
 
 	router := chi.NewMux()
 
+	//router.Handle("/*", http.StripPrefix("/", http.FileServer(http.FS(FS))))
+	fmt.Println(os.Getwd())
+	router.Handle("/public/*", http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
+	router.Get("/", handlers.MakeHandler(handlers.HandleHomeIndex))
 
-    router.Handle("/*", http.StripPrefix("/", http.FileServer(http.FS(FS))))
-	router.Get("/",handlers.MakeHandler(handlers.HandleHomeIndex))
-
-    port := os.Getenv("HTTP_LISTEN_ADDR")
-    slog.Info("application is running","port",port)
-	log.Fatal(http.ListenAndServe(os.Getenv("HTTP_LISTEN_ADDR"),router))
+	port := os.Getenv("HTTP_LISTEN_ADDR")
+	slog.Info("application is running", "port", port)
+	log.Fatal(http.ListenAndServe(os.Getenv("HTTP_LISTEN_ADDR"), router))
 
 }
 
-
 func getEnv() error {
 	if err := godotenv.Load(); err != nil {
-		return err 
+		return err
 	}
-	return nil 
+	return nil
 
 }
