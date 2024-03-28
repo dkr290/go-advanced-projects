@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"log/slog"
 	"net/http"
@@ -22,10 +21,11 @@ func main() {
 	}
 
 	router := chi.NewMux()
+	router.Use(handlers.WithUser)
 
-	//router.Handle("/*", http.StripPrefix("/", http.FileServer(http.FS(FS))))
-	fmt.Println(os.Getwd())
 	router.Handle("/public/*", http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
+	//router.Handle("/*", http.StripPrefix("/", http.FileServer(http.FS(FS))))
+
 	router.Get("/", handlers.MakeHandler(handlers.HandleHomeIndex))
 
 	port := os.Getenv("HTTP_LISTEN_ADDR")

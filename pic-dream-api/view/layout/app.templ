@@ -1,5 +1,8 @@
 package layout
 
+import "github.com/dkr290/go-events-booking-api/pic-dream-api/view/ui"
+
+
 
 
 templ App(nav bool) {
@@ -17,7 +20,7 @@ templ App(nav bool) {
 		</head>
 		<body class="antialiased">
 			if nav {
-				navigation
+				@ui.Navigation()
 			}
 			{ children... }
 		</body>
