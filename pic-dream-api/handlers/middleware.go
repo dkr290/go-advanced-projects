@@ -8,8 +8,6 @@ import (
 	"github.com/dkr290/go-events-booking-api/pic-dream-api/models"
 )
 
-const userKey = "user"
-
 func WithUser(next http.Handler) http.Handler {
 
 	fn := func(w http.ResponseWriter, r *http.Request) {
@@ -18,8 +16,11 @@ func WithUser(next http.Handler) http.Handler {
 			return
 		}
 
-		user := models.AuthenticatedUser{}
-		ctx := context.WithValue(r.Context(), userKey, user)
+		user := models.AuthenticatedUser{
+			Email:    "dani@gmail.com",
+			LoggedIn: true,
+		}
+		ctx := context.WithValue(r.Context(), models.UserContextKey, user)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 

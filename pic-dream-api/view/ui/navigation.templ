@@ -1,24 +1,33 @@
 package ui
 
+import (
+ "github.com/dkr290/go-events-booking-api/pic-dream-api/view"
+
+)
+
 templ Navigation() {
     <div class="navbar bg-base-100 border-b border-gray-700">
   <div class="flex-1">
-    <a class="text-2xl font-black text-secondary">Pic Dream API</a>
+    <a class="text-2xl font-black text-primary">Pic Dream API</a>
   </div>
   <div class="flex-none">
     <ul class="menu menu-horizontal px-1">
-      <li><a>Link</a></li>
+        if view.AuthenticatedUser(ctx).LoggedIn{
+       
       <li>
         <details>
           <summary>
-            Parent
+            { view.AuthenticatedUser(ctx).Email }
           </summary>
           <ul class="p-2 bg-base-100 rounded-t-none">
-            <li><a>Link 1</a></li>
-            <li><a>Link 2</a></li>
+            <li><a>Settings</a></li>
+            <li><a>Logout</a></li>
           </ul>
         </details>
       </li>
+        } else {
+          <a class="btn btn-primary">Log in</a>
+        }
     </ul>
   </div>
 </div>

@@ -9,7 +9,7 @@ import (
 
 func getAuthenticatedUser(r *http.Request) models.AuthenticatedUser {
 
-	user, ok := r.Context().Value(userKey).(models.AuthenticatedUser)
+	user, ok := r.Context().Value(models.UserContextKey).(models.AuthenticatedUser)
 	if !ok {
 		return models.AuthenticatedUser{}
 	}
