@@ -16,10 +16,11 @@ func WithUser(next http.Handler) http.Handler {
 			return
 		}
 
-		user := models.AuthenticatedUser{
-			Email:    "dani@gmail.com",
-			LoggedIn: true,
-		}
+		//		user := models.AuthenticatedUser{
+		//	Email:    "dani@gmail.com",
+		//		LoggedIn: true,
+		//	}
+		user := models.AuthenticatedUser{}
 		ctx := context.WithValue(r.Context(), models.UserContextKey, user)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
