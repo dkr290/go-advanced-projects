@@ -28,6 +28,7 @@ func main() {
 
 	router.Get("/", handlers.MakeHandler(handlers.HandleHomeIndex))
 	router.Get("/login", handlers.MakeHandler(handlers.HandleLogin))
+	router.Post("/login", handlers.MakeHandler(handlers.HandleLoginCreate))
 
 	port := os.Getenv("HTTP_LISTEN_ADDR")
 	slog.Info("application is running", "port", port)
