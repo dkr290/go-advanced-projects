@@ -16,6 +16,7 @@ tidy:
 
 
 dev-create:
+	k3d registry create; \
 	k3d cluster create $(K3D_DEV_NAME) \
 	  --api-port 6550 \
 	  --servers 1 \
@@ -23,6 +24,7 @@ dev-create:
 	  --k3s-arg --disable="traefik@server:0" \
 	  --k3s-arg --disable="servicelb@server:0" \
 	  --no-lb \
+		--registry-use k3d-registry:37801 \
 	  --wait
 
 dev-start:
@@ -32,7 +34,11 @@ dev-stop:
 	k3d cluster stop $(K3D_DEV_NAME)
 
 dev-delete:
-	k3d cluster delete $(K3D_DEV_NAME)
+	k3d cluster delete $(K3D_DEV_NAME); \
+	k3d registry delete k3d-registry
+
+dev-registry:
+	k3d registry list
 
 ###---------DOCKER Build containers ---------------------------
 all: sales

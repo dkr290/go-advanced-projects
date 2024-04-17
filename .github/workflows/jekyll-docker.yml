@@ -1,0 +1,48 @@
+name: Docker build and push CI
+
+on:
+  push:
+    paths:
+      - "api-service/**"
+
+    branches:
+      - main
+  pull_request:
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+env:
+  DOCKER_IMAGE_API_SERVICE: ghcr.io/${{ github.repository }}/api-service
+  API_SERVICE_VERSION: "0.0.1"
+jobs:
+  # This workflow contains a single job called "build"
+  build-goapp:
+    name: Build and push docker image
+    # The type of runner that the job will run on
+
+    runs-on: ubuntu-latest
+    outputs:
+      commit: ${{ steps.push-image.outputs.commit }}
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+
+      - name: docker version and build api_service
+        run: |
+          cd api-service/zarf/docker/
+          docker -v
+          docker build . -f Dockerfile.service -t $DOCKER_IMAGE_API_SERVICE
+          docker images -a
+
+      - if: github.event_name != 'pull_request'
+        name: docker login and push
+        id: push-image
+        run: |
+          echo "${{ github.token }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          VERSION=API_SERVICE_VERSION
+          echo DOCKER_IMAGE_API_SERVICE=$DOCKER_IMAGE_API_SERVICE
+          echo VERSION=$VERSION
+          docker tag $DOCKER_IMAGE_API_SERVICE $DOCKER_IMAGE_APP1:$VERSION 
+          docker push $DOCKER_IMAGE_API_SERVICE:$VERSION
