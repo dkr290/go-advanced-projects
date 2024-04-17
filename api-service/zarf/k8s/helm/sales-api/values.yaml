@@ -5,7 +5,7 @@
 replicaCount: 1
 
 image:
-  repository: k3d-registry:33559/sales-api
+  repository: ghcr.io/dkr290/go-advanced-projects/api-service
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
