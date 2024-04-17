@@ -27,7 +27,7 @@ COPY --from=build_sales_api --chown=sales:sales /api-service/app/services/sales-
 WORKDIR /api-service
 USER sales
 RUN ls -lR
-CMD ["./sales-api"]
+CMD ["./sales/sales-api"]
 
 LABEL org.opencontainers.image.created="${BUILD_DATE}" \
   org.opencontainers.image.title="sales-api" \
