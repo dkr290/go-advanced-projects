@@ -31,6 +31,7 @@ jobs:
 
       - name: docker version and build api_service
         run: |
+          ls -l
           docker -v
           docker build --build-arg BUILD_REF=$API_SERVICE_VERSION --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"`  . -f api-service/zarf/docker/Dockerfile.service -t $DOCKER_IMAGE_API_SERVICE
           docker images -a
