@@ -33,7 +33,7 @@ jobs:
         run: |
           cd api-service/zarf/docker/
           docker -v
-          docker build . -f Dockerfile.service -t $DOCKER_IMAGE_API_SERVICE
+          docker build --build-arg BUILD_REF=$API_SERVICE_VERSION --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"`  . -f Dockerfile.service -t $DOCKER_IMAGE_API_SERVICE
           docker images -a
 
       - if: github.event_name != 'pull_request'
@@ -41,7 +41,7 @@ jobs:
         id: push-image
         run: |
           echo "${{ github.token }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          VERSION=API_SERVICE_VERSION
+          VERSION=$API_SERVICE_VERSION
           echo DOCKER_IMAGE_API_SERVICE=$DOCKER_IMAGE_API_SERVICE
           echo VERSION=$VERSION
           docker tag $DOCKER_IMAGE_API_SERVICE $DOCKER_IMAGE_APP1:$VERSION 
