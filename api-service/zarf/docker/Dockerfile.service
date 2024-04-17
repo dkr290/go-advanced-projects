@@ -26,6 +26,7 @@ RUN addgroup -g 1000 -S sales && \
 COPY --from=build_sales_api --chown=sales:sales /api-service/app/services/sales-api/ /api-service/sales
 WORKDIR /api-service
 USER sales
+RUN ls -lR
 CMD ["./sales-api"]
 
 LABEL org.opencontainers.image.created="${BUILD_DATE}" \
