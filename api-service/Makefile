@@ -5,6 +5,7 @@ SALES_APP       := sales-api
 BASE_IMAGE_NAME := localhost/api-service
 VERSION         := 0.0.1
 SERVICE_IMAGE   := $(BASE_IMAGE_NAME)/$(SALES_APP):$(VERSION)
+DEPLOYMENT      := "apiservice-sales-api" 
 
 
 run-local:
@@ -50,3 +51,8 @@ sales:
 		--build-arg BUILD_REF=$(VERSION) \
 		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
 		.
+
+# kubectl commands 
+dev-restart:
+	kubectl rollout restart deployment $(DEPLOYMENT) -n apiservice  
+
