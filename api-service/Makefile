@@ -6,10 +6,13 @@ BASE_IMAGE_NAME := localhost/api-service
 VERSION         := 0.0.1
 SERVICE_IMAGE   := $(BASE_IMAGE_NAME)/$(SALES_APP):$(VERSION)
 DEPLOYMENT      := "apiservice-sales-api" 
-
+SERVICE_NAME    := "SALES-API" 
 
 run-local:
-	go run ./app/services/sales-api/main.go
+	go run ./app/services/sales-api/main.go  | go run ./app/tooling/logfmt/main.go -service=${SERVICE_NAME}
+
+run-local-help:
+	go run ./app/services/sales-api/main.go --help
 
 tidy:
 	go mod tidy
@@ -57,6 +60,7 @@ dev-restart:
 	kubectl rollout restart deployment $(DEPLOYMENT) -n apiservice  
 
 dev-logs:
-	kubectl logs -n apiservice -l app.kubernetes.io/name=sales-api --all-containers=true -f --tail=100
+	kubectl logs -n apiservice -l app.kubernetes.io/name=sales-api --all-containers=true -f --tail=100 | go run ./app/tooling/logfmt/main.go -service=${SERVICE_NAME}
+
 
 
