@@ -56,3 +56,7 @@ sales:
 dev-restart:
 	kubectl rollout restart deployment $(DEPLOYMENT) -n apiservice  
 
+dev-logs:
+	kubectl logs -n apiservice -l app.kubernetes.io/name=sales-api --all-containers=true -f --tail=100
+
+
