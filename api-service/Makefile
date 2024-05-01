@@ -18,6 +18,13 @@ tidy:
 	go mod tidy
 	go mod vendor
 
+### def tooling 
+dev-gotooling:
+	go install github.com/divan/expvarmon@latest
+	go install github.com/rakyll/hey@latest
+	go install honnef.co/go/tools/cmd/staticcheck@latest
+	go install golang.org/x/vuln/cmd/govulncheck@latest
+	go install golang.org/x/tools/cmd/goimports@latest
 
 dev-create:
 	k3d registry create; \
@@ -62,5 +69,6 @@ dev-restart:
 dev-logs:
 	kubectl logs -n apiservice -l app.kubernetes.io/name=sales-api --all-containers=true -f --tail=100 | go run ./app/tooling/logfmt/main.go -service=${SERVICE_NAME}
 
-
+metrics-view-local:
+	expvarmon -ports="localhost:4000" -vars="build,requests,goroutines,errors,panics,mem:memstats.Alloc"
 
