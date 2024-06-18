@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"html/template"
 	"log"
 	"net/http"
 	"time"
@@ -12,20 +11,22 @@ import (
 const PORT = ":4000"
 
 type application struct {
-	templateMap map[string]*template.Template
-	config      appConfig
+	config appConfig
 }
 
 type appConfig struct {
 	useCache bool
+	verbose  bool
 }
 
 func main() {
-	app := application{
-		templateMap: make(map[string]*template.Template),
-	}
+	app := application{}
 
 	flag.BoolVar(&app.config.useCache, "cache", false, "Use template cache")
+	flag.BoolVar(&app.config.verbose, "verbose", false, "Use verbose logging")
+	flag.Usage = func() {
+		flag.PrintDefaults()
+	}
 	flag.Parse()
 
 	srv := &http.Server{

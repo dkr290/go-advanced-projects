@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 
@@ -12,16 +13,28 @@ type templateData struct {
 	Data map[string]any
 }
 
-var verbose = true
-
 func (app *application) render(w http.ResponseWriter, t string, td *templateData) {
+	var err error
+	var tmpl *template.Template
+	if app.config.useCache {
+		tmpl, err = templatecache.Get(t, app.config.verbose, app.templatePaths(t)...)
+		if err != nil {
+			log.Println("Error getting the template:", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 
-	tmpl, err := templatecache.Get(t, verbose, app.templatePaths(t)...)
-	if err != nil {
-		log.Println("Error getting the template:", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-
+		}
+	}
+	if tmpl == nil {
+		newTemplate, err := template.ParseFiles(app.templatePaths(t)...)
+		if err != nil {
+			log.Println("Error building template:", err)
+			return
+		}
+		if app.config.verbose {
+			log.Println("Not using cache option")
+		}
+		tmpl = newTemplate
 	}
 
 	if td == nil {
