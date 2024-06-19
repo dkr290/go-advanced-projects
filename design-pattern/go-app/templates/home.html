@@ -1,10 +1,37 @@
-{{ template "base" .}} {{ define "content"}}
+{{ template "base" .}} {{define "css"}}
+<style>
+  .image-container {
+    background-size: cover;
+    opacity: 0.9;
+    width: 100vw;
+    height: 85vh;
+    position: relative;
+  }
+  .header-child {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
 
-<div class="container">
-  <div class="row">
-    <div class="row">
-      <h3 class="mt-4">Gofind a pet</h3>
-    </div>
+  .header-text {
+    font-size: 6em;
+    color: white;
+    font-weight: bold;
+    -webkit-text-stroke: 1px black;
+  }
+</style>
+{{end}} {{ define "content"}}
+
+<img
+  src="/static/home-page/puppies.jpeg"
+  alt="puppies"
+  class="img image-container"
+/>
+<div class="header-container">
+  <div class="header-child">
+    <h1 class="header-text">Go Find a Pet!</h1>
   </div>
 </div>
+
 {{ end }}
