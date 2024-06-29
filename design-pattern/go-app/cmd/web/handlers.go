@@ -47,3 +47,7 @@ func (app *application) CreateCatFromFactory(w http.ResponseWriter, r *http.Requ
 	_, _ = w.Write(data)
 
 }
+
+func (app *application) TestPatterns(w http.ResponseWriter, r *http.Request) {
+	app.render(w, "test.html", nil)
+}
