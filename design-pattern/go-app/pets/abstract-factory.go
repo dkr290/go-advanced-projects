@@ -1,6 +1,7 @@
 package pets
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/dkr2909/go-advanced-projects/design-pattern/go-app/models"
@@ -43,5 +44,21 @@ type CatAbstractFactory struct{}
 func (cf *CatAbstractFactory) newPet() AnimalInterface {
 	return &CatFromFactory{
 		Pet: &models.Cat{},
+	}
+}
+
+func NewPetFromAbstractFactory(species string) (AnimalInterface, error) {
+	switch species {
+	case "dog":
+		var dogFactory DogAbstractFactory
+		dog := dogFactory.newPet()
+		return dog, nil
+	case "cat":
+		var catFactory CatAbstractFactory
+		cat := catFactory.newPet()
+		return cat, nil
+
+	default:
+		return nil, errors.New("invalid species supplied")
 	}
 }
