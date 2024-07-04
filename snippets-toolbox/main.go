@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 const Port = ":4000"
@@ -21,7 +23,14 @@ func home(w http.ResponseWriter, r *http.Request) {
 
 // snippetView() handler function
 func snippetView(w http.ResponseWriter, r *http.Request) {
-	_, _ = w.Write([]byte("Display a specific snippet..."))
+	//extract the value of the id parameter from the query string
+	// convert it to integer and compare if it is less then 1 return 404 page
+	id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	if err != nil || id < 1 {
+		http.NotFound(w, r)
+		return
+	}
+	fmt.Fprintf(w, "Display a specific snippet with ID %d...", id)
 }
 
 //snippetCreate() handler to create snippets
