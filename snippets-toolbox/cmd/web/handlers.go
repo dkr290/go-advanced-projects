@@ -18,13 +18,22 @@ func home(w http.ResponseWriter, r *http.Request) {
 	// the http.Error() function to send a generic 500 Internal Server Error
 	// response to the user.
 
-	ts, err := template.ParseFiles("./ui/html/pages/home.html")
+	//initialize slice containing two files. It's importnant
+	//the base template should be first one
+
+	files := []string{
+		"./ui/html/base.html",
+		"./ui/html/partials/nav.html",
+		"./ui/html/pages/home.html",
+	}
+	//template.ParseFiles() function to read the files and sto the templates in the templateset. variadic parameter as noted in the function
+	ts, err := template.ParseFiles(files...)
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-	err = ts.Execute(w, nil)
+	err = ts.ExecuteTemplate(w, "base", nil)
 	if err != nil {
 		log.Print(err.Error())
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
