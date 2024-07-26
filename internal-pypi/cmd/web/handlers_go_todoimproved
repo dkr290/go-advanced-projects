@@ -12,6 +12,12 @@ import (
 	"strings"
 )
 
+type PackageData struct {
+	Name   string
+	WlPkg  string
+	TarPkg string
+}
+
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
@@ -44,67 +50,52 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	// var newPackagesWhl []string
-	// for _, pWl := range packagesWhl {
-	// 	baseName := filepath.Base(pWl)
-	// 	newPackagesWhl = append(newPackagesWhl, baseName)
-	//
-	// }
+	var newPackagesWhl []string
+	for _, pWl := range packagesWhl {
+		baseName := filepath.Base(pWl)
+		newPackagesWhl = append(newPackagesWhl, baseName)
+
+	}
 	packagesTar, err := filepath.Glob(filepath.Join(packageDir, "*.tar.gz"))
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	// var newPackagesTar []string
-	// for _, pTr := range packagesTar {
-	// 	baseName := filepath.Base(pTr)
-	// 	newPackagesTar = append(newPackagesTar, baseName)
-	// }
+	var newPackagesTar []string
+	for _, pTr := range packagesTar {
+		baseName := filepath.Base(pTr)
+		newPackagesTar = append(newPackagesTar, baseName)
+	}
 
 	allPackages := append(packagesWhl, packagesTar...)
 	log.Println(allPackages)
-	// var onlyNames []string
-	// var nameWithoutExt string
-	// for _, file := range allPackages {
-	// 	baseName := filepath.Base(file)
-	// 	ext := filepath.Ext(baseName)
-	// 	if ext == ".gz" {
-	// 		nameWithoutExt = extractName(baseName)
-	// 	}
-	// 	if ext == ".whl" {
-	// 		nameWithoutExt = extractName(baseName)
-	// 	}
-	//
-	// 	onlyNames = append(onlyNames, nameWithoutExt)
-	// }
-	// var newData []string
-	// for _, f := range onlyNames {
-	// 	f += "/"
-	// 	newData = append(newData, f)
-	// }
-	// newData = removeDuplicates(newData)
+	var pkgList []PackageData
+	var pkg PackageData
+	var nameWithoutExt string
+	for _, file := range allPackages {
+		baseName := filepath.Base(file)
+		ext := filepath.Ext(baseName)
+		if ext == ".gz" {
+			nameWithoutExt = extractName(baseName)
+			pkg = PackageData{
+				Name:   nameWithoutExt,
+				TarPkg: baseName,
+			}
 
-	// type PagesData struct {
-	// 	Name   []string
-	// 	WlPkg  []string
-	// 	TarPkg []string
-	// }
-	//
-	// data := struct {
-	// 	Pages []PagesData
-	// }{
-	// 	Pages: []PagesData{
-	// 		{Name: newData, WlPkg: newPackagesWhl, TarPkg: newPackagesTar},
-	// 	},
-	// }
-	data := struct {
-		Packages []string
-	}{
-		Packages: allPackages,
+		}
+		if ext == ".whl" {
+			nameWithoutExt = extractName(baseName)
+			pkg = PackageData{
+				Name:  nameWithoutExt,
+				WlPkg: baseName,
+			}
+
+		}
+		pkgList = append(pkgList, pkg)
 	}
-
-	err = ts.ExecuteTemplate(w, "base", data)
+	log.Println(pkgList)
+	err = ts.ExecuteTemplate(w, "base", pkgList)
 	if err != nil {
 		log.Print(err.Error())
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -187,10 +178,9 @@ func simpleHandler(w http.ResponseWriter, r *http.Request) {
 func packageHandler(w http.ResponseWriter, r *http.Request) {
 	packageName := filepath.Base(r.URL.Path)
 	packagePath := filepath.Join(packageDir, packageName)
-	log.Printf("Attempting to serve package: %s", packagePath)
+
 	file, err := os.Open(packagePath)
 	if err != nil {
-		log.Printf("Error opening package file: %v", err)
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
@@ -198,12 +188,7 @@ func packageHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", packageName))
-	written, err := io.Copy(w, file)
-	if err != nil {
-		log.Printf("Error serving package file: %v", err)
-	} else {
-		log.Printf("Successfully served package %s (%d bytes)", packageName, written)
-	}
+	io.Copy(w, file)
 }
 
 func extractName(filename string) string {

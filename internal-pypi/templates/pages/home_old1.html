@@ -8,9 +8,14 @@
         </div>
         <div class="card-body">
           <h3 class="card-title">Package Index</h3>
-          {{range .Packages}}
+          {{range .PackageData}}
           <div class="list-group">
-            <a href="/simple/{{.}}" class="text-decoration-none">{{.}}</a>
+            <a href="/simple/{{.Name}}" class="text-decoration-none"
+              >{{.Name}}</a
+            >
+            <a href="/simple/{{.WlPkg}}" class="text-decoration-none"
+              >{{.WlPkg}}</a
+            >
           </div>
           {{end}}
         </div>
