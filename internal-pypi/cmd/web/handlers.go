@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 )
 
@@ -165,12 +164,22 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func simpleHandler(w http.ResponseWriter, r *http.Request) {
-	packageName := strings.TrimPrefix(r.URL.Path, "/simple/")
+	rawPath := r.URL.RawPath
+	if rawPath == "" {
+		rawPath = r.URL.Path
+	}
+	log.Println(rawPath)
+	packageName := strings.TrimPrefix(rawPath, "/simple/")
 	packageName = strings.TrimSuffix(packageName, "/")
-	packages, err := filepath.Glob(filepath.Join(packageDir, packageName+"*.whl"))
+	packages, err := filepath.Glob(filepath.Join(packageDir, packageName+"*"))
 	if err != nil {
 		log.Println("Filepath error ", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	log.Printf("Listing packages for: %s", packageName)
+	if len(packages) == 0 {
+		http.NotFound(w, r)
 		return
 	}
 
@@ -178,15 +187,17 @@ func simpleHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "<!DOCTYPE html><html><head><title>Links for %s</title></head><body><h1>Links for %s</h1>", packageName, packageName)
 	for _, pkg := range packages {
 		fileName := filepath.Base(pkg)
-		fmt.Fprintf(w, "<a href=\"/packages/%s#sha256=placeholder\">%s</a><br>", fileName, fileName)
+		fmt.Fprintf(w, "<a href=\"/packages/%s\">%s</a><br>", fileName, fileName)
 		log.Println(filepath.Base(pkg))
 
 	}
 	fmt.Fprintf(w, "</body></html>")
 }
+
 func packageHandler(w http.ResponseWriter, r *http.Request) {
-	packageName := filepath.Base(r.URL.Path)
+	packageName := strings.TrimPrefix(r.URL.Path, "/packages/")
 	packagePath := filepath.Join(packageDir, packageName)
+
 	log.Printf("Attempting to serve package: %s", packagePath)
 	file, err := os.Open(packagePath)
 	if err != nil {
@@ -204,40 +215,4 @@ func packageHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		log.Printf("Successfully served package %s (%d bytes)", packageName, written)
 	}
-}
-
-func extractName(filename string) string {
-	// Remove file extension
-	name := strings.TrimSuffix(filename, ".tar.gz")
-	name = strings.TrimSuffix(name, ".whl")
-	// Replace underscores with hyphens for consistency
-	name = strings.ReplaceAll(name, "_", "-")
-
-	// Use regex to extract the package name and version
-	re := regexp.MustCompile(`^([\w-]+-\d+(?:\.\d+)*(?:\.\d+)?)`)
-	match := re.FindString(name)
-
-	if match != "" {
-		return match
-	}
-
-	// If the regex does not match fall back to the original logic
-	parts := strings.Split(name, "-")
-	if len(parts) > 2 {
-		return strings.Join(parts[:3], "-")
-	}
-	return name
-}
-func removeDuplicates(slice []string) []string {
-	seen := make(map[string]bool)
-	result := []string{}
-
-	for _, item := range slice {
-		if !seen[item] {
-			seen[item] = true
-			result = append(result, item)
-		}
-	}
-
-	return result
 }

@@ -3,12 +3,18 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 )
 
 const PORT = ":4000"
 
 func main() {
+
 	mux := http.NewServeMux()
+
+	if err := os.MkdirAll(packageDir, os.ModePerm); err != nil {
+		log.Fatalf("could not create upload directory: %v", err)
+	}
 	//create a file server which serves files out of "./ui/static direct all "
 	//path is relative to the project directory root
 	fs := http.FileServer(http.Dir("./static/"))
