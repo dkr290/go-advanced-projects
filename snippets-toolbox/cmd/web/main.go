@@ -15,7 +15,7 @@ func main() {
 	fs := http.FileServer(http.Dir("./ui/static/"))
 
 	//use the handler function to register the fileserver as handler
-	mux.Handle("/static", http.StripPrefix("/static", fs))
+	mux.Handle("/static/", http.StripPrefix("/static/", fs))
 	mux.HandleFunc("/", home)
 	mux.HandleFunc("/snippet/view", snippetView)
 	mux.HandleFunc("/snippet/create", snippetCreate)
