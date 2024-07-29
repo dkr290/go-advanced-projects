@@ -25,6 +25,8 @@ func main() {
 	mux.HandleFunc("/simple/", basicAuth(simpleHandler))
 	mux.HandleFunc("/packages/", basicAuth(packageHandler))
 	mux.HandleFunc("/upload", basicAuth(uploadHandler))
+	mux.HandleFunc("/about", basicAuth(aboutHandler))
+	mux.HandleFunc("/contact", basicAuth(contactHandler))
 
 	log.Print("Starting server on", PORT)
 	if err := http.ListenAndServe(PORT, mux); err != nil {

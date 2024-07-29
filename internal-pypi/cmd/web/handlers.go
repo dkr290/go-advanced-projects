@@ -43,64 +43,20 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	// var newPackagesWhl []string
-	// for _, pWl := range packagesWhl {
-	// 	baseName := filepath.Base(pWl)
-	// 	newPackagesWhl = append(newPackagesWhl, baseName)
-	//
-	// }
 	packagesTar, err := filepath.Glob(filepath.Join(packageDir, "*.tar.gz"))
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	// var newPackagesTar []string
-	// for _, pTr := range packagesTar {
-	// 	baseName := filepath.Base(pTr)
-	// 	newPackagesTar = append(newPackagesTar, baseName)
-	// }
 
 	allPackages := append(packagesWhl, packagesTar...)
-	log.Println(allPackages)
-	// var onlyNames []string
-	// var nameWithoutExt string
-	// for _, file := range allPackages {
-	// 	baseName := filepath.Base(file)
-	// 	ext := filepath.Ext(baseName)
-	// 	if ext == ".gz" {
-	// 		nameWithoutExt = extractName(baseName)
-	// 	}
-	// 	if ext == ".whl" {
-	// 		nameWithoutExt = extractName(baseName)
-	// 	}
-	//
-	// 	onlyNames = append(onlyNames, nameWithoutExt)
-	// }
-	// var newData []string
-	// for _, f := range onlyNames {
-	// 	f += "/"
-	// 	newData = append(newData, f)
-	// }
-	// newData = removeDuplicates(newData)
 
-	// type PagesData struct {
-	// 	Name   []string
-	// 	WlPkg  []string
-	// 	TarPkg []string
-	// }
-	//
-	// data := struct {
-	// 	Pages []PagesData
-	// }{
-	// 	Pages: []PagesData{
-	// 		{Name: newData, WlPkg: newPackagesWhl, TarPkg: newPackagesTar},
-	// 	},
-	// }
+	sortedPackages := sortPackages(allPackages)
 	data := struct {
 		Packages []string
 	}{
-		Packages: allPackages,
+		Packages: sortedPackages,
 	}
 
 	err = ts.ExecuteTemplate(w, "base", data)
@@ -110,6 +66,73 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
+func aboutHandler(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/about" {
+		http.NotFound(w, r)
+		return
+	}
+	// Use the template.ParseFiles() function to read the template file into
+	// template set. If there's an error, log detailed error message
+	// the http.Error() function to send a generic 500 Internal Server Error
+	// response to the user.
+
+	//initialize slice containing two files. It's importnant
+	//the base template should be first one
+
+	files := []string{
+		"./templates/base.html",
+		"./templates/partials/nav.html",
+		"./templates/pages/about.html",
+	}
+	//template.ParseFiles() function to read the files and sto the templates in the templateset. variadic parameter as noted in the function
+	ts, err := template.ParseFiles(files...)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	err = ts.ExecuteTemplate(w, "base", nil)
+	if err != nil {
+		log.Print(err.Error())
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
+
+}
+func contactHandler(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/contact" {
+		http.NotFound(w, r)
+		return
+	}
+	// Use the template.ParseFiles() function to read the template file into
+	// template set. If there's an error, log detailed error message
+	// the http.Error() function to send a generic 500 Internal Server Error
+	// response to the user.
+
+	//initialize slice containing two files. It's importnant
+	//the base template should be first one
+
+	files := []string{
+		"./templates/base.html",
+		"./templates/partials/nav.html",
+		"./templates/pages/contact.html",
+	}
+	//template.ParseFiles() function to read the files and sto the templates in the templateset. variadic parameter as noted in the function
+	ts, err := template.ParseFiles(files...)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	err = ts.ExecuteTemplate(w, "base", nil)
+	if err != nil {
+		log.Print(err.Error())
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
+
+}
+
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Upload request received")
 	if r.Method != http.MethodPost && r.Method != http.MethodPut {
@@ -168,16 +191,19 @@ func simpleHandler(w http.ResponseWriter, r *http.Request) {
 	if rawPath == "" {
 		rawPath = r.URL.Path
 	}
-	log.Println(rawPath)
 	packageName := strings.TrimPrefix(rawPath, "/simple/")
 	packageName = strings.TrimSuffix(packageName, "/")
-	packages, err := filepath.Glob(filepath.Join(packageDir, packageName+"*"))
-	if err != nil {
-		log.Println("Filepath error ", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	log.Printf("Listing packages for: %s", packageName)
+	// Create both underscore and hyphen versions of the package name
+	underscorePackageName := strings.ReplaceAll(packageName, "-", "_")
+	hyphenPackageName := strings.ReplaceAll(packageName, "_", "-")
+
+	// Search for packages using both versions
+	packagesUnderscore, _ := filepath.Glob(filepath.Join(packageDir, underscorePackageName+"*"))
+	packagesHyphen, _ := filepath.Glob(filepath.Join(packageDir, hyphenPackageName+"*"))
+
+	// Combine the results
+	packages := append(packagesUnderscore, packagesHyphen...)
+
 	if len(packages) == 0 {
 		http.NotFound(w, r)
 		return
@@ -188,7 +214,6 @@ func simpleHandler(w http.ResponseWriter, r *http.Request) {
 	for _, pkg := range packages {
 		fileName := filepath.Base(pkg)
 		fmt.Fprintf(w, "<a href=\"/packages/%s\">%s</a><br>", fileName, fileName)
-		log.Println(filepath.Base(pkg))
 
 	}
 	fmt.Fprintf(w, "</body></html>")
