@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"os"
 )
 
 func main() {
@@ -20,6 +21,16 @@ func main() {
 	// encountered during parsing the application will be terminated.
 
 	flag.Parse()
+	// use log.New for to create logger for writing informational message
+	//prefix INFO or ERROR to stdout or stderr
+	//additional info is local date and time
+	infolog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+
+	// Create a logger for writing error messages in the same way, using stderr
+	// the destination and use the log.Lshortfile flag to include the
+	// file name and line number.
+
+	errlog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
 	mux := http.NewServeMux()
 	//create a file server which serves files out of "./ui/static direct all "
@@ -36,9 +47,10 @@ func main() {
 	// prefix it with the * symbol) before using it. Note that it is using
 	// log.Printf() function to interpolate the address with the log message.
 
-	log.Printf("Starting server on %s", cfg.addr)
+	infolog.Printf("Starting server on %s", cfg.addr)
 	if err := http.ListenAndServe(cfg.addr, mux); err != nil {
 
-		log.Fatal(err)
+		errlog.Fatal(err)
+
 	}
 }
