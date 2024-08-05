@@ -31,7 +31,11 @@ func main() {
 	// file name and line number.
 
 	errlog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
-
+	// initialize new instance of application containing the dependencies
+	app := &appconfig{
+		errotLog: errlog,
+		infoLog:  infolog,
+	}
 	mux := http.NewServeMux()
 	//create a file server which serves files out of "./ui/static direct all "
 	//path is relative to the project directory root
@@ -39,16 +43,25 @@ func main() {
 
 	//use the handler function to register the fileserver as handler
 	mux.Handle("/static/", http.StripPrefix("/static/", fs))
-	mux.HandleFunc("/", home)
-	mux.HandleFunc("/snippet/view", snippetView)
-	mux.HandleFunc("/snippet/create", snippetCreate)
+	mux.HandleFunc("/", app.home)
+	mux.HandleFunc("/snippet/view", app.snippetView)
+	mux.HandleFunc("/snippet/create", app.snippetCreate)
 	// The value returned from the flag.String() function is a pointer to theflag
 	// value, not the value itself. So we need to dereference the pointer
 	// prefix it with the * symbol) before using it. Note that it is using
 	// log.Printf() function to interpolate the address with the log message.
 
+	//initialize a new http.Server sruct. We set the address and handler fields
+	//the errorlog so the server is using a custom errolog logger
+
+	srv := http.Server{
+		Addr:     cfg.addr,
+		ErrorLog: errlog,
+		Handler:  mux,
+	}
+
 	infolog.Printf("Starting server on %s", cfg.addr)
-	if err := http.ListenAndServe(cfg.addr, mux); err != nil {
+	if err := srv.ListenAndServe(); err != nil {
 
 		errlog.Fatal(err)
 
