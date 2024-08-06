@@ -9,7 +9,7 @@ import (
 
 func (a *appconfig) home(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
-		http.NotFound(w, r)
+		a.notFound(w)
 		return
 	}
 	// Use the template.ParseFiles() function to read the template file into
@@ -28,13 +28,12 @@ func (a *appconfig) home(w http.ResponseWriter, r *http.Request) {
 	//template.ParseFiles() function to read the files and sto the templates in the templateset. variadic parameter as noted in the function
 	ts, err := template.ParseFiles(files...)
 	if err != nil {
-		a.errotLog.Print(err.Error())
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		a.serveError(w, err)
 		return
 	}
 	err = ts.ExecuteTemplate(w, "base", nil)
 	if err != nil {
-		a.errotLog.Print(err.Error())
+		a.serveError(w, err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 
@@ -42,7 +41,7 @@ func (a *appconfig) home(w http.ResponseWriter, r *http.Request) {
 func (a *appconfig) snippetView(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 	if err != nil || id < 1 {
-		http.NotFound(w, r)
+		a.notFound(w)
 		return
 	}
 	fmt.Fprintf(w, "Display a specific snippet with ID %d...", id)
@@ -50,7 +49,7 @@ func (a *appconfig) snippetView(w http.ResponseWriter, r *http.Request) {
 func (a *appconfig) snippetCreate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.Header().Set("Allow", http.MethodPost)
-		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		a.clientError(w, http.StatusMethodNotAllowed)
 		return
 	}
 	w.Write([]byte("Create a new snippet..."))

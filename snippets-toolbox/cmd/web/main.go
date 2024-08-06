@@ -1,10 +1,14 @@
 package main
 
 import (
+	"database/sql"
 	"flag"
 	"log"
 	"net/http"
 	"os"
+	"time"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func main() {
@@ -13,6 +17,7 @@ func main() {
 
 	//define a new command-line flag with the name addr and default value
 	flag.StringVar(&cfg.addr, "addr", ":4000", "HTTP network address")
+	flag.StringVar(&cfg.dsn, "dsn", "web:password@/snippetbox?parseTime=true", "MySql data source")
 	// Importantly, we use the flag.Parse() function to parse the command-line flag.
 	// This reads in the command-line flag value and assigns it to the addr
 	// variable. You need to call this *before* you use the addr variable
@@ -31,21 +36,19 @@ func main() {
 	// file name and line number.
 
 	errlog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+
+	//database driver to keep main short openDB() function below
+	db, err := openDB(cfg.dsn)
+	if err != nil {
+		errlog.Fatal(err)
+	}
+	//close the connectionpool
+	defer db.Close()
 	// initialize new instance of application containing the dependencies
 	app := &appconfig{
 		errotLog: errlog,
 		infoLog:  infolog,
 	}
-	mux := http.NewServeMux()
-	//create a file server which serves files out of "./ui/static direct all "
-	//path is relative to the project directory root
-	fs := http.FileServer(http.Dir("./ui/static/"))
-
-	//use the handler function to register the fileserver as handler
-	mux.Handle("/static/", http.StripPrefix("/static/", fs))
-	mux.HandleFunc("/", app.home)
-	mux.HandleFunc("/snippet/view", app.snippetView)
-	mux.HandleFunc("/snippet/create", app.snippetCreate)
 	// The value returned from the flag.String() function is a pointer to theflag
 	// value, not the value itself. So we need to dereference the pointer
 	// prefix it with the * symbol) before using it. Note that it is using
@@ -57,7 +60,7 @@ func main() {
 	srv := http.Server{
 		Addr:     cfg.addr,
 		ErrorLog: errlog,
-		Handler:  mux,
+		Handler:  app.routes(),
 	}
 
 	infolog.Printf("Starting server on %s", cfg.addr)
@@ -66,4 +69,29 @@ func main() {
 		errlog.Fatal(err)
 
 	}
+}
+
+func openDB(dsn string) (*sql.DB, error) {
+
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		return nil, err
+	}
+	count := 0
+	retryInterval := 2 * time.Second
+	for {
+
+		if err := db.Ping(); err == nil {
+			log.Println("Sucesfully connected to the database")
+			return db, nil
+		}
+		log.Printf("Attempt %d: Failed to connect to the database. Retrying in %v...\n", count, retryInterval)
+		time.Sleep(retryInterval)
+		count++
+		if count > 10 {
+			return nil, err
+		}
+
+	}
+
 }
