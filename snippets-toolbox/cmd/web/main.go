@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"dkr290/go-advanced-projects/snippets-toolbox/internal/models"
 	"flag"
 	"log"
 	"net/http"
@@ -17,7 +18,8 @@ func main() {
 
 	//define a new command-line flag with the name addr and default value
 	flag.StringVar(&cfg.addr, "addr", ":4000", "HTTP network address")
-	flag.StringVar(&cfg.dsn, "dsn", "web:password@/snippetbox?parseTime=true", "MySql data source")
+	flag.StringVar(&cfg.dsn, "dsn", "web:password@tcp(localhost)/snippetbox?parseTime=true", "MySql data source")
+
 	// Importantly, we use the flag.Parse() function to parse the command-line flag.
 	// This reads in the command-line flag value and assigns it to the addr
 	// variable. You need to call this *before* you use the addr variable
@@ -45,9 +47,11 @@ func main() {
 	//close the connectionpool
 	defer db.Close()
 	// initialize new instance of application containing the dependencies
+
 	app := &appconfig{
 		errotLog: errlog,
 		infoLog:  infolog,
+		snippets: &models.SnippetsModel{DB: db},
 	}
 	// The value returned from the flag.String() function is a pointer to theflag
 	// value, not the value itself. So we need to dereference the pointer
@@ -84,14 +88,14 @@ func openDB(dsn string) (*sql.DB, error) {
 		if err := db.Ping(); err == nil {
 			log.Println("Sucesfully connected to the database")
 			return db, nil
+		} else {
+			log.Printf("Attempt %d: Failed to connect to the database. Retrying in %v...\n", count, retryInterval)
+			time.Sleep(retryInterval)
+			count++
+			if count > 10 {
+				return nil, err
+			}
 		}
-		log.Printf("Attempt %d: Failed to connect to the database. Retrying in %v...\n", count, retryInterval)
-		time.Sleep(retryInterval)
-		count++
-		if count > 10 {
-			return nil, err
-		}
-
 	}
 
 }
