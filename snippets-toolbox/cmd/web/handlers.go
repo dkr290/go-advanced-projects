@@ -1,8 +1,10 @@
 package main
 
 import (
+	"dkr290/go-advanced-projects/snippets-toolbox/internal/models"
+	"errors"
 	"fmt"
-	"html/template"
+	//	"html/template"
 	"net/http"
 	"strconv"
 )
@@ -20,23 +22,33 @@ func (a *appconfig) home(w http.ResponseWriter, r *http.Request) {
 	//initialize slice containing two files. It's importnant
 	//the base template should be first one
 
-	files := []string{
-		"./ui/html/base.html",
-		"./ui/html/partials/nav.html",
-		"./ui/html/pages/home.html",
-	}
-	//template.ParseFiles() function to read the files and sto the templates in the templateset. variadic parameter as noted in the function
-	ts, err := template.ParseFiles(files...)
+	snippets, err := a.snippets.Latest()
 	if err != nil {
 		a.serveError(w, err)
 		return
 	}
-	err = ts.ExecuteTemplate(w, "base", nil)
-	if err != nil {
-		a.serveError(w, err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+
+	for _, snippet := range snippets {
+		fmt.Fprintf(w, "%+v\n", snippet)
 	}
 
+	// files := []string{
+	// 	"./ui/html/base.html",
+	// 	"./ui/html/partials/nav.html",
+	// 	"./ui/html/pages/home.html",
+	// }
+	// //template.ParseFiles() function to read the files and sto the templates in the templateset. variadic parameter as noted in the function
+	// ts, err := template.ParseFiles(files...)
+	// if err != nil {
+	// 	a.serveError(w, err)
+	// 	return
+	// }
+	// err = ts.ExecuteTemplate(w, "base", nil)
+	// if err != nil {
+	// 	a.serveError(w, err)
+	// 	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	// }
+	//
 }
 func (a *appconfig) snippetView(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
@@ -44,7 +56,15 @@ func (a *appconfig) snippetView(w http.ResponseWriter, r *http.Request) {
 		a.notFound(w)
 		return
 	}
-	fmt.Fprintf(w, "Display a specific snippet with ID %d...", id)
+	snippet, err := a.snippets.Get(id)
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			a.notFound(w)
+		} else {
+			a.serveError(w, err)
+		}
+	}
+	fmt.Fprintf(w, "%+v", snippet)
 }
 func (a *appconfig) snippetCreate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
