@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-func indexHandler(w http.ResponseWriter, r *http.Request) {
+func (app *Config) indexHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
 		return
@@ -32,21 +32,18 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	//template.ParseFiles() function to read the files and sto the templates in the templateset. variadic parameter as noted in the function
 	ts, err := template.ParseFiles(files...)
 	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		app.serveError(w, err)
 		return
 	}
 
 	packagesWhl, err := filepath.Glob(filepath.Join(packageDir, "*.whl"))
 	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		app.serveError(w, err)
 		return
 	}
 	packagesTar, err := filepath.Glob(filepath.Join(packageDir, "*.tar.gz"))
 	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		app.serveError(w, err)
 		return
 	}
 
@@ -61,12 +58,12 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = ts.ExecuteTemplate(w, "base", data)
 	if err != nil {
-		log.Print(err.Error())
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		app.serveError(w, err)
+		return
 	}
 
 }
-func aboutHandler(w http.ResponseWriter, r *http.Request) {
+func (app *Config) aboutHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/about" {
 		http.NotFound(w, r)
 		return
@@ -87,19 +84,18 @@ func aboutHandler(w http.ResponseWriter, r *http.Request) {
 	//template.ParseFiles() function to read the files and sto the templates in the templateset. variadic parameter as noted in the function
 	ts, err := template.ParseFiles(files...)
 	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		app.serveError(w, err)
 		return
 	}
 
 	err = ts.ExecuteTemplate(w, "base", nil)
 	if err != nil {
-		log.Print(err.Error())
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		app.serveError(w, err)
+		return
 	}
 
 }
-func contactHandler(w http.ResponseWriter, r *http.Request) {
+func (app *Config) contactHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/contact" {
 		http.NotFound(w, r)
 		return
@@ -120,31 +116,29 @@ func contactHandler(w http.ResponseWriter, r *http.Request) {
 	//template.ParseFiles() function to read the files and sto the templates in the templateset. variadic parameter as noted in the function
 	ts, err := template.ParseFiles(files...)
 	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		app.serveError(w, err)
 		return
 	}
 
 	err = ts.ExecuteTemplate(w, "base", nil)
 	if err != nil {
-		log.Print(err.Error())
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		app.serveError(w, err)
+		return
 	}
 
 }
 
-func uploadHandler(w http.ResponseWriter, r *http.Request) {
+func (app *Config) uploadHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Upload request received")
 	if r.Method != http.MethodPost && r.Method != http.MethodPut {
 		log.Println("Invalid request method", r.Method)
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		app.clientError(w, http.StatusMethodNotAllowed)
 		return
 	}
 
-	err := r.ParseMultipartForm(32 << 20) // 10 MB
+	err := r.ParseMultipartForm(32 << 20) // > 10 MB
 	if err != nil {
-		log.Println("Error parsing form data:", err)
-		http.Error(w, "Error parsing form data", http.StatusInternalServerError)
+		app.serveError(w, err)
 		return
 	}
 
@@ -158,8 +152,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if err != nil {
-			log.Println("Error retreiving the file", err)
-			http.Error(w, "Error retrieving the file", http.StatusInternalServerError)
+			app.serveError(w, err)
 			return
 		}
 
@@ -171,14 +164,14 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	dst, err := os.Create(filePath)
 	if err != nil {
 		log.Println("Error creating the file:", err)
-		http.Error(w, "Error creating the file", http.StatusInternalServerError)
+		app.serveError(w, err)
 		return
 	}
 	defer dst.Close()
 	written, err := io.Copy(dst, file)
 	if err != nil {
 		log.Println("Error saving the file", err)
-		http.Error(w, "Error saving the file", http.StatusInternalServerError)
+		app.serveError(w, err)
 		return
 	}
 	log.Printf("File uploaded successfully: %s (%d bytes)\n", header.Filename, written)
@@ -186,7 +179,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "File uploaded successfully: %s\n", header.Filename)
 }
 
-func simpleHandler(w http.ResponseWriter, r *http.Request) {
+func (app *Config) simpleHandler(w http.ResponseWriter, r *http.Request) {
 	rawPath := r.URL.RawPath
 	if rawPath == "" {
 		rawPath = r.URL.Path
@@ -219,11 +212,11 @@ func simpleHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "</body></html>")
 }
 
-func packageHandler(w http.ResponseWriter, r *http.Request) {
+func (app *Config) packageHandler(w http.ResponseWriter, r *http.Request) {
 	packageName := strings.TrimPrefix(r.URL.Path, "/packages/")
 	packagePath := filepath.Join(packageDir, packageName)
 
-	log.Printf("Attempting to serve package: %s", packagePath)
+	app.clientLog("Attemting to serve the package %s", packagePath)
 	file, err := os.Open(packagePath)
 	if err != nil {
 		log.Printf("Error opening package file: %v", err)
@@ -236,8 +229,8 @@ func packageHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", packageName))
 	written, err := io.Copy(w, file)
 	if err != nil {
-		log.Printf("Error serving package file: %v", err)
+		app.errorLog("Error service package file: %v", err)
 	} else {
-		log.Printf("Successfully served package %s (%d bytes)", packageName, written)
+		app.clientLog("Successfully served package %s with size %d", packageName, written)
 	}
 }

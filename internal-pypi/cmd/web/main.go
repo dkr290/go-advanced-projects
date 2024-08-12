@@ -1,49 +1,45 @@
 package main
 
 import (
+	"flag"
+	"internal-pypi/internal/config"
 	"log"
 	"net/http"
 	"os"
 )
 
-const PORT = ":4000"
+type Config struct {
+	*config.AppConfig
+}
 
 func main() {
 
-	mux := http.NewServeMux()
+	// Initialize the AppConfig
+	aconf := config.New("admin", "password", ":4000")
+	app := Config{AppConfig: aconf}
+	//define a new command-line flag with the name addr and default value
+	flag.StringVar(&app.Username, "username", app.Username, "he username for authentication")
+	flag.StringVar(&app.Password, "password", app.Password, "password for the authentication")
+	flag.StringVar(&app.Port, "port", app.Port, "The port for application to run")
+
+	flag.Parse()
+	log.Println(app.Port)
+	app.InfoLog = log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	app.ErrorLog = log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
 	if err := os.MkdirAll(packageDir, os.ModePerm); err != nil {
 		log.Fatalf("could not create upload directory: %v", err)
 	}
-	//create a file server which serves files out of "./ui/static direct all "
-	//path is relative to the project directory root
-	fs := http.FileServer(http.Dir("./static/"))
 
-	//use the handler function to register the fileserver as handler
-	mux.Handle("/static", http.StripPrefix("/static", fs))
-	mux.HandleFunc("/", basicAuth(indexHandler))
-	mux.HandleFunc("/simple/", basicAuth(simpleHandler))
-	mux.HandleFunc("/packages/", basicAuth(packageHandler))
-	mux.HandleFunc("/upload", basicAuth(uploadHandler))
-	mux.HandleFunc("/about", basicAuth(aboutHandler))
-	mux.HandleFunc("/contact", basicAuth(contactHandler))
-
-	log.Print("Starting server on", PORT)
-	if err := http.ListenAndServe(PORT, mux); err != nil {
-
-		log.Fatal(err)
+	srv := http.Server{
+		Addr:     app.Port,
+		ErrorLog: app.ErrorLog,
+		Handler:  app.routes(),
 	}
-}
-func basicAuth(next http.HandlerFunc) http.HandlerFunc {
-	username, password := getCredentials()
 
-	return func(w http.ResponseWriter, r *http.Request) {
-		user, pass, ok := r.BasicAuth()
-		if !ok || user != username || pass != password {
-			w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
-		next(w, r)
+	app.InfoLog.Printf("Starting the application on port %s", app.Port)
+	if err := srv.ListenAndServe(); err != nil {
+
+		app.ErrorLog.Fatal(err)
 	}
 }
