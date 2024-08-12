@@ -4,7 +4,8 @@ import (
 	"dkr290/go-advanced-projects/snippets-toolbox/internal/models"
 	"errors"
 	"fmt"
-	//	"html/template"
+
+	"html/template"
 	"net/http"
 	"strconv"
 )
@@ -64,7 +65,27 @@ func (a *appconfig) snippetView(w http.ResponseWriter, r *http.Request) {
 			a.serveError(w, err)
 		}
 	}
-	fmt.Fprintf(w, "%+v", snippet)
+	//fmt.Fprintf(w, "%+v", snippet)
+	//initialize the data to pass to the template
+	files := []string{
+		"./ui/html/base.html",
+		"./ui/html/partials/nav.html",
+		"./ui/html/pages/view.html",
+	}
+	ts, err := template.ParseFiles(files...)
+	if err != nil {
+		a.serveError(w, err)
+		return
+	}
+	//using TemplateData struct to pass snippet data
+	data := &TemplateData{
+		Snippet: snippet,
+	}
+	err = ts.ExecuteTemplate(w, "base", data)
+	if err != nil {
+		a.serveError(w, err)
+	}
+
 }
 func (a *appconfig) snippetCreate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {

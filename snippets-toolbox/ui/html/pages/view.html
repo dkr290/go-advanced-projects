@@ -1,0 +1,19 @@
+{{ define "title"}}Snippet #{{.Snippet.ID}}{{ end }} {{ define "main"}}
+<main class="container my-5">
+  <div class="card shadow-sm border-0">
+    <div class="card-header bg-primary text-white">
+      <strong>{{.Snippet.Title}}</strong>
+      <span class="float-end">#{{.Snippet.ID}}</span>
+    </div>
+    <div class="card-body">
+      <pre><code>{{.Snippet.Content}}</code></pre>
+    </div>
+    <div class="card-footer text-muted">
+      <div class="d-flex justify-content-between">
+        <time>Created: {{.Snippet.Created}}</time>
+        <time>Expires: {{.Snippet.Expired}}</time>
+      </div>
+    </div>
+  </div>
+</main>
+{{ end }}
