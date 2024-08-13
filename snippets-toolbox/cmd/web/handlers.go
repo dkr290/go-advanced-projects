@@ -29,27 +29,27 @@ func (a *appconfig) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, snippet := range snippets {
-		fmt.Fprintf(w, "%+v\n", snippet)
+	files := []string{
+		"./ui/html/base.html",
+		"./ui/html/partials/nav.html",
+		"./ui/html/pages/home.html",
+	}
+	//template.ParseFiles() function to read the files and sto the templates in the templateset. variadic parameter as noted in the function
+	ts, err := template.ParseFiles(files...)
+	if err != nil {
+		a.serveError(w, err)
+		return
 	}
 
-	// files := []string{
-	// 	"./ui/html/base.html",
-	// 	"./ui/html/partials/nav.html",
-	// 	"./ui/html/pages/home.html",
-	// }
-	// //template.ParseFiles() function to read the files and sto the templates in the templateset. variadic parameter as noted in the function
-	// ts, err := template.ParseFiles(files...)
-	// if err != nil {
-	// 	a.serveError(w, err)
-	// 	return
-	// }
-	// err = ts.ExecuteTemplate(w, "base", nil)
-	// if err != nil {
-	// 	a.serveError(w, err)
-	// 	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-	// }
-	//
+	data := &TemplateData{
+		Snippets: snippets,
+	}
+
+	err = ts.ExecuteTemplate(w, "base", data)
+	if err != nil {
+		a.serveError(w, err)
+	}
+
 }
 func (a *appconfig) snippetView(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))

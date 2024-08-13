@@ -1,6 +1,33 @@
-{{ define "title"}}Home{{ end }} {{ define "main"}}
+{{ define "title" }}Home{{ end }} {{ define "main" }}
 <main class="container my-5">
   <h2 class="mb-4">Latest Snippets</h2>
+  {{ if .Snippets }}
+  <div class="table-responsive">
+    <table class="table table-striped table-hover">
+      <thead class="table-primary">
+        <tr>
+          <th scope="col">Title</th>
+          <th scope="col">Created</th>
+          <th scope="col">ID</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{ range .Snippets }}
+        <tr>
+          <td>
+            <a href="/snippet/view?id={{.ID}}" class="text-decoration-none"
+              >{{.Title}}</a
+            >
+          </td>
+          <td>{{.Created}}</td>
+          <td>#{{.ID}}</td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+  {{ else }}
   <p class="lead">There's nothing to see here yet!</p>
+  {{ end }}
 </main>
 {{ end }}

@@ -31,27 +31,35 @@ func main() {
 	// use log.New for to create logger for writing informational message
 	//prefix INFO or ERROR to stdout or stderr
 	//additional info is local date and time
-	infolog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 
 	// Create a logger for writing error messages in the same way, using stderr
 	// the destination and use the log.Lshortfile flag to include the
 	// file name and line number.
 
-	errlog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+	errLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
 	//database driver to keep main short openDB() function below
 	db, err := openDB(cfg.dsn)
 	if err != nil {
-		errlog.Fatal(err)
+		errLog.Fatal(err)
 	}
 	//close the connectionpool
 	defer db.Close()
+
+	//use template cache to be used
+	templateCache, err := newTemplateCache()
+	if err != nil {
+		errLog.Fatal(err)
+	}
+
 	// initialize new instance of application containing the dependencies
 
 	app := &appconfig{
-		errotLog: errlog,
-		infoLog:  infolog,
-		snippets: &models.SnippetsModel{DB: db},
+		errotLog:      errLog,
+		infoLog:       infoLog,
+		snippets:      &models.SnippetsModel{DB: db},
+		templateCache: templateCache,
 	}
 	// The value returned from the flag.String() function is a pointer to theflag
 	// value, not the value itself. So we need to dereference the pointer
@@ -63,14 +71,14 @@ func main() {
 
 	srv := http.Server{
 		Addr:     cfg.addr,
-		ErrorLog: errlog,
+		ErrorLog: errLog,
 		Handler:  app.routes(),
 	}
 
-	infolog.Printf("Starting server on %s", cfg.addr)
+	infoLog.Printf("Starting server on %s", cfg.addr)
 	if err := srv.ListenAndServe(); err != nil {
 
-		errlog.Fatal(err)
+		errLog.Fatal(err)
 
 	}
 }
