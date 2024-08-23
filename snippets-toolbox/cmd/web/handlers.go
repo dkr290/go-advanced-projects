@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"html/template"
 	"net/http"
 	"strconv"
 )
@@ -20,7 +19,7 @@ func (a *appconfig) home(w http.ResponseWriter, r *http.Request) {
 	// the http.Error() function to send a generic 500 Internal Server Error
 	// response to the user.
 
-	//initialize slice containing two files. It's importnant
+	//initialize slice conta sxining two files. It's importnant
 	//the base template should be first one
 
 	snippets, err := a.snippets.Latest()
@@ -28,27 +27,9 @@ func (a *appconfig) home(w http.ResponseWriter, r *http.Request) {
 		a.serveError(w, err)
 		return
 	}
-
-	files := []string{
-		"./ui/html/base.html",
-		"./ui/html/partials/nav.html",
-		"./ui/html/pages/home.html",
-	}
-	//template.ParseFiles() function to read the files and sto the templates in the templateset. variadic parameter as noted in the function
-	ts, err := template.ParseFiles(files...)
-	if err != nil {
-		a.serveError(w, err)
-		return
-	}
-
-	data := &TemplateData{
+	a.render(w, http.StatusOK, "home.html", &TemplateData{
 		Snippets: snippets,
-	}
-
-	err = ts.ExecuteTemplate(w, "base", data)
-	if err != nil {
-		a.serveError(w, err)
-	}
+	})
 
 }
 func (a *appconfig) snippetView(w http.ResponseWriter, r *http.Request) {
@@ -65,26 +46,10 @@ func (a *appconfig) snippetView(w http.ResponseWriter, r *http.Request) {
 			a.serveError(w, err)
 		}
 	}
-	//fmt.Fprintf(w, "%+v", snippet)
-	//initialize the data to pass to the template
-	files := []string{
-		"./ui/html/base.html",
-		"./ui/html/partials/nav.html",
-		"./ui/html/pages/view.html",
-	}
-	ts, err := template.ParseFiles(files...)
-	if err != nil {
-		a.serveError(w, err)
-		return
-	}
-	//using TemplateData struct to pass snippet data
-	data := &TemplateData{
+
+	a.render(w, http.StatusOK, "view.html", &TemplateData{
 		Snippet: snippet,
-	}
-	err = ts.ExecuteTemplate(w, "base", data)
-	if err != nil {
-		a.serveError(w, err)
-	}
+	})
 
 }
 func (a *appconfig) snippetCreate(w http.ResponseWriter, r *http.Request) {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"runtime/debug"
@@ -18,4 +19,33 @@ func (a *appconfig) clientError(w http.ResponseWriter, status int) {
 
 func (a *appconfig) notFound(w http.ResponseWriter) {
 	a.clientError(w, http.StatusNotFound)
+}
+
+func (a *appconfig) render(w http.ResponseWriter, status int, page string, data *TemplateData) {
+	// Retrieve the appropriate template set from the cache based on the page
+	// name (like 'home.tmpl'). If no entry exists in the cache with the
+	// provided name, then create a new error and call the serverError() helper
+
+	ts, ok := a.templateCache[page]
+	if !ok {
+		err := fmt.Errorf("the template %s does not exist", page)
+		a.serveError(w, err)
+		return
+	}
+
+	buff := new(bytes.Buffer)
+
+	w.WriteHeader(status) //200 ok or 400 Bad Request
+
+	// execute template
+	err := ts.ExecuteTemplate(buff, "base", data)
+	if err != nil {
+		a.serveError(w, err)
+	}
+	// If the template is written to the buffer without any errors, safe
+	// to go ahead and write the HTTP status code to http.ResponseWriter.
+	w.WriteHeader(status)
+
+	buff.WriteTo(w)
+
 }
