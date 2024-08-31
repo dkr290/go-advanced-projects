@@ -11,8 +11,8 @@
     </div>
     <div class="card-footer text-muted">
       <div class="d-flex justify-content-between">
-        <time>Created: {{.Created}}</time>
-        <time>Expires: {{.Expired}}</time>
+        <time>Created: {{.Created | humanDate}}</time>
+        <time>Expires: {{.Expired | humanDate}}</time>
       </div>
     </div>
   </div>

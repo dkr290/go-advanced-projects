@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"runtime/debug"
+	"time"
 )
 
 func (a *appconfig) serveError(w http.ResponseWriter, err error) {
@@ -42,10 +43,16 @@ func (a *appconfig) render(w http.ResponseWriter, status int, page string, data 
 	if err != nil {
 		a.serveError(w, err)
 	}
-	// If the template is written to the buffer without any errors, safe
-	// to go ahead and write the HTTP status code to http.ResponseWriter.
-	w.WriteHeader(status)
 
 	buff.WriteTo(w)
 
+}
+
+// Create an newTemplateData() helper, which returns a pointer to a templateData
+// struct initialized with the current year. Note that we're not using the
+
+func (a *appconfig) newTemplateData(r *http.Request) *TemplateData {
+	return &TemplateData{
+		CurrentYear: time.Now().Year(),
+	}
 }
