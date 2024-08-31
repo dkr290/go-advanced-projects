@@ -22,13 +22,14 @@ type Task struct {
 	Name          string
 	State         State
 	Image         string
+	CPU           float64
 	Memory        int
 	Disk          int
 	ExposedPorts  nat.PortSet
 	PortBindings  map[string]string
 	RestartPolicy string
 	StartTime     time.Time
-	EndTime       time.Time
+	FinishTime    time.Time
 }
 
 type TaskEvent struct {
