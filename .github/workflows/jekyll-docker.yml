@@ -55,7 +55,7 @@ jobs:
         with:
           image: $DOCKER_IMAGE_API_SERVICE
           image-report: "trivy-report.json"
-          patched-tag: "${{ DOCKER_IMAGE_API_SERVICE }}-patched"
+          patched-tag: $DOCKER_IMAGE_API_SERVICE-patched"
 
       - name: docker version and build pypi_service
         run: |
