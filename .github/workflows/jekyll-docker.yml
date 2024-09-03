@@ -38,6 +38,13 @@ jobs:
           docker -v
           docker build --build-arg BUILD_REF=$API_SERVICE_VERSION --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"`  . -f zarf/docker/Dockerfile.service -t $DOCKER_IMAGE_API_SERVICE
           docker images -a
+      - name: Scan api_service image with Trivy
+        run: |
+          trivy image --format json --output trivy-report.json $DOCKER_IMAGE_API_SERVICE
+
+      - name: Patch api_service image with Copacetic
+        run: |
+          copa patch --image $DOCKER_IMAGE_API_SERVICE --report trivy-report.json
 
       - name: docker version and build pypi_service
         run: |
@@ -45,6 +52,14 @@ jobs:
           docker -v
           docker build --build-arg BUILD_REF=$PYPI_SERVICE_VERSION --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"`  . -f Dockerfile -t $DOCKER_IMAGE_PYPI_SERVICE
           docker images -a
+
+      - name: Scan pypi_service image with Trivy
+        run: |
+          trivy image --format json --output trivy-report.json $DOCKER_IMAGE_PYPI_SERVICE
+
+      - name: Patch pypi_service image with Copacetic
+        run: |
+          copa patch --image $DOCKER_IMAGE_PYPI_SERVICE --report trivy-report.json
 
       - if: github.event_name != 'pull_request'
         name: docker login and push
