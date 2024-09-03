@@ -36,13 +36,13 @@ jobs:
         run: |
           cd api-service
           docker -v
-          docker build --build-arg BUILD_REF=$API_SERVICE_VERSION --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"`  . -f zarf/docker/Dockerfile.service -t API_IMAGE
+          docker build --build-arg BUILD_REF=$API_SERVICE_VERSION --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"`  . -f zarf/docker/Dockerfile.service -t api-image
           docker images -a
 
       - name: Scan api_service image with Trivy
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: "API_IMAGE"
+          image-ref: "api-image"
           format: "json"
           output: "trivy-report.json"
           exit-code: "1"
@@ -53,9 +53,9 @@ jobs:
       - name: Patch api_service image with Copacetic
         uses: project-copacetic/copa-action@v1.0.0
         with:
-          image: "API_IMAGE"
+          image: "api-image"
           image-report: "trivy-report.json"
-          patched-tag: "API_IMAGE_patched"
+          patched-tag: "api-image-patched"
 
       - name: docker version and build pypi_service
         run: |
@@ -69,7 +69,7 @@ jobs:
         id: push-image
         run: |
           echo "${{ github.token }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker tag API_IMAGE_patched $DOCKER_IMAGE_API_SERVICE:$API_SERVICE_VERSION
+          docker tag api-image-patched $DOCKER_IMAGE_API_SERVICE:$API_SERVICE_VERSION
           docker push $DOCKER_IMAGE_API_SERVICE:$API_SERVICE_VERSION
 
           docker tag $DOCKER_IMAGE_PYPI_SERVICE $DOCKER_IMAGE_PYPI_SERVICE:$PYPI_SERVICE_VERSION
