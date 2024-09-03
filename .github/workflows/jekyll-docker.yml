@@ -38,13 +38,24 @@ jobs:
           docker -v
           docker build --build-arg BUILD_REF=$API_SERVICE_VERSION --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"`  . -f zarf/docker/Dockerfile.service -t $DOCKER_IMAGE_API_SERVICE
           docker images -a
+
       - name: Scan api_service image with Trivy
-        run: |
-          trivy image --format json --output trivy-report.json $DOCKER_IMAGE_API_SERVICE
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: $DOCKER_IMAGE_API_SERVICE
+          format: "json"
+          output: "trivy-report.json"
+          exit-code: "1"
+          ignore-unfixed: true
+          vuln-type: "os,library"
+          severity: "CRITICAL,HIGH"
 
       - name: Patch api_service image with Copacetic
-        run: |
-          copa patch --image $DOCKER_IMAGE_API_SERVICE --report trivy-report.json
+        uses: project-copacetic/copa-action@v1.0.0
+        with:
+          image: $DOCKER_IMAGE_API_SERVICE
+          image-report: "trivy-report.json"
+          patched-tag: "${{ DOCKER_IMAGE_API_SERVICE }}-patched"
 
       - name: docker version and build pypi_service
         run: |
@@ -53,21 +64,12 @@ jobs:
           docker build --build-arg BUILD_REF=$PYPI_SERVICE_VERSION --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"`  . -f Dockerfile -t $DOCKER_IMAGE_PYPI_SERVICE
           docker images -a
 
-      - name: Scan pypi_service image with Trivy
-        run: |
-          trivy image --format json --output trivy-report.json $DOCKER_IMAGE_PYPI_SERVICE
-
-      - name: Patch pypi_service image with Copacetic
-        run: |
-          copa patch --image $DOCKER_IMAGE_PYPI_SERVICE --report trivy-report.json
-
       - if: github.event_name != 'pull_request'
         name: docker login and push
         id: push-image
         run: |
           echo "${{ github.token }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-          docker tag $DOCKER_IMAGE_API_SERVICE $DOCKER_IMAGE_API_SERVICE:$API_SERVICE_VERSION 
+          docker tag $DOCKER_IMAGE_API_SERVICE-patched $DOCKER_IMAGE_API_SERVICE:$API_SERVICE_VERSION
           docker push $DOCKER_IMAGE_API_SERVICE:$API_SERVICE_VERSION
 
           docker tag $DOCKER_IMAGE_PYPI_SERVICE $DOCKER_IMAGE_PYPI_SERVICE:$PYPI_SERVICE_VERSION
