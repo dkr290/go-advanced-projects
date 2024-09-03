@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "api-service/**"
+      - "internal-pypi/**"
 
     branches:
       - main
@@ -13,7 +14,9 @@ on:
   workflow_dispatch:
 env:
   DOCKER_IMAGE_API_SERVICE: ghcr.io/${{ github.repository }}/api-service
+  DOCKER_IMAGE_PYPI_SERVICE: ghcr.io/${{ github.repository }}/internal-pypi
   API_SERVICE_VERSION: "0.0.1"
+  PYPI_SERVICE_VERSION: "0.0.1"
 jobs:
   # This workflow contains a single job called "build"
   build-goapp:
@@ -36,13 +39,21 @@ jobs:
           docker build --build-arg BUILD_REF=$API_SERVICE_VERSION --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"`  . -f zarf/docker/Dockerfile.service -t $DOCKER_IMAGE_API_SERVICE
           docker images -a
 
+      - name: docker version and build pypi_service
+        run: |
+          cd internal-pypi
+          docker -v
+          docker build --build-arg BUILD_REF=$PYPI_SERVICE_VERSION --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"`  . -f Dockerfile -t $DOCKER_IMAGE_PYPI_SERVICE
+          docker images -a
+
       - if: github.event_name != 'pull_request'
         name: docker login and push
         id: push-image
         run: |
           echo "${{ github.token }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          VERSION=$API_SERVICE_VERSION
-          echo DOCKER_IMAGE_API_SERVICE=$DOCKER_IMAGE_API_SERVICE
-          echo VERSION=$VERSION
-          docker tag $DOCKER_IMAGE_API_SERVICE $DOCKER_IMAGE_API_SERVICE:$VERSION 
-          docker push $DOCKER_IMAGE_API_SERVICE:$VERSION
+
+          docker tag $DOCKER_IMAGE_API_SERVICE $DOCKER_IMAGE_API_SERVICE:$API_SERVICE_VERSION 
+          docker push $DOCKER_IMAGE_API_SERVICE:$API_SERVICE_VERSION
+
+          docker tag $DOCKER_IMAGE_PYPI_SERVICE $DOCKER_IMAGE_PYPI_SERVICE:$PYPI_SERVICE_VERSION
+          docker push $DOCKER_IMAGE_PYPI_SERVICE:$PYPI_SERVICE_VERSION

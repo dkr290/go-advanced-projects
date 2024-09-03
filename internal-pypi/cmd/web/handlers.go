@@ -188,14 +188,15 @@ func (app *Config) simpleHandler(w http.ResponseWriter, r *http.Request) {
 	packageName = strings.TrimSuffix(packageName, "/")
 	// Create both underscore and hyphen versions of the package name
 	underscorePackageName := strings.ReplaceAll(packageName, "-", "_")
-	hyphenPackageName := strings.ReplaceAll(packageName, "_", "-")
+	//hyphenPackageName := strings.ReplaceAll(packageName, "_", "-")
 
 	// Search for packages using both versions
 	packagesUnderscore, _ := filepath.Glob(filepath.Join(packageDir, underscorePackageName+"*"))
-	packagesHyphen, _ := filepath.Glob(filepath.Join(packageDir, hyphenPackageName+"*"))
+	//packagesHyphen, _ := filepath.Glob(filepath.Join(packageDir, hyphenPackageName+"*"))
 
 	// Combine the results
-	packages := append(packagesUnderscore, packagesHyphen...)
+	var packages []string
+	packages = append(packages, packagesUnderscore...)
 
 	if len(packages) == 0 {
 		http.NotFound(w, r)
