@@ -57,6 +57,25 @@ jobs:
           tar -xzf copacetic.tar.gz
           sudo mv copa /usr/local/bin/
           copa --version  # Verify installation
+      - name: Install Docker Buildx Plugin
+        run: |
+          mkdir -p ~/.docker/cli-plugins
+          curl -SL https://github.com/docker/buildx/releases/download/v0.16.2/buildx-v0.16.2.linux-amd64 -o ~/.docker/cli-plugins/docker-buildx
+          chmod +x ~/.docker/cli-plugins/docker-buildx
+          docker buildx version
+
+      - name: Create Buildx Builder
+        run: |
+          docker buildx create --use
+          docker buildx inspect --bootstrap
+
+      - name: Enable BuildKit
+        run: |
+          export DOCKER_BUILDKIT=1
+          docker buildx create --use
+          docker buildx inspect --bootstrap
+        env:
+          DOCKER_BUILDKIT: 1
 
       - name: Enable BuildKit and Patch api_service image with Copacetic
         run: |
