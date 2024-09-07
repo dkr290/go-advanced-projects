@@ -53,7 +53,7 @@ jobs:
       - name: Patch api_service image with Copacetic
         uses: project-copacetic/copa-action@main
         with:
-          image: "api-image"
+          image: "api-image:latest"
           image-report: "trivy-report.json"
           patched-tag: "api-image-patched"
           copa-version: "0.7.0"
