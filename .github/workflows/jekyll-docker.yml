@@ -53,14 +53,12 @@ jobs:
         run: |
           ls -l
 
-      - name: Patch api_service image with Copacetic
-        uses: project-copacetic/copa-action@main
-        with:
-          image: api-image:latest
-          image-report: "trivy-report.json"
-          patched-tag: "api-image-patched"
-          copa-version: "0.7.0"
-          buildkit-version: latest
+      - name: Enable BuildKit and Patch api_service image with Copacetic
+        run: |
+          export DOCKER_BUILDKIT=1
+          copa patch -i api-image:latest -r trivy-report.json -t api-image-patched --addr tcp://127.0.0.1:8888 --timeout 5m
+        env:
+          DOCKER_BUILDKIT: 1 # Ensure BuildKit is enabled
 
       - name: docker version and build pypi_service
         run: |
