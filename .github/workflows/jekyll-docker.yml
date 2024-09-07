@@ -51,12 +51,13 @@ jobs:
           severity: "CRITICAL,HIGH"
 
       - name: Patch api_service image with Copacetic
-        uses: project-copacetic/copa-action@v1.0.0
+        uses: project-copacetic/copa-action@v1.2.1
         with:
           image: "api-image"
           image-report: "trivy-report.json"
           patched-tag: "api-image-patched"
           copa-version: "v0.15.2"
+          buildkit-version: latest
 
       - name: docker version and build pypi_service
         run: |
