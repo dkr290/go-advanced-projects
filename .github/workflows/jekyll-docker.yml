@@ -51,7 +51,7 @@ jobs:
           severity: "CRITICAL,HIGH"
 
       - name: Patch api_service image with Copacetic
-        uses: project-copacetic/copa-action@1.2.1
+        uses: project-copacetic/copa-action@main
         with:
           image: "api-image"
           image-report: "trivy-report.json"
