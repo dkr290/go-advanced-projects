@@ -56,8 +56,8 @@ jobs:
           image: "api-image"
           image-report: "trivy-report.json"
           patched-tag: "api-image-patched"
-          copa-version: "latest"
-          buildkit-version: latest
+          copa-version: "0.7.0"
+          buildkit-version: "0.15.2"
 
       - name: docker version and build pypi_service
         run: |
