@@ -60,7 +60,10 @@ jobs:
       - name: Enable BuildKit and Patch api_service image with Copacetic
         run: |
           export DOCKER_BUILDKIT=1
-          copa patch -i api-image:latest -r trivy-report.json -t api-image-patched --addr tcp://127.0.0.1:8888 --timeout 5m
+          docker image ls 
+          ls -l
+          #copa patch -i api-image:latest -r ./trivy-report.json -t api-image-patched --addr tcp://127.0.0.1:8888 --timeout 5m
+          copa patch -i api-image:latest -r ./trivy-report.json -t api-image-patched  --timeout 5m
         env:
           DOCKER_BUILDKIT: 1 # Ensure BuildKit is enabled
 
