@@ -38,11 +38,12 @@ jobs:
           docker -v
           docker build --build-arg BUILD_REF=$API_SERVICE_VERSION --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"`  . -f zarf/docker/Dockerfile.service -t api-image
           docker images -a
+          ls -l
 
       - name: Scan api_service image with Trivy
         uses: aquasecurity/trivy-action@0.24.0
         with:
-          image-ref: "api-image"
+          image-ref: "api-image:latest"
           format: "json"
           output: "trivy-report.json"
           exit-code: "0"
