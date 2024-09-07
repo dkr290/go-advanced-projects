@@ -52,9 +52,9 @@ jobs:
 
       - name: Install Copacetic CLI
         run: |
-          curl -sSL https://github.com/project-copacetic/copacetic/releases/download/v0.7.0/copacetic_0.7.0_linux_amd64.tar.gz -o copacetic.tar.gz
+          curl -sSL https://github.com/project-copacetic/copacetic/releases/download/v0.7.0/copa_0.7.0_linux_amd64.tar.gz -o copacetic.tar.gz
           tar -xzf copacetic.tar.gz
-          sudo mv copacetic /usr/local/bin/copa
+          sudo mv copa /usr/local/bin/
           copa --version  # Verify installation
 
       - name: Enable BuildKit and Patch api_service image with Copacetic
