@@ -36,24 +36,27 @@ jobs:
         run: |
           cd api-service
           docker -v
-          docker build --build-arg BUILD_REF=$API_SERVICE_VERSION --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"`  . -f zarf/docker/Dockerfile.service -t ghcr.io/api-image:latest
+          docker build --build-arg BUILD_REF=$API_SERVICE_VERSION --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"`  . -f zarf/docker/Dockerfile.service -t api-image:latest
           docker images -a
           ls -l
 
       - name: Scan api_service image with Trivy
         uses: aquasecurity/trivy-action@0.24.0
         with:
-          image-ref: ghcr.io/api-image:latest
+          image-ref: api-image:latest
           format: "json"
           output: "trivy-report.json"
           exit-code: "0"
           ignore-unfixed: true
           severity: "CRITICAL,HIGH"
+      - name: ls
+        run: |
+          ls -l
 
       - name: Patch api_service image with Copacetic
         uses: project-copacetic/copa-action@main
         with:
-          image: ghcr.io/api-image:latest
+          image: api-image:latest
           image-report: "trivy-report.json"
           patched-tag: "api-image-patched"
           copa-version: "0.7.0"
