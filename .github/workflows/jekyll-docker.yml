@@ -82,10 +82,14 @@ jobs:
           export DOCKER_BUILDKIT=1
           docker image ls 
           ls -l
-          #copa patch -i api-image:latest -r ./trivy-report.json -t api-image-patched --addr tcp://127.0.0.1:8888 --timeout 5m
-          copa patch -i api-image:latest -r ./trivy-report.json -t api-image-patched  --timeout 5m
+          copa patch -i docker-daemon://api-image:latest -r ./trivy-report.json -t api-image-patched --addr tcp://127.0.0.1:8888 --timeout 5m
         env:
           DOCKER_BUILDKIT: 1 # Ensure BuildKit is enabled
+
+      - name: Verify Patched Image
+        run: |
+          docker images -a  # Confirm the patched image exists locally
+          docker inspect api-image-patched  # Inspect the patched image
 
       - name: docker version and build pypi_service
         run: |
