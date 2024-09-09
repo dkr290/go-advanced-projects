@@ -36,60 +36,9 @@ jobs:
         run: |
           cd api-service
           docker -v
-          docker build --build-arg BUILD_REF=$API_SERVICE_VERSION --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"`  . -f zarf/docker/Dockerfile.service -t api-image:latest
+          docker build --build-arg BUILD_REF=$API_SERVICE_VERSION --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"`  . -f zarf/docker/Dockerfile.service -t $DOCKER_IMAGE_API_SERVICE
           docker images -a
           ls -l
-
-      - name: Scan api_service image with Trivy
-        uses: aquasecurity/trivy-action@0.24.0
-        with:
-          image-ref: api-image:latest
-          format: "json"
-          output: "trivy-report.json"
-          exit-code: "0"
-          ignore-unfixed: true
-          vuln-type: "os,library"
-          severity: "CRITICAL,HIGH"
-
-      - name: Install Copacetic CLI
-        run: |
-          curl -sSL https://github.com/project-copacetic/copacetic/releases/download/v0.7.0/copa_0.7.0_linux_amd64.tar.gz -o copacetic.tar.gz
-          tar -xzf copacetic.tar.gz
-          sudo mv copa /usr/local/bin/
-          copa --version  # Verify installation
-      - name: Install Docker Buildx Plugin
-        run: |
-          mkdir -p ~/.docker/cli-plugins
-          curl -SL https://github.com/docker/buildx/releases/download/v0.16.2/buildx-v0.16.2.linux-amd64 -o ~/.docker/cli-plugins/docker-buildx
-          chmod +x ~/.docker/cli-plugins/docker-buildx
-          docker buildx version
-
-      - name: Create Buildx Builder
-        run: |
-          docker buildx create --use
-          docker buildx inspect --bootstrap
-
-      - name: Enable BuildKit
-        run: |
-          export DOCKER_BUILDKIT=1
-          docker buildx create --use
-          docker buildx inspect --bootstrap
-        env:
-          DOCKER_BUILDKIT: 1
-
-      - name: Enable BuildKit and Patch api_service image with Copacetic
-        run: |
-          export DOCKER_BUILDKIT=1
-          docker image ls 
-          ls -l
-          copa patch -i docker-daemon://api-image:latest -r ./trivy-report.json -t api-image-patched --addr tcp://127.0.0.1:8888 --timeout 5m
-        env:
-          DOCKER_BUILDKIT: 1 # Ensure BuildKit is enabled
-
-      - name: Verify Patched Image
-        run: |
-          docker images -a  # Confirm the patched image exists locally
-          docker inspect api-image-patched  # Inspect the patched image
 
       - name: docker version and build pypi_service
         run: |
@@ -97,6 +46,37 @@ jobs:
           docker -v
           docker build --build-arg BUILD_REF=$PYPI_SERVICE_VERSION --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"`  . -f Dockerfile -t $DOCKER_IMAGE_PYPI_SERVICE
           docker images -a
+
+      - if: github.event_name != 'pull_request'
+        name: docker login and push
+        id: push-image
+        run: |
+          echo "${{ github.token }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker tag DOCKER_IMAGE_API_SERVICE $DOCKER_IMAGE_API_SERVICE:$API_SERVICE_VERSION
+          docker push $DOCKER_IMAGE_API_SERVICE:$API_SERVICE_VERSION
+
+          docker tag $DOCKER_IMAGE_PYPI_SERVICE $DOCKER_IMAGE_PYPI_SERVICE:$PYPI_SERVICE_VERSION
+          docker push $DOCKER_IMAGE_PYPI_SERVICE:$PYPI_SERVICE_VERSION
+
+      - name: Scan api_service image with Trivy
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: $DOCKER_IMAGE_API_SERVICE:$API_SERVICE_VERSION
+          format: "json"
+          output: "trivy-report.json"
+          exit-code: "0"
+          ignore-unfixed: true
+          vuln-type: "os,library"
+          severity: "CRITICAL,HIGH"
+
+      - name: Patch images with copacetic
+        uses: project-copacetic/copa-action@main
+        with:
+          image: $DOCKER_IMAGE_API_SERVICE:$API_SERVICE_VERSION
+          image-report: "trivy-report.json"
+          patched-tag: "api-image-patched"
+          copa-version: "0.7.0"
+          buildkit-version: "0.15.2"
 
       - if: github.event_name != 'pull_request'
         name: docker login and push
