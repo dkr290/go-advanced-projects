@@ -77,15 +77,29 @@ jobs:
           patched-tag: "api-image-patched"
           copa-version: "0.7.0"
           buildkit-version: "latest"
+        id: patch_image
         continue-on-error: true
 
-      - if: github.event_name != 'pull_request'
-        name: docker login and push
+      - name: Check if patching was successful
+        id: check_patch
+        run: |
+          echo "checking patch"
+          if [[ "${{ steps.patch_image.outcome }}" == "failure" && "${{ steps.patch_image.outputs.no_vulnerabilities }}" == "true" ]]; then
+            echo "No vulnerabilities found, pushing the original image."
+            echo "no_vulnerabilities=true" >> $GITHUB_ENV
+          else
+            echo "Patching succeeded, pushing the patched image."
+          fi
+
+      - name: docker login and push
         id: push-patched-image
         run: |
           echo "${{ github.token }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker tag api-image-patched $DOCKER_IMAGE_API_SERVICE:$API_SERVICE_VERSION
-          docker push $DOCKER_IMAGE_API_SERVICE:$API_SERVICE_VERSION
-
-          docker tag $DOCKER_IMAGE_PYPI_SERVICE $DOCKER_IMAGE_PYPI_SERVICE:$PYPI_SERVICE_VERSION
-          docker push $DOCKER_IMAGE_PYPI_SERVICE:$PYPI_SERVICE_VERSION
+          if [[ "$no_vulnerabilities" == "true" ]]; then
+            docker tag $DOCKER_IMAGE_API_SERVICE $DOCKER_IMAGE_API_SERVICE:$API_SERVICE_VERSION
+            docker push $DOCKER_IMAGE_API_SERVICE:$API_SERVICE_VERSION
+          else 
+            docker tag api-image-patched $DOCKER_IMAGE_API_SERVICE:$API_SERVICE_VERSION
+            docker push $DOCKER_IMAGE_API_SERVICE:$API_SERVICE_VERSION
+            docker tag $DOCKER_IMAGE_PYPI_SERVICE $DOCKER_IMAGE_PYPI_SERVICE:$PYPI_SERVICE_VERSION
+            docker push $DOCKER_IMAGE_PYPI_SERVICE:$PYPI_SERVICE_VERSION
