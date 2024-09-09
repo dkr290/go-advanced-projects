@@ -77,6 +77,7 @@ jobs:
           patched-tag: "api-image-patched"
           copa-version: "0.7.0"
           buildkit-version: "latest"
+        continue-on-error: true
 
       - if: github.event_name != 'pull_request'
         name: docker login and push
