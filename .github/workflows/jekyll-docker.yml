@@ -61,7 +61,7 @@ jobs:
       - name: Scan api_service image with Trivy
         uses: aquasecurity/trivy-action@0.24.0
         with:
-          image-ref: ${{ DOCKER_IMAGE_API_SERVICE }}:${{ API_SERVICE_VERSION }}
+          image-ref: ${{ env.DOCKER_IMAGE_API_SERVICE }}:${{ env.API_SERVICE_VERSION }}
           format: "json"
           output: "trivy-report.json"
           exit-code: "0"
@@ -72,7 +72,7 @@ jobs:
       - name: Patch images with copacetic
         uses: project-copacetic/copa-action@main
         with:
-          image: ${{ DOCKER_IMAGE_API_SERVICE }}:${{ API_SERVICE_VERSION }}
+          image: ${{ env.DOCKER_IMAGE_API_SERVICE }}:${{ env.API_SERVICE_VERSION }}
           image-report: "trivy-report.json"
           patched-tag: "api-image-patched"
           copa-version: "0.7.0"
