@@ -76,7 +76,7 @@ jobs:
           image-report: "trivy-report.json"
           patched-tag: "api-image-patched"
           copa-version: "0.7.0"
-          buildkit-version: "0.15.2"
+          buildkit-version: "latest"
 
       - if: github.event_name != 'pull_request'
         name: docker login and push
