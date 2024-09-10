@@ -69,7 +69,25 @@ jobs:
           vuln-type: "os,library"
           severity: "CRITICAL,HIGH"
 
+      - name: Check for vulnerabilities
+        id: check_vulnerabilities
+        run: |
+          if [ ! -s trivy-report.json ]; then
+            echo "No vulnerabilities found (report is empty)."
+            echo "skip_copa=true" >> $GITHUB_ENV
+          else
+            VULNERABILITIES_COUNT=$(jq '.Results[].Vulnerabilities | length' trivy-report.json | awk '{s+=$1} END {print s}')
+            if [ "$VULNERABILITIES_COUNT" -eq 0 ]; then
+              echo "No vulnerabilities found."
+              echo "skip_copa=true" >> $GITHUB_ENV
+            else
+              echo "Vulnerabilities found: $VULNERABILITIES_COUNT"
+              echo "skip_copa=false" >> $GITHUB_ENV
+            fi
+          fi
+
       - name: Patch images with copacetic
+        if: env.skip_copa == 'false'
         uses: project-copacetic/copa-action@main
         with:
           image: ${{ env.DOCKER_IMAGE_API_SERVICE }}:${{ env.API_SERVICE_VERSION }}
@@ -78,24 +96,12 @@ jobs:
           copa-version: "0.7.0"
           buildkit-version: "latest"
         id: patch_image
-        continue-on-error: true
-
-      - name: Check if patching was successful
-        id: check_patch
-        run: |
-          echo "checking patch"
-          if [[ "${{ steps.patch_image.outcome }}" == "failure" && "${{ steps.patch_image.outputs.no_vulnerabilities }}" == "true" ]]; then
-            echo "No vulnerabilities found, pushing the original image."
-            echo "no_vulnerabilities=true" >> $GITHUB_ENV
-          else
-            echo "Patching succeeded, pushing the patched image."
-          fi
 
       - name: docker login and push
         id: push-patched-image
         run: |
           echo "${{ github.token }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          if [[ "$no_vulnerabilities" == "true" ]]; then
+          if env.skip_copa == 'false'; then
             docker tag $DOCKER_IMAGE_API_SERVICE $DOCKER_IMAGE_API_SERVICE:$API_SERVICE_VERSION
             docker push $DOCKER_IMAGE_API_SERVICE:$API_SERVICE_VERSION
           else 
