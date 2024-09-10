@@ -97,12 +97,23 @@ jobs:
           copa-version: "0.7.0"
           buildkit-version: "latest"
         id: patch_image
+        continue-on-error: true
+
+      - name: Handle patching results
+        run: |
+          if [ "${{ steps.patch_image.outcome }}" == "success" ]; then
+            echo "Patching was successful."
+            echo "push_docker_patch=true" >> $GITHUB_ENV
+          else
+            echo "Patching encountered issues or no patchable vulnerabilities were found."
+            echo "push_docker_patch=false" >> $GITHUB_ENV
+          fi
 
       - name: docker login and push
         id: push-patched-image
         run: |
           echo "${{ github.token }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          if env.skip_copa == 'false'; then
+          if env.push_docker_patch == 'false'; then
             docker tag $DOCKER_IMAGE_API_SERVICE $DOCKER_IMAGE_API_SERVICE:$API_SERVICE_VERSION
             docker push $DOCKER_IMAGE_API_SERVICE:$API_SERVICE_VERSION
           else 
