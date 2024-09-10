@@ -235,3 +235,20 @@ func (app *Config) packageHandler(w http.ResponseWriter, r *http.Request) {
 		app.clientLog("Successfully served package %s with size %d", packageName, written)
 	}
 }
+func (app *Config) favIconHandler(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "static/favicon.ico")
+
+}
+
+func (app *Config) testHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		log.Println("Invalid request method", r.Method)
+		app.clientError(w, http.StatusMethodNotAllowed)
+		return
+	}
+	s := "Liveness and Readiness"
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	fmt.Fprintf(w, "<!DOCTYPE html><html><head><title>Test</title></head><body><h1>Test for %s</h1>", s)
+	fmt.Fprintf(w, "</body></html>")
+
+}
