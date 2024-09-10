@@ -83,6 +83,7 @@ jobs:
             else
               echo "Vulnerabilities found: $VULNERABILITIES_COUNT"
               echo "skip_copa=false" >> $GITHUB_ENV
+              cat trivy-report.json 
             fi
           fi
 
