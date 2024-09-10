@@ -83,7 +83,6 @@ jobs:
             else
               echo "Vulnerabilities found: $VULNERABILITIES_COUNT"
               echo "skip_copa=false" >> $GITHUB_ENV
-              cat trivy-report.json 
             fi
           fi
 
@@ -121,3 +120,4 @@ jobs:
             docker push $DOCKER_IMAGE_API_SERVICE:$API_SERVICE_VERSION
             docker tag $DOCKER_IMAGE_PYPI_SERVICE $DOCKER_IMAGE_PYPI_SERVICE:$PYPI_SERVICE_VERSION
             docker push $DOCKER_IMAGE_PYPI_SERVICE:$PYPI_SERVICE_VERSION
+          fi
