@@ -7,8 +7,6 @@ import (
 
 	"net/http"
 	"strconv"
-
-	"github.com/go-chi/chi/v5"
 )
 
 func (a *appconfig) home(w http.ResponseWriter, r *http.Request) {
@@ -41,7 +39,7 @@ func (a *appconfig) home(w http.ResponseWriter, r *http.Request) {
 
 }
 func (a *appconfig) snippetView(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 	if err != nil || id < 1 {
 		a.notFound(w)
 		return
@@ -60,9 +58,11 @@ func (a *appconfig) snippetView(w http.ResponseWriter, r *http.Request) {
 
 }
 func (a *appconfig) snippetCreate(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Display the form to create the snippet"))
-}
-func (a *appconfig) snippetCreatePost(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.Header().Set("Allow", http.MethodPost)
+		a.clientError(w, http.StatusMethodNotAllowed)
+		return
+	}
 	//some dummy data to be removed after
 
 	title := "0 snail"
@@ -76,5 +76,5 @@ func (a *appconfig) snippetCreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//redirect user to relevant page
-	http.Redirect(w, r, fmt.Sprintf("/snippet/view/%d", id), http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("/snippet/view?id=%d", id), http.StatusSeeOther)
 }
