@@ -112,7 +112,7 @@ jobs:
 
   build-pypi-service:
     name:
-      Build and push API-Service docker image
+      Build and push PYPI-Service docker image
       # The type of runner that the job will run on
 
     runs-on: ubuntu-latest
