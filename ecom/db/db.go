@@ -13,8 +13,8 @@ import (
 type Database interface {
 	GetUserByEmail(email string) (*types.User, error)
 	GetUserById(id int) (*types.User, error)
-	CreateUser(types.User) error
-	InitDB(cfg mysql.Config) (*sql.DB, error)
+	CreateUser(user types.User) error
+	InitDB(cfg mysql.Config) error
 }
 
 type MysqlDB struct {
@@ -69,6 +69,6 @@ func (m *MysqlDB) GetUserByEmail(email string) (*types.User, error) {
 func (m *MysqlDB) GetUserById(id int) (*types.User, error) {
 	return nil, nil
 }
-func (m *MysqlDB) CreateUser(types.User) error {
+func (m *MysqlDB) CreateUser(user types.User) error {
 	return nil
 }

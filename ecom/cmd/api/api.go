@@ -23,7 +23,7 @@ func New(addr string, db *db.MysqlDB) *ApiServer {
 
 func (a *ApiServer) Run() error {
 	r := chi.NewRouter()
-	h := userhandlers.NewUserHandler(*a.db)
+	h := userhandlers.NewUserHandler(a.db)
 	r.Route("/api/v1", func(r chi.Router) {
 		h.RegisterRoutes(r)
 

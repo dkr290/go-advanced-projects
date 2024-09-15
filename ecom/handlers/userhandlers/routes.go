@@ -11,10 +11,10 @@ import (
 )
 
 type UserHandlers struct {
-	DB db.MysqlDB
+	DB db.Database
 }
 
-func NewUserHandler(db db.MysqlDB) *UserHandlers {
+func NewUserHandler(db db.Database) *UserHandlers {
 	return &UserHandlers{
 		DB: db,
 	}
@@ -38,6 +38,12 @@ func (h *UserHandlers) handleRegister(w http.ResponseWriter, r *http.Request) {
 	var payload types.RegisterUserPayload
 	if err := helpers.ParseJson(r, payload); err != nil {
 		helpers.WriteError(w, http.StatusBadRequest, err)
+	}
+
+	if err := helpers.Validate.Struct(payload); err != nil {
+		errors := err.(validator.ValidationErrors)
+		helpers.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid payload: %v", errors))
+		return
 	}
 	// check if the user exists
 	_, err := h.DB.GetUserByEmail(payload.Email)

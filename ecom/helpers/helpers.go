@@ -3,9 +3,13 @@ package helpers
 import (
 	"encoding/json"
 	"fmt"
-	"golang.org/x/crypto/bcrypt"
 	"net/http"
+
+	"github.com/go-playground/validator/v10"
+	"golang.org/x/crypto/bcrypt"
 )
+
+var Validate = validator.New()
 
 func ParseJson(r *http.Request, payload any) error {
 	if r.Body == nil {
