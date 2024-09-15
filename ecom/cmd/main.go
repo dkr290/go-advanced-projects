@@ -11,7 +11,9 @@ import (
 
 func main() {
 
-	d, err := db.NewMySQLStorage(mysql.Config{
+	mdb := db.MysqlDB{}
+
+	err := mdb.InitDB(mysql.Config{
 		User:                 config.Envs.DBUser,
 		Passwd:               config.Envs.DBPassword,
 		Addr:                 config.Envs.DBAddress,
@@ -25,7 +27,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	server := api.New(":8080", d)
+	server := api.New(":8080", &mdb)
 
 	if err := server.Run(); err != nil {
 		log.Fatal(err)

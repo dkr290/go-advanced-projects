@@ -1,20 +1,20 @@
 package api
 
 import (
-	"database/sql"
 	"log"
 	"net/http"
 
-	"github.com/dkr290/go-advanced-projects/ecom/services/user"
+	"github.com/dkr290/go-advanced-projects/ecom/db"
+	"github.com/dkr290/go-advanced-projects/ecom/handlers/userhandlers"
 	"github.com/go-chi/chi/v5"
 )
 
 type ApiServer struct {
 	addr string
-	db   *sql.DB
+	db   *db.MysqlDB
 }
 
-func New(addr string, db *sql.DB) *ApiServer {
+func New(addr string, db *db.MysqlDB) *ApiServer {
 	return &ApiServer{
 		addr: addr,
 		db:   db,
@@ -23,10 +23,9 @@ func New(addr string, db *sql.DB) *ApiServer {
 
 func (a *ApiServer) Run() error {
 	r := chi.NewRouter()
-	userStore := user.NewStore(a.db)
-	userHandler := user.NewHandler(&userStore)
+	h := userhandlers.NewUserHandler(*a.db)
 	r.Route("/api/v1", func(r chi.Router) {
-		userHandler.RegisterRoutes(r)
+		h.RegisterRoutes(r)
 
 	})
 

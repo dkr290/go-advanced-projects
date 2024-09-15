@@ -3,6 +3,7 @@ package helpers
 import (
 	"encoding/json"
 	"fmt"
+	"golang.org/x/crypto/bcrypt"
 	"net/http"
 )
 
@@ -24,4 +25,14 @@ func WriteJSON(w http.ResponseWriter, status int, v any) error {
 
 func WriteError(w http.ResponseWriter, status int, err error) {
 	WriteJSON(w, status, map[string]string{"error": err.Error()})
+}
+
+func HashPassword(password string) (string, error) {
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+
+	return string(hash), nil
 }
