@@ -13,7 +13,7 @@ func main() {
 
 	mdb := db.MysqlDB{}
 
-	err := mdb.InitDB(mysql.Config{
+	_, err := mdb.InitDB(mysql.Config{
 		User:                 config.Envs.DBUser,
 		Passwd:               config.Envs.DBPassword,
 		Addr:                 config.Envs.DBAddress,

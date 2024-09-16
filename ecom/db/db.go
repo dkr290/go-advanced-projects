@@ -14,14 +14,14 @@ type Database interface {
 	GetUserByEmail(email string) (*types.User, error)
 	GetUserById(id int) (*types.User, error)
 	CreateUser(user types.User) error
-	InitDB(cfg mysql.Config) error
+	InitDB(cfg mysql.Config) (*sql.DB, error)
 }
 
 type MysqlDB struct {
 	db *sql.DB
 }
 
-func (m *MysqlDB) InitDB(cfg mysql.Config) error {
+func (m *MysqlDB) InitDB(cfg mysql.Config) (*sql.DB, error) {
 	db, err := sql.Open("mysql", cfg.FormatDSN())
 	if err != nil {
 		log.Fatal(err)
@@ -34,13 +34,13 @@ func (m *MysqlDB) InitDB(cfg mysql.Config) error {
 
 		if err := db.Ping(); err == nil {
 			log.Println("Sucesfully connected to the database")
-			return nil
+			return db, nil
 		} else {
 			log.Printf("Attempt %d: Failed to connect to the database. Retrying in %v...\n", count, retryInterval)
 			time.Sleep(retryInterval)
 			count++
 			if count > 10 {
-				return err
+				return nil, err
 			}
 		}
 	}

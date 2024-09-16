@@ -8,6 +8,7 @@ import (
 	"github.com/dkr290/go-advanced-projects/ecom/helpers"
 	"github.com/dkr290/go-advanced-projects/ecom/types"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-playground/validator/v10"
 )
 
 type UserHandlers struct {
@@ -36,7 +37,7 @@ func (h *UserHandlers) handleRegister(w http.ResponseWriter, r *http.Request) {
 
 	//if it does not we create new user
 	var payload types.RegisterUserPayload
-	if err := helpers.ParseJson(r, payload); err != nil {
+	if err := helpers.ParseJson(r, &payload); err != nil {
 		helpers.WriteError(w, http.StatusBadRequest, err)
 	}
 
