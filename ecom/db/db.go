@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -67,8 +68,33 @@ func (m *MysqlDB) GetUserByEmail(email string) (*types.User, error) {
 }
 
 func (m *MysqlDB) GetUserById(id int) (*types.User, error) {
-	return nil, nil
+	rows, err := m.db.Query("SELECT * FROM users WHERE id = ?", id)
+	if err != nil {
+		return nil, err
+	}
+
+	u := new(types.User)
+	for rows.Next() {
+		err := rows.Scan(&u.ID, &u.FirstName, &u.LastName, &u.Email, &u.Password, &u.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+
+	}
+	if u.ID == 0 {
+		return nil, fmt.Errorf("user not found")
+	}
+	return u, nil
+
 }
 func (m *MysqlDB) CreateUser(user types.User) error {
+	if m.db == nil {
+		return errors.New("database connection is nil")
+	}
+	_, err := m.db.Exec("INSERT INTO users (firstName,lastName,email,password) VALUES(?,?,?,?)",
+		user.FirstName, user.LastName, user.Email, user.Password)
+	if err != nil {
+		return err
+	}
 	return nil
 }
