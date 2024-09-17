@@ -11,9 +11,7 @@ import (
 
 func main() {
 
-	mdb := db.MysqlDB{}
-
-	_, err := mdb.InitDB(mysql.Config{
+	d, err := db.InitDB(mysql.Config{
 		User:                 config.Envs.DBUser,
 		Passwd:               config.Envs.DBPassword,
 		Addr:                 config.Envs.DBAddress,
@@ -22,6 +20,10 @@ func main() {
 		AllowNativePasswords: true,
 		ParseTime:            true,
 	})
+
+	mdb := db.MysqlDB{
+		DB: d,
+	}
 
 	if err != nil {
 		log.Fatal(err)

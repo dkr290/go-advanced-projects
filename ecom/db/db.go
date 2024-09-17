@@ -2,7 +2,6 @@ package db
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -15,14 +14,13 @@ type Database interface {
 	GetUserByEmail(email string) (*types.User, error)
 	GetUserById(id int) (*types.User, error)
 	CreateUser(user types.User) error
-	InitDB(cfg mysql.Config) (*sql.DB, error)
 }
 
 type MysqlDB struct {
-	db *sql.DB
+	DB *sql.DB
 }
 
-func (m *MysqlDB) InitDB(cfg mysql.Config) (*sql.DB, error) {
+func InitDB(cfg mysql.Config) (*sql.DB, error) {
 	db, err := sql.Open("mysql", cfg.FormatDSN())
 	if err != nil {
 		log.Fatal(err)
@@ -48,7 +46,7 @@ func (m *MysqlDB) InitDB(cfg mysql.Config) (*sql.DB, error) {
 }
 func (m *MysqlDB) GetUserByEmail(email string) (*types.User, error) {
 
-	rows, err := m.db.Query("SELECT * FROM users WHERE email = ?", email)
+	rows, err := m.DB.Query("SELECT * FROM users WHERE email = ?", email)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +66,7 @@ func (m *MysqlDB) GetUserByEmail(email string) (*types.User, error) {
 }
 
 func (m *MysqlDB) GetUserById(id int) (*types.User, error) {
-	rows, err := m.db.Query("SELECT * FROM users WHERE id = ?", id)
+	rows, err := m.DB.Query("SELECT * FROM users WHERE id = ?", id)
 	if err != nil {
 		return nil, err
 	}
@@ -88,10 +86,7 @@ func (m *MysqlDB) GetUserById(id int) (*types.User, error) {
 
 }
 func (m *MysqlDB) CreateUser(user types.User) error {
-	if m.db == nil {
-		return errors.New("database connection is nil")
-	}
-	_, err := m.db.Exec("INSERT INTO users (firstName,lastName,email,password) VALUES(?,?,?,?)",
+	_, err := m.DB.Exec("INSERT INTO users (firstName,lastName,email,password) VALUES(?,?,?,?)",
 		user.FirstName, user.LastName, user.Email, user.Password)
 	if err != nil {
 		return err

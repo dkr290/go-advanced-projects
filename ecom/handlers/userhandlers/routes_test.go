@@ -2,14 +2,12 @@ package userhandlers
 
 import (
 	"bytes"
-	"database/sql"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/dkr290/go-advanced-projects/ecom/types"
-	"github.com/go-sql-driver/mysql"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -92,7 +90,4 @@ func (m *mockMysqlDB) GetUserById(id int) (*types.User, error) {
 
 func (m *mockMysqlDB) CreateUser(user types.User) error {
 	return nil
-}
-func (m *mockMysqlDB) InitDB(cfg mysql.Config) (*sql.DB, error) {
-	return nil, nil
 }
