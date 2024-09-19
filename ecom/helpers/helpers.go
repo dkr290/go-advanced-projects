@@ -3,9 +3,14 @@ package helpers
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+	"strconv"
+	"time"
 
+	"github.com/dkr290/go-advanced-projects/ecom/config"
 	"github.com/go-playground/validator/v10"
+	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -28,7 +33,7 @@ func WriteJSON(w http.ResponseWriter, status int, v any) error {
 }
 
 func WriteError(w http.ResponseWriter, status int, err error) {
-	WriteJSON(w, status, map[string]string{"error": err.Error()})
+	_ = WriteJSON(w, status, map[string]string{"error": err.Error()})
 }
 
 func HashPassword(password string) (string, error) {
@@ -39,4 +44,27 @@ func HashPassword(password string) (string, error) {
 	}
 
 	return string(hash), nil
+}
+
+func ComparePasswords(hashed string, plaint []byte) bool {
+
+	err := bcrypt.CompareHashAndPassword([]byte(hashed), plaint)
+	return err == nil
+
+}
+
+func CreateJWT(secret []byte, userID int) (string, error) {
+	expiration := time.Second * time.Duration(config.Envs.JWTExpirationInseconds)
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"userID":   strconv.Itoa(userID),
+		"expireAt": time.Now().Add(expiration).Unix(),
+	})
+
+	tokenString, err := token.SignedString(secret)
+	if err != nil {
+		return "", err
+
+	}
+	return tokenString, nil
 }
