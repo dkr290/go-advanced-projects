@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -66,4 +67,9 @@ func CreateJWT(secret []byte, userID int) (string, error) {
 
 	}
 	return tokenString, nil
+}
+
+func CustomErrorMessage(message string, err error) error {
+
+	return errors.New(message + err.Error())
 }

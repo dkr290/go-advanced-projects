@@ -25,11 +25,14 @@ func main() {
 		DB: d,
 	}
 
+	pdb := db.ProductMysql{
+		DB: d,
+	}
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	server := api.New(":8080", &mdb)
+	server := api.New(":8080", &mdb, &pdb)
 
 	if err := server.Run(); err != nil {
 		log.Fatal(err)
