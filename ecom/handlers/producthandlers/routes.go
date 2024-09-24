@@ -9,10 +9,10 @@ import (
 )
 
 type ProducsHandlers struct {
-	DB db.ProductDatabase
+	DB db.ProductDatabaseInt
 }
 
-func NewProductHandler(db db.ProductDatabase) *ProducsHandlers {
+func NewProductHandler(db db.ProductDatabaseInt) *ProducsHandlers {
 	return &ProducsHandlers{
 		DB: db,
 	}

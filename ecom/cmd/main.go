@@ -21,11 +21,11 @@ func main() {
 		ParseTime:            true,
 	})
 
-	mdb := db.MysqlDB{
+	mdb := db.UserMysqlDB{
 		DB: d,
 	}
 
-	pdb := db.ProductMysql{
+	pdb := db.ProductMysqlDB{
 		DB: d,
 	}
 	if err != nil {

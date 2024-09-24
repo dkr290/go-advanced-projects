@@ -10,13 +10,13 @@ import (
 	"github.com/go-sql-driver/mysql"
 )
 
-type Database interface {
+type UserDatabaseInt interface {
 	GetUserByEmail(email string) (*types.User, error)
 	GetUserById(id int) (*types.User, error)
 	CreateUser(user types.User) error
 }
 
-type MysqlDB struct {
+type UserMysqlDB struct {
 	DB *sql.DB
 }
 
@@ -44,7 +44,7 @@ func InitDB(cfg mysql.Config) (*sql.DB, error) {
 		}
 	}
 }
-func (m *MysqlDB) GetUserByEmail(email string) (*types.User, error) {
+func (m *UserMysqlDB) GetUserByEmail(email string) (*types.User, error) {
 
 	rows, err := m.DB.Query("SELECT * FROM users WHERE email = ?", email)
 	if err != nil {
@@ -65,7 +65,7 @@ func (m *MysqlDB) GetUserByEmail(email string) (*types.User, error) {
 	return u, nil
 }
 
-func (m *MysqlDB) GetUserById(id int) (*types.User, error) {
+func (m *UserMysqlDB) GetUserById(id int) (*types.User, error) {
 	rows, err := m.DB.Query("SELECT * FROM users WHERE id = ?", id)
 	if err != nil {
 		return nil, err
@@ -85,7 +85,7 @@ func (m *MysqlDB) GetUserById(id int) (*types.User, error) {
 	return u, nil
 
 }
-func (m *MysqlDB) CreateUser(user types.User) error {
+func (m *UserMysqlDB) CreateUser(user types.User) error {
 	_, err := m.DB.Exec("INSERT INTO users (firstName,lastName,email,password) VALUES(?,?,?,?)",
 		user.FirstName, user.LastName, user.Email, user.Password)
 	if err != nil {

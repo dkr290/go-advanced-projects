@@ -14,10 +14,10 @@ import (
 )
 
 type UserHandlers struct {
-	DB db.Database
+	DB db.UserDatabaseInt
 }
 
-func NewUserHandler(db db.Database) *UserHandlers {
+func NewUserHandler(db db.UserDatabaseInt) *UserHandlers {
 	return &UserHandlers{
 		DB: db,
 	}

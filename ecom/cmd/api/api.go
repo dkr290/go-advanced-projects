@@ -12,11 +12,11 @@ import (
 
 type ApiServer struct {
 	addr string
-	db   *db.MysqlDB
-	pdb  *db.ProductMysql
+	db   *db.UserMysqlDB
+	pdb  *db.ProductMysqlDB
 }
 
-func New(addr string, db *db.MysqlDB, pdb *db.ProductMysql) *ApiServer {
+func New(addr string, db *db.UserMysqlDB, pdb *db.ProductMysqlDB) *ApiServer {
 	return &ApiServer{
 		addr: addr,
 		db:   db,
