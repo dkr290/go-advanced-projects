@@ -5,6 +5,7 @@ import (
 
 	"github.com/dkr290/go-advanced-projects/ecom/db"
 	"github.com/dkr290/go-advanced-projects/ecom/helpers"
+	"github.com/dkr290/go-advanced-projects/ecom/types"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -37,5 +38,10 @@ func (h *ProducsHandlers) handleGetProduct(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *ProducsHandlers) handleCreateProduct(w http.ResponseWriter, r *http.Request) {
-
+	var product types.CreateProductPayload
+	if err := helpers.ParseJson(r, &product); err != nil {
+		helpers.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+	// TODO validation
 }
