@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/dkr290/go-advanced-projects/ecom/types"
 )
@@ -39,4 +40,47 @@ func (p *ProductMysqlDB) GetProducts() ([]types.Product, error) {
 	}
 
 	return products, nil
+}
+
+func (p *ProductMysqlDB) CreateProduct(product types.Product) error {
+
+	_, err := p.DB.Exec("INSERT INTO products(name,description,image,price,quantity) VALUES(?,?,?,?,?)",
+		product.Name, product.Description, product.Image, product.Price, product.Quantity)
+
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *ProductMysqlDB) UpdateProduct(product types.Product) error {
+	_, err := p.DB.Exec("UPDATE products SET name = ?, description = ?, image = ?, price = ?, quantity = ? WHERE id = ?",
+		product.Name, product.Description, product.Image, product.Price, product.Quantity, product.ID)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p *ProductMysqlDB) GetProductById(id int) (*types.Product, error) {
+	row := p.DB.QueryRow("SELECT * FROM products WHERE id = ?", id)
+
+	product := &types.Product{}
+	err := row.Scan(
+		&product.ID,
+		&product.Name,
+		&product.Description,
+		&product.Image,
+		&product.Price,
+		&product.Quantity,
+		&product.CreatedAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("product with id %d not found", id)
+		}
+	}
+	return product, nil
+
 }
