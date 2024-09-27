@@ -30,6 +30,8 @@ type Product struct {
 	Quantity    int       `json:"quantity"`
 	CreatedAt   time.Time `json:"createdAt"`
 }
+
+// user to create product same as product but without ID and created At which are auto created
 type CreateProductPayload struct {
 	Name        string  `json:"name" validate:"required"`
 	Description string  `json:"description"`

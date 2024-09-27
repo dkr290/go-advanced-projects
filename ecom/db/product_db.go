@@ -9,6 +9,7 @@ import (
 
 type ProductDatabaseInt interface {
 	GetProducts() ([]types.Product, error)
+	CreateProduct(types.CreateProductPayload) error
 }
 
 type ProductMysqlDB struct {
@@ -42,7 +43,7 @@ func (p *ProductMysqlDB) GetProducts() ([]types.Product, error) {
 	return products, nil
 }
 
-func (p *ProductMysqlDB) CreateProduct(product types.Product) error {
+func (p *ProductMysqlDB) CreateProduct(product types.CreateProductPayload) error {
 
 	_, err := p.DB.Exec("INSERT INTO products(name,description,image,price,quantity) VALUES(?,?,?,?,?)",
 		product.Name, product.Description, product.Image, product.Price, product.Quantity)
