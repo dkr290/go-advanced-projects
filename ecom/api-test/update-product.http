@@ -1,0 +1,10 @@
+PUT http://localhost:8080/api/v1/products/update/2
+Content-Type: application/json
+
+{
+  "name":"product new name ",
+  "description":"cosmetics 3", 
+  "image":"image1",
+  "price":28.98,
+  "quantity": 15
+}

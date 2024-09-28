@@ -3,6 +3,8 @@ package producthandlers
 import (
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/dkr290/go-advanced-projects/ecom/db"
 	"github.com/dkr290/go-advanced-projects/ecom/helpers"
@@ -22,8 +24,10 @@ func NewProductHandler(db db.ProductDatabaseInt) *ProducsHandlers {
 }
 
 func (h *ProducsHandlers) RegisterRoutes(router chi.Router) {
-	router.Get("/products", h.handleGetProduct)
-	router.Post("/products", h.handleCreateProduct)
+	router.Get("/all", h.handleGetProduct)
+	router.Post("/create", h.handleCreateProduct)
+	router.Put("/update/{id}", h.handleUpdateProduct)
+	router.Get("/{id}", h.handleGetProductById)
 }
 
 func (h *ProducsHandlers) handleGetProduct(w http.ResponseWriter, r *http.Request) {
@@ -62,5 +66,54 @@ func (h *ProducsHandlers) handleCreateProduct(w http.ResponseWriter, r *http.Req
 		helpers.WriteError(w, http.StatusBadRequest, fmt.Errorf("write json error : %v", err))
 		return
 	}
-	// TODO validation
+}
+
+func (h *ProducsHandlers) handleUpdateProduct(w http.ResponseWriter, r *http.Request) {
+	var product types.CreateProductPayload
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		helpers.WriteError(w, http.StatusInternalServerError, fmt.Errorf("invalid product id: %v", err))
+		return
+	}
+
+	if err := helpers.ParseJson(r, &product); err != nil {
+		helpers.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+	err = h.DB.UpdateProduct(product, id)
+	if err != nil {
+		helpers.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+	err = helpers.WriteJSON(w, http.StatusCreated, product)
+	if err != nil {
+		helpers.WriteError(w, http.StatusBadRequest, fmt.Errorf("write json error : %v", err))
+		return
+	}
+
+}
+func (h *ProducsHandlers) handleGetProductById(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		helpers.WriteError(w, http.StatusInternalServerError, fmt.Errorf("invalid product id: %v", err))
+		return
+	}
+	product, err := h.DB.GetProductById(id)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			helpers.WriteError(w, http.StatusNotFound, err)
+
+		} else {
+			helpers.WriteError(w, http.StatusInternalServerError, fmt.Errorf("failed to retreive product %v", err))
+		}
+		return
+	}
+	err = helpers.WriteJSON(w, http.StatusCreated, product)
+	if err != nil {
+		helpers.WriteError(w, http.StatusBadRequest, fmt.Errorf("write json error : %v", err))
+		return
+	}
+
 }
