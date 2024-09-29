@@ -32,7 +32,7 @@ type Product struct {
 }
 
 // user to create product same as product but without ID and created At which are auto created
-type CreateProductPayload struct {
+type ProductPayload struct {
 	Name        string  `json:"name" validate:"required"`
 	Description string  `json:"description"`
 	Image       string  `json:"image"`

@@ -9,8 +9,8 @@ import (
 
 type ProductDatabaseInt interface {
 	GetProducts() ([]types.Product, error)
-	CreateProduct(types.CreateProductPayload) error
-	UpdateProduct(types.CreateProductPayload, int) error
+	CreateProduct(types.ProductPayload) error
+	UpdateProduct(types.ProductPayload, int) error
 	GetProductById(id int) (*types.Product, error)
 }
 
@@ -45,7 +45,7 @@ func (p *ProductMysqlDB) GetProducts() ([]types.Product, error) {
 	return products, nil
 }
 
-func (p *ProductMysqlDB) CreateProduct(product types.CreateProductPayload) error {
+func (p *ProductMysqlDB) CreateProduct(product types.ProductPayload) error {
 
 	// Check if product name already exists
 	var count int
@@ -67,7 +67,7 @@ func (p *ProductMysqlDB) CreateProduct(product types.CreateProductPayload) error
 	return nil
 }
 
-func (p *ProductMysqlDB) UpdateProduct(product types.CreateProductPayload, id int) error {
+func (p *ProductMysqlDB) UpdateProduct(product types.ProductPayload, id int) error {
 	_, err := p.DB.Exec("UPDATE products SET name = ?, description = ?, image = ?, price = ?, quantity = ? WHERE id = ?",
 		product.Name, product.Description, product.Image, product.Price, product.Quantity, id)
 
