@@ -57,3 +57,12 @@ type OrderItem struct {
 	Price     float64   `json:"price"`
 	CreatedAt time.Time `json:"createdAt"`
 }
+
+type CartItem struct {
+	ProductID int `json:"productID"`
+	Quantity  int `json:"quantity"`
+}
+
+type CardCheckoutPayload struct {
+	Items []CartItem `json:"items" validate:"required"`
+}

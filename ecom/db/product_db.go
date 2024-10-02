@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/dkr290/go-advanced-projects/ecom/types"
 )
@@ -12,6 +13,7 @@ type ProductDatabaseInt interface {
 	CreateProduct(types.ProductPayload) error
 	UpdateProduct(types.ProductPayload, int) error
 	GetProductById(id int) (*types.Product, error)
+	GetProductByIds(ids []int) ([]types.Product, error)
 }
 
 type ProductMysqlDB struct {
@@ -96,5 +98,43 @@ func (p *ProductMysqlDB) GetProductById(id int) (*types.Product, error) {
 		}
 	}
 	return product, nil
+
+}
+
+func (p *ProductMysqlDB) GetProductByIds(productIDs []int) ([]types.Product, error) {
+	placeholders := strings.Repeat(",?", len(productIDs)-1)
+	query := fmt.Sprintf("SELECT * FROM products WHERE id IN (?%s)", placeholders)
+
+	// Convert productIDs to []interface{}
+	args := make([]interface{}, len(productIDs))
+	for i, v := range productIDs {
+		args[i] = v
+	}
+
+	rows, err := p.DB.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	products := []types.Product{}
+	product := &types.Product{}
+	for rows.Next() {
+		err := rows.Scan(
+			product.ID,
+			&product.Name,
+			&product.Description,
+			&product.Image,
+			&product.Price,
+			&product.Quantity,
+			&product.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		products = append(products, *product)
+	}
+
+	return products, nil
 
 }
