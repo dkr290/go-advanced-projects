@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/dkr290/go-events-booking-api/pic-dream-api/models"
+	"github.com/dkr290/go-advanced-projects/pic-dream-api/models"
 )
 
 func getAuthenticatedUser(r *http.Request) models.AuthenticatedUser {

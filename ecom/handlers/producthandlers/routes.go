@@ -45,7 +45,7 @@ func (h *ProducsHandlers) handleGetProduct(w http.ResponseWriter, r *http.Reques
 
 func (h *ProducsHandlers) handleCreateProduct(w http.ResponseWriter, r *http.Request) {
 	//create empty payload
-	var product types.CreateProductPayload
+	var product types.ProductPayload
 	if err := helpers.ParseJson(r, &product); err != nil {
 		helpers.WriteError(w, http.StatusBadRequest, err)
 		return
@@ -69,7 +69,7 @@ func (h *ProducsHandlers) handleCreateProduct(w http.ResponseWriter, r *http.Req
 }
 
 func (h *ProducsHandlers) handleUpdateProduct(w http.ResponseWriter, r *http.Request) {
-	var product types.CreateProductPayload
+	var product types.ProductPayload
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/dkr290/go-events-booking-api/pic-dream-api/models"
+	"github.com/dkr290/go-advanced-projects/pic-dream-api/models"
 )
 
 func WithUser(next http.Handler) http.Handler {

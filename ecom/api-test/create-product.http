@@ -2,8 +2,8 @@ POST http://localhost:8080/api/v1/products/create
 Content-Type: application/json
 
 {
-  "name":"product 123",
-  "description":"cosmetics", 
+  "name":"car engines",
+  "description":"automotive", 
   "image":"image1",
   "price":23.98,
   "quantity": 10
