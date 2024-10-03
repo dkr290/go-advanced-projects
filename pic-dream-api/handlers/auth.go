@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/dkr290/go-events-booking-api/pic-dream-api/view/userauth"
+	"github.com/dkr290/go-advanced-projects/pic-dream-api/view/userauth"
 	"github.com/nedpals/supabase-go"
 )
 
 func HandleLogin(w http.ResponseWriter, r *http.Request) error {
 
 	return userauth.LogIn().Render(r.Context(), w)
+
 }
 
 func HandleLoginCreate(w http.ResponseWriter, r *http.Request) error {

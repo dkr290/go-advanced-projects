@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/dkr290/go-events-booking-api/pic-dream-api/handlers"
+	"github.com/dkr290/go-advanced-projects/pic-dream-api/handlers"
 	"github.com/go-chi/chi/v5"
 	"github.com/joho/godotenv"
 )
