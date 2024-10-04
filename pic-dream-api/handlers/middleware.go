@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/dkr290/go-advanced-projects/pic-dream-api/models"
+	"github.com/dkr290/go-advanced-projects/pic-dream-api/types"
 )
 
 func WithUser(next http.Handler) http.Handler {
@@ -20,8 +20,8 @@ func WithUser(next http.Handler) http.Handler {
 		//	Email:    "dani@gmail.com",
 		//		LoggedIn: true,
 		//	}
-		user := models.AuthenticatedUser{}
-		ctx := context.WithValue(r.Context(), models.UserContextKey, user)
+		user := types.AuthenticatedUser{}
+		ctx := context.WithValue(r.Context(), types.UserContextKey, user)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 
