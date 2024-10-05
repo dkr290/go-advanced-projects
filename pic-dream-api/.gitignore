@@ -3,5 +3,5 @@ bin
 *_templ.go*
 tmp
 vendor
-**/node_modules/*
+node_modules/
 
