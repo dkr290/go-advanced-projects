@@ -8,7 +8,7 @@ import (
 	"github.com/nedpals/supabase-go"
 )
 
-func HandleLogin(w http.ResponseWriter, r *http.Request) error {
+func HandleLoginIndex(w http.ResponseWriter, r *http.Request) error {
 
 	return userauth.LogIn().Render(r.Context(), w)
 

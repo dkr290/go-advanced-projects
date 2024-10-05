@@ -1,6 +1,8 @@
 package types
 
-const UserContextKey = "user"
+type contextKey string
+
+const UserContextKey contextKey = "user"
 
 type AuthenticatedUser struct {
 	Email    string

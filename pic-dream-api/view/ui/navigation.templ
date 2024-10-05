@@ -3,28 +3,29 @@ package ui
 import "github.com/dkr290/go-advanced-projects/pic-dream-api/view"
 
 templ Navigation() {
-<div class="navbar bg-base-100 border-b border-gray-700">
-  <div class="flex-1">
-    <a class="text-2xl font-black text-primary">Pic Dream API</a>
-  </div>
-  <div class="flex-none">
-    <ul class="menu menu-horizontal px-1">
-      if view.AuthenticatedUser(ctx).LoggedIn {
-      <li>
-        <details>
-          <summary>
-            { view.AuthenticatedUser(ctx).Email }
-          </summary>
-          <ul class="p-2 bg-base-100 rounded-t-none">
-            <li><a>Settings</a></li>
-            <li><a>Logout</a></li>
-          </ul>
-        </details>
-      </li>
-      } else {
-      <a class="btn btn-primary">Log in</a>
-      }
-    </ul>
-  </div>
-</div>
+	<div class="navbar bg-base-100 border-b border-teal-900">
+		<div class="flex-1">
+			<a class="text-2xl font-mono text-primary">Pic APP</a>
+		</div>
+		<div class="flex-none">
+			<ul class="menu menu-horizontal px-1">
+				// in templ always have the access to ctx context
+				if view.AuthenticatedUser(ctx).LoggedIn {
+					<li>
+						<details>
+							<summary>
+								{ view.AuthenticatedUser(ctx).Email }
+							</summary>
+							<ul class="p-2 bg-base-100 rounded-t-none">
+								<li><a>Settings</a></li>
+								<li><a>Logout</a></li>
+							</ul>
+						</details>
+					</li>
+				} else {
+					<a class="btn btn-primary">Log in</a>
+				}
+			</ul>
+		</div>
+	</div>
 }
