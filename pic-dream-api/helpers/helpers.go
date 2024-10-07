@@ -1,0 +1,52 @@
+package helpers
+
+import (
+	"errors"
+	"log/slog"
+	"net/http"
+	"regexp"
+
+	"github.com/a-h/templ"
+)
+
+func MakeHandler(h func(http.ResponseWriter, *http.Request) error) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if err := h(w, r); err != nil {
+			slog.Error("internal server error", "err", err, "path", r.URL.Path)
+		}
+	}
+}
+
+func Render(r *http.Request, w http.ResponseWriter, component templ.Component) error {
+	return component.Render(r.Context(), w)
+}
+
+func ValidateEmail(email string) bool {
+	pattern := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+	return pattern.MatchString(email)
+}
+
+func ValidatePassword(password string) error {
+
+	if len(password) < 4 {
+		return errors.New("password must be at least 4 characters long")
+	}
+	if len(password) > 20 {
+		return errors.New("password must be no more than 20 characters long")
+	}
+	if matched, _ := regexp.MatchString("[A-Z]", password); !matched {
+		return errors.New("password must contain at least one uppercase letter")
+	}
+	if matched, _ := regexp.MatchString("[a-z]", password); !matched {
+		return errors.New("password must contain at least one lowercase letter")
+	}
+	if matched, _ := regexp.MatchString("[0-9]", password); !matched {
+		return errors.New("password must contain at least one digit")
+	}
+	if matched, _ := regexp.MatchString("[!@#$%^&*(),.?\":{}|<>]", password); !matched {
+		return errors.New("password must contain at least one special character")
+	}
+
+	return nil
+
+}
