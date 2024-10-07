@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"log/slog"
 	"net/http"
@@ -32,7 +31,7 @@ func main() {
 	}
 	sbClient := db.InitDB(sbHost, sbSecret)
 	//to change this when we pass the variable
-	fmt.Printf("sbClient: %v\n", sbClient)
+	h := handlers.NewHandlers(*sbClient)
 
 	router := chi.NewMux()
 	router.Use(handlers.IsLoggedIn)
@@ -40,9 +39,9 @@ func main() {
 	router.Handle("/public/*", http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
 	//router.Handle("/*", http.StripPrefix("/", http.FileServer(http.FS(FS))))
 
-	router.Get("/", helpers.MakeHandler(handlers.HandleHomeIndex))
-	router.Get("/login", helpers.MakeHandler(handlers.HandleLoginIndex))
-	router.Post("/login", helpers.MakeHandler(handlers.HandleLoginCreate))
+	router.Get("/", helpers.MakeHandler(h.HandleHomeIndex))
+	router.Get("/login", helpers.MakeHandler(h.HandleLoginIndex))
+	router.Post("/login", helpers.MakeHandler(h.HandleLoginCreate))
 
 	port := os.Getenv("HTTP_LISTEN_ADDR")
 	slog.Info("application is running", "port", port)
