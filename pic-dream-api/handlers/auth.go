@@ -10,33 +10,57 @@ import (
 )
 
 func (s *Handlers) HandleLoginIndex(w http.ResponseWriter, r *http.Request) error {
-
 	return helpers.Render(r, w, userauth.LogIn())
-
 }
 
-func (s *Handlers) HandleLoginCreate(w http.ResponseWriter, r *http.Request) error {
+func (s *Handlers) HandleSignupIndex(w http.ResponseWriter, r *http.Request) error {
+	return helpers.Render(r, w, userauth.SignUp())
+}
 
-	credentials := supabase.UserCredentials{
-		Email:    r.FormValue("email"),
-		Password: r.FormValue("password"),
+func (s *Handlers) HandleSignupCretate(w http.ResponseWriter, r *http.Request) error {
+	params := userauth.SignupParams{
+		Email:           r.FormValue("email"),
+		Password:        r.FormValue("password"),
+		ConfirmPassword: r.FormValue("confirmPassword"),
 	}
-	if !helpers.ValidateEmail(credentials.Email) {
+	if !helpers.ValidateEmail(params.Email) {
 		slog.Error("email is not valid")
-		return helpers.Render(r, w, userauth.LoginForm(credentials, userauth.LoginErrors{
+		return helpers.Render(r, w, userauth.SignUpForm(params, userauth.SignupErrors{
 			Email: "The email is invalid",
 		}))
 
 	}
-
-	if err := helpers.ValidatePassword(credentials.Password); err != nil {
+	if err := helpers.ValidatePassword(params.Password); err != nil {
 		slog.Error("password is not valid")
-		return helpers.Render(r, w, userauth.LoginForm(credentials, userauth.LoginErrors{
+		return helpers.Render(r, w, userauth.SignUpForm(params, userauth.SignupErrors{
 			Password: "The password is invalid: " + err.Error(),
 		}))
 
 	}
+	if params.Password != params.ConfirmPassword {
+		slog.Error("The passwords are not the same ")
+		return helpers.Render(r, w, userauth.SignUpForm(params, userauth.SignupErrors{
+			ConfirmPassword: "Password mismatch",
+		}))
+	}
 
+	return nil
+}
+
+func (s *Handlers) HandleLoginCreate(w http.ResponseWriter, r *http.Request) error {
+	credentials := supabase.UserCredentials{
+		Email:    r.FormValue("email"),
+		Password: r.FormValue("password"),
+	}
+	// this should be valid only if we create user and password
+	// if err := helpers.ValidatePassword(credentials.Password); err != nil {
+	// 	slog.Error("password is not valid")
+	// 	return helpers.Render(r, w, userauth.LoginForm(credentials, userauth.LoginErrors{
+	// 		Password: "The password is invalid: " + err.Error(),
+	// 	}))
+	//
+	// }
+	//
 	// calling the supabase
 	resp, err := s.sb.Auth.SignIn(r.Context(), credentials)
 	if err != nil {
@@ -57,5 +81,4 @@ func (s *Handlers) HandleLoginCreate(w http.ResponseWriter, r *http.Request) err
 	http.SetCookie(w, cookie)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 	return nil
-
 }

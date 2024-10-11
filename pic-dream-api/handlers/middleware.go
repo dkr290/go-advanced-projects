@@ -10,21 +10,18 @@ import (
 
 func IsLoggedIn(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//to not go into the middleware, the public not need to be authenticated
+		// to not go into the middleware, the public not need to be authenticated
 		if strings.Contains(r.URL.Path, "/public") {
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		user := types.AuthenticatedUser{
-			Email:    "dani@abv.bg",
-			LoggedIn: true,
-		}
+		user := types.AuthenticatedUser{}
 		ctx := context.WithValue(r.Context(), types.UserContextKey, user)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
-
 }
+
 func getAuthenticatedUser(r *http.Request) types.AuthenticatedUser {
 	// do we have an user key
 	// and is that key authenticated user
