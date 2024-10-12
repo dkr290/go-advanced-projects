@@ -42,6 +42,7 @@ func main() {
 	router.Post("/login", helpers.MakeHandler(h.HandleLoginCreate))
 	router.Get("/signup", helpers.MakeHandler(h.HandleSignupIndex))
 	router.Post("/signup", helpers.MakeHandler(h.HandleSignupCretate))
+	router.Get("/auth/callback", helpers.MakeHandler(h.HandleAuthCallback))
 
 	port := os.Getenv("HTTP_LISTEN_ADDR")
 	slog.Info("application is running", "port", port)

@@ -1625,6 +1625,10 @@ html {
   font-weight: 900;
 }
 
+.font-semibold {
+  font-weight: 600;
+}
+
 .text-error {
   --tw-text-opacity: 1;
   color: var(--fallback-er,oklch(var(--er)/var(--tw-text-opacity)));
@@ -1638,6 +1642,11 @@ html {
 .text-sky-500 {
   --tw-text-opacity: 1;
   color: rgb(14 165 233 / var(--tw-text-opacity));
+}
+
+.text-success {
+  --tw-text-opacity: 1;
+  color: var(--fallback-su,oklch(var(--su)/var(--tw-text-opacity)));
 }
 
 .antialiased {

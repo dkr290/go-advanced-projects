@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -26,25 +27,32 @@ func (s *Handlers) HandleSignupCretate(w http.ResponseWriter, r *http.Request) e
 	if !helpers.ValidateEmail(params.Email) {
 		slog.Error("email is not valid")
 		return helpers.Render(r, w, userauth.SignUpForm(params, userauth.SignupErrors{
-			Email: "The email is invalid",
+			Email: "the email is invalid",
 		}))
 
 	}
 	if err := helpers.ValidatePassword(params.Password); err != nil {
 		slog.Error("password is not valid")
 		return helpers.Render(r, w, userauth.SignUpForm(params, userauth.SignupErrors{
-			Password: "The password is invalid: " + err.Error(),
+			Password: "the password is invalid: " + err.Error(),
 		}))
 
 	}
 	if params.Password != params.ConfirmPassword {
 		slog.Error("The passwords are not the same ")
 		return helpers.Render(r, w, userauth.SignUpForm(params, userauth.SignupErrors{
-			ConfirmPassword: "Password mismatch",
+			ConfirmPassword: "password do not match",
 		}))
 	}
 
-	return nil
+	sbUser, err := s.sb.Auth.SignUp(r.Context(), supabase.UserCredentials{
+		Email:    params.Email,
+		Password: params.Password,
+	})
+	if err != nil {
+		return err
+	}
+	return helpers.Render(r, w, userauth.SignupSuccess(sbUser.Email))
 }
 
 func (s *Handlers) HandleLoginCreate(w http.ResponseWriter, r *http.Request) error {
@@ -52,15 +60,6 @@ func (s *Handlers) HandleLoginCreate(w http.ResponseWriter, r *http.Request) err
 		Email:    r.FormValue("email"),
 		Password: r.FormValue("password"),
 	}
-	// this should be valid only if we create user and password
-	// if err := helpers.ValidatePassword(credentials.Password); err != nil {
-	// 	slog.Error("password is not valid")
-	// 	return helpers.Render(r, w, userauth.LoginForm(credentials, userauth.LoginErrors{
-	// 		Password: "The password is invalid: " + err.Error(),
-	// 	}))
-	//
-	// }
-	//
 	// calling the supabase
 	resp, err := s.sb.Auth.SignIn(r.Context(), credentials)
 	if err != nil {
@@ -80,5 +79,14 @@ func (s *Handlers) HandleLoginCreate(w http.ResponseWriter, r *http.Request) err
 
 	http.SetCookie(w, cookie)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+	return nil
+}
+
+func (s *Handlers) HandleAuthCallback(w http.ResponseWriter, r *http.Request) error {
+	accessToken := r.URL.Query().Get("token")
+	if len(accessToken) == 0 {
+		return helpers.Render(r, w, userauth.CallbackScript())
+	}
+	fmt.Println(accessToken)
 	return nil
 }
