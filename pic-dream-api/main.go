@@ -32,7 +32,7 @@ func main() {
 	h := handlers.NewHandlers(*sbClient)
 
 	router := chi.NewMux()
-	router.Use(handlers.IsLoggedIn)
+	router.Use(h.IsLoggedIn)
 
 	router.Handle("/public/*", http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
 	// router.Handle("/*", http.StripPrefix("/", http.FileServer(http.FS(FS))))
@@ -41,6 +41,7 @@ func main() {
 	router.Get("/login", helpers.MakeHandler(h.HandleLoginIndex))
 	router.Post("/login", helpers.MakeHandler(h.HandleLoginCreate))
 	router.Get("/signup", helpers.MakeHandler(h.HandleSignupIndex))
+	router.Post("/logout", helpers.MakeHandler(h.HandleLogoutCreate))
 	router.Post("/signup", helpers.MakeHandler(h.HandleSignupCretate))
 	router.Get("/auth/callback", helpers.MakeHandler(h.HandleAuthCallback))
 

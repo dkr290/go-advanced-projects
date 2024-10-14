@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -55,6 +54,23 @@ func (s *Handlers) HandleSignupCretate(w http.ResponseWriter, r *http.Request) e
 	return helpers.Render(r, w, userauth.SignupSuccess(sbUser.Email))
 }
 
+func (s *Handlers) HandleLogoutCreate(w http.ResponseWriter, r *http.Request) error {
+	cookie := &http.Cookie{
+		Value:    "",
+		Name:     "at",
+		MaxAge:   -1,
+		HttpOnly: true,
+		Path:     "/",
+		Secure:   true,
+	}
+
+	http.SetCookie(w, cookie)
+
+	// Redirect the user to the home page or login page
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+	return nil
+}
+
 func (s *Handlers) HandleLoginCreate(w http.ResponseWriter, r *http.Request) error {
 	credentials := supabase.UserCredentials{
 		Email:    r.FormValue("email"),
@@ -69,24 +85,30 @@ func (s *Handlers) HandleLoginCreate(w http.ResponseWriter, r *http.Request) err
 		}))
 
 	}
-	cookie := &http.Cookie{
-		Value:    resp.AccessToken,
-		Name:     "at",
-		Path:     "/",
-		HttpOnly: true,
-		Secure:   true,
-	}
 
-	http.SetCookie(w, cookie)
+	setAuthCookie(w, resp.AccessToken)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 	return nil
 }
 
 func (s *Handlers) HandleAuthCallback(w http.ResponseWriter, r *http.Request) error {
-	accessToken := r.URL.Query().Get("token")
+	accessToken := r.URL.Query().Get("access_token")
 	if len(accessToken) == 0 {
 		return helpers.Render(r, w, userauth.CallbackScript())
 	}
-	fmt.Println(accessToken)
+	setAuthCookie(w, accessToken)
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 	return nil
+}
+
+func setAuthCookie(w http.ResponseWriter, accessToken string) {
+	cookie := &http.Cookie{
+		Value:    accessToken,
+		Name:     "at",
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+	}
+	http.SetCookie(w, cookie)
 }
