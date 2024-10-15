@@ -87,8 +87,7 @@ func (s *Handlers) HandleLoginCreate(w http.ResponseWriter, r *http.Request) err
 	}
 
 	setAuthCookie(w, resp.AccessToken)
-	http.Redirect(w, r, "/", http.StatusSeeOther)
-	return nil
+	return helpers.HxRedirect(w, r, "/")
 }
 
 func (s *Handlers) HandleAuthCallback(w http.ResponseWriter, r *http.Request) error {
