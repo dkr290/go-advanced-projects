@@ -45,6 +45,11 @@ func main() {
 	router.Post("/signup", helpers.MakeHandler(h.HandleSignupCretate))
 	router.Get("/auth/callback", helpers.MakeHandler(h.HandleAuthCallback))
 
+	router.Group(func(auth chi.Router) {
+		auth.Use(h.WithAuth)
+		auth.Get("/settings", helpers.MakeHandler(h.HandleSettingsIndex))
+	})
+
 	port := os.Getenv("HTTP_LISTEN_ADDR")
 	slog.Info("application is running", "port", port)
 	log.Fatal(http.ListenAndServe(os.Getenv("HTTP_LISTEN_ADDR"), router))

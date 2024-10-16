@@ -8,6 +8,24 @@ import (
 	"github.com/dkr290/go-advanced-projects/pic-dream-api/types"
 )
 
+func (h *Handlers) WithAuth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// to not go into the middleware, the public not need to be authenticated
+		if strings.Contains(r.URL.Path, "/public") {
+			next.ServeHTTP(w, r)
+			return
+		}
+		user := getAuthenticatedUser(r)
+
+		if !user.LoggedIn {
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 func (h *Handlers) IsLoggedIn(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// to not go into the middleware, the public not need to be authenticated
