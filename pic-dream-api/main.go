@@ -27,9 +27,13 @@ func main() {
 	if len(sbSecret) == 0 {
 		log.Fatal("Need supabase token")
 	}
+	github_redirect_url := os.Getenv("GITHUB_AUTH_REDIRECT")
+	if len(github_redirect_url) == 0 {
+		log.Fatal("Need github callback redirect url")
+	}
 	sbClient := db.InitDB(sbHost, sbSecret)
 	// to change this when we pass the variable
-	h := handlers.NewHandlers(*sbClient)
+	h := handlers.NewHandlers(*sbClient, github_redirect_url)
 
 	router := chi.NewMux()
 	router.Use(h.IsLoggedIn)
@@ -39,11 +43,13 @@ func main() {
 
 	router.Get("/", helpers.MakeHandler(h.HandleHomeIndex))
 	router.Get("/login", helpers.MakeHandler(h.HandleLoginIndex))
+	router.Get("/login/provider/google", helpers.MakeHandler(h.HandleLoginGoogle))
 	router.Post("/login", helpers.MakeHandler(h.HandleLoginCreate))
 	router.Get("/signup", helpers.MakeHandler(h.HandleSignupIndex))
 	router.Post("/logout", helpers.MakeHandler(h.HandleLogoutCreate))
 	router.Post("/signup", helpers.MakeHandler(h.HandleSignupCretate))
 	router.Get("/auth/callback", helpers.MakeHandler(h.HandleAuthCallback))
+	router.Get("/auth/v1/callback", helpers.MakeHandler(h.HandleV1AuthCallback))
 
 	router.Group(func(auth chi.Router) {
 		auth.Use(h.WithAuth)

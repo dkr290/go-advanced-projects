@@ -17,6 +17,19 @@ func (s *Handlers) HandleSignupIndex(w http.ResponseWriter, r *http.Request) err
 	return helpers.Render(r, w, userauth.SignUp())
 }
 
+func (s *Handlers) HandleLoginGoogle(w http.ResponseWriter, r *http.Request) error {
+	resp, err := s.sb.Auth.SignInWithProvider(supabase.ProviderSignInOptions{
+		Provider:   "github",
+		RedirectTo: s.github_redirect_url,
+	})
+	if err != nil {
+		return err
+	}
+
+	http.Redirect(w, r, resp.URL, http.StatusSeeOther)
+	return nil
+}
+
 func (s *Handlers) HandleSignupCretate(w http.ResponseWriter, r *http.Request) error {
 	params := userauth.SignupParams{
 		Email:           r.FormValue("email"),
@@ -94,6 +107,17 @@ func (s *Handlers) HandleAuthCallback(w http.ResponseWriter, r *http.Request) er
 	accessToken := r.URL.Query().Get("access_token")
 	if len(accessToken) == 0 {
 		return helpers.Render(r, w, userauth.CallbackScript())
+	}
+	setAuthCookie(w, accessToken)
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+	return nil
+}
+
+func (s *Handlers) HandleV1AuthCallback(w http.ResponseWriter, r *http.Request) error {
+	accessToken := r.URL.Query().Get("access_token")
+	if len(accessToken) == 0 {
+		return helpers.Render(r, w, userauth.CallbackV1Script())
 	}
 	setAuthCookie(w, accessToken)
 
