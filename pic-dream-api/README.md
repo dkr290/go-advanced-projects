@@ -1,0 +1,15 @@
+# We need the following parameters
+
+HTTP_LISTEN_ADDR=":8080"
+
+### from supabase
+
+```
+DB_HOST=
+DB_USER=
+DB_PASSWORD=
+SUPABASE_SECRET=
+SUPABASE_URL=
+GITHUB_AUTH_REDIRECT=
+SESSION_KEY=
+```

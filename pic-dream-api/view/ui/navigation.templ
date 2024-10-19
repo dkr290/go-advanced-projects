@@ -18,14 +18,20 @@ templ Navigation() {
 							</summary>
 							<ul class="p-2 bg-base-100 rounded-t-none">
 								<li><a>Settings</a></li>
-								<li><a>Logout</a></li>
+								@LogoutForm()
 							</ul>
 						</details>
 					</li>
 				} else {
-					<a class="btn btn-primary">Log in</a>
+					<a href="/login" class="btn btn-primary">Log in</a>
 				}
 			</ul>
 		</div>
 	</div>
+}
+
+templ LogoutForm() {
+	<form method="POST" action="/logout">
+		<li><button type="submit" class="btn btn-link">Logout</button></li>
+	</form>
 }

@@ -27,7 +27,6 @@ func ValidateEmail(email string) bool {
 }
 
 func ValidatePassword(password string) error {
-
 	if len(password) < 4 {
 		return errors.New("password must be at least 4 characters long")
 	}
@@ -48,5 +47,15 @@ func ValidatePassword(password string) error {
 	}
 
 	return nil
+}
 
+// set header and make cliebnt side redirect
+func HxRedirect(w http.ResponseWriter, r *http.Request, to string) error {
+	if len(r.Header.Get("HX-Request")) > 0 {
+		w.Header().Set("HX-Redirect", to)
+		w.WriteHeader(http.StatusSeeOther)
+		return nil
+	}
+	http.Redirect(w, r, to, http.StatusSeeOther)
+	return nil
 }
