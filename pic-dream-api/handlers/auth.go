@@ -3,10 +3,17 @@ package handlers
 import (
 	"log/slog"
 	"net/http"
+	"os"
 
 	"github.com/dkr290/go-advanced-projects/pic-dream-api/helpers"
 	"github.com/dkr290/go-advanced-projects/pic-dream-api/view/userauth"
+	"github.com/gorilla/sessions"
 	"github.com/nedpals/supabase-go"
+)
+
+const (
+	sessionUserKey        = "user"
+	sessionAccessTokenKey = "accessToken"
 )
 
 func (s *Handlers) HandleLoginIndex(w http.ResponseWriter, r *http.Request) error {
@@ -17,7 +24,7 @@ func (s *Handlers) HandleSignupIndex(w http.ResponseWriter, r *http.Request) err
 	return helpers.Render(r, w, userauth.SignUp())
 }
 
-func (s *Handlers) HandleLoginGoogle(w http.ResponseWriter, r *http.Request) error {
+func (s *Handlers) HandleLoginGithub(w http.ResponseWriter, r *http.Request) error {
 	resp, err := s.sb.Auth.SignInWithProvider(supabase.ProviderSignInOptions{
 		Provider:   "github",
 		RedirectTo: s.github_redirect_url,
@@ -68,16 +75,12 @@ func (s *Handlers) HandleSignupCretate(w http.ResponseWriter, r *http.Request) e
 }
 
 func (s *Handlers) HandleLogoutCreate(w http.ResponseWriter, r *http.Request) error {
-	cookie := &http.Cookie{
-		Value:    "",
-		Name:     "at",
-		MaxAge:   -1,
-		HttpOnly: true,
-		Path:     "/",
-		Secure:   true,
+	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
+	session, _ := store.Get(r, sessionUserKey)
+	session.Values[sessionAccessTokenKey] = ""
+	if err := session.Save(r, w); err != nil {
+		return err
 	}
-
-	http.SetCookie(w, cookie)
 
 	// Redirect the user to the home page or login page
 	http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -99,7 +102,9 @@ func (s *Handlers) HandleLoginCreate(w http.ResponseWriter, r *http.Request) err
 
 	}
 
-	setAuthCookie(w, resp.AccessToken)
+	if err := setAuthSession(w, r, resp.AccessToken); err != nil {
+		return err
+	}
 	return helpers.HxRedirect(w, r, "/")
 }
 
@@ -108,30 +113,20 @@ func (s *Handlers) HandleAuthCallback(w http.ResponseWriter, r *http.Request) er
 	if len(accessToken) == 0 {
 		return helpers.Render(r, w, userauth.CallbackScript())
 	}
-	setAuthCookie(w, accessToken)
+	if err := setAuthSession(w, r, accessToken); err != nil {
+		return err
+	}
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 	return nil
 }
 
-func (s *Handlers) HandleV1AuthCallback(w http.ResponseWriter, r *http.Request) error {
-	accessToken := r.URL.Query().Get("access_token")
-	if len(accessToken) == 0 {
-		return helpers.Render(r, w, userauth.CallbackV1Script())
+func setAuthSession(w http.ResponseWriter, r *http.Request, accessToken string) error {
+	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
+	session, _ := store.Get(r, sessionUserKey)
+	session.Values[sessionAccessTokenKey] = accessToken
+	if err := session.Save(r, w); err != nil {
+		return err
 	}
-	setAuthCookie(w, accessToken)
-
-	http.Redirect(w, r, "/", http.StatusSeeOther)
 	return nil
-}
-
-func setAuthCookie(w http.ResponseWriter, accessToken string) {
-	cookie := &http.Cookie{
-		Value:    accessToken,
-		Name:     "at",
-		Path:     "/",
-		HttpOnly: true,
-		Secure:   true,
-	}
-	http.SetCookie(w, cookie)
 }

@@ -3,9 +3,11 @@ package handlers
 import (
 	"context"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/dkr290/go-advanced-projects/pic-dream-api/types"
+	"github.com/gorilla/sessions"
 )
 
 func (h *Handlers) WithAuth(next http.Handler) http.Handler {
@@ -33,14 +35,15 @@ func (h *Handlers) IsLoggedIn(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
-
-		cookie, err := r.Cookie("at")
+		store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
+		session, err := store.Get(r, sessionUserKey)
 		if err != nil {
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		resp, err := h.sb.Auth.User(r.Context(), cookie.Value)
+		accessToken := session.Values["accessToken"]
+		resp, err := h.sb.Auth.User(r.Context(), accessToken.(string))
 		if err != nil {
 			next.ServeHTTP(w, r)
 			return
