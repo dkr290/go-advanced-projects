@@ -28,7 +28,7 @@ reset:
 	@go run cmd/reset/main.go up
 
 down: ## Database migration down
-	@go run cmd/migrate/main.go down
+	@go run cmd/migrate/main.go dsudoown
 
 migration: ## Migrations against the database
 	@migrate create -ext sql -dir cmd/migrate/migrations $(filter-out $@,$(MAKECMDGOALS))

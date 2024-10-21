@@ -8,13 +8,18 @@ import (
 
 	"github.com/dkr290/go-advanced-projects/pic-dream-api/handlers"
 	"github.com/dkr290/go-advanced-projects/pic-dream-api/helpers"
+	"github.com/dkr290/go-advanced-projects/pic-dream-api/pkg/db"
 	"github.com/dkr290/go-advanced-projects/pic-dream-api/pkg/sb"
 	"github.com/go-chi/chi/v5"
 	"github.com/joho/godotenv"
+	"github.com/uptrace/bun"
 )
 
 // embed public
 // var FS embed.FS
+
+var Bun *bun.DB
+
 func main() {
 	if err := getEnv(); err != nil {
 		log.Fatal(err)
@@ -33,7 +38,7 @@ func main() {
 	}
 	sbClient := sb.InitDB(sbHost, sbSecret)
 	// to change this when we pass the variable
-	h := handlers.NewHandlers(*sbClient, github_redirect_url)
+	h := handlers.NewHandlers(*sbClient, github_redirect_url, *Bun)
 
 	router := chi.NewMux()
 	router.Use(h.IsLoggedIn)
@@ -65,5 +70,10 @@ func getEnv() error {
 	if err := godotenv.Load(); err != nil {
 		return err
 	}
+	db, err := db.Init(Bun)
+	if err != nil {
+		return err
+	}
+	Bun = db
 	return nil
 }
