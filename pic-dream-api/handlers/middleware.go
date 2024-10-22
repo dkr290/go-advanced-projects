@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/dkr290/go-advanced-projects/pic-dream-api/types"
+	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
 )
 
@@ -50,6 +51,7 @@ func (h *Handlers) IsLoggedIn(next http.Handler) http.Handler {
 		}
 
 		user := types.AuthenticatedUser{
+			ID:       uuid.MustParse(resp.ID),
 			Email:    resp.Email,
 			LoggedIn: true,
 		}

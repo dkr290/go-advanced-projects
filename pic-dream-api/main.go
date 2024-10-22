@@ -12,13 +12,10 @@ import (
 	"github.com/dkr290/go-advanced-projects/pic-dream-api/pkg/sb"
 	"github.com/go-chi/chi/v5"
 	"github.com/joho/godotenv"
-	"github.com/uptrace/bun"
 )
 
 // embed public
 // var FS embed.FS
-
-var Bun *bun.DB
 
 func main() {
 	if err := getEnv(); err != nil {
@@ -36,9 +33,19 @@ func main() {
 	if len(github_redirect_url) == 0 {
 		log.Fatal("Need github callback redirect url")
 	}
+
+	bunDB, err := db.Init()
+	if err != nil {
+		log.Fatal("Cannot initialize the database", err)
+	}
+
+	psDB := db.SupabasePostgresql{
+		Bun: bunDB,
+	}
+
 	sbClient := sb.InitDB(sbHost, sbSecret)
 	// to change this when we pass the variable
-	h := handlers.NewHandlers(*sbClient, github_redirect_url, *Bun)
+	h := handlers.NewHandlers(*sbClient, github_redirect_url, &psDB)
 
 	router := chi.NewMux()
 	router.Use(h.IsLoggedIn)
@@ -70,10 +77,5 @@ func getEnv() error {
 	if err := godotenv.Load(); err != nil {
 		return err
 	}
-	db, err := db.Init(Bun)
-	if err != nil {
-		return err
-	}
-	Bun = db
 	return nil
 }

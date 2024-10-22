@@ -7,12 +7,23 @@ import (
 	"os"
 	"strings"
 
+	"github.com/dkr290/go-advanced-projects/pic-dream-api/types"
+	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/extra/bundebug"
 )
+
+type PictureDatabase interface {
+	CreateAccount(account *types.Account) error
+	GetAccountByUserID(userID uuid.UUID) (types.Account, error)
+}
+
+type SupabasePostgresql struct {
+	Bun *bun.DB
+}
 
 func CreateDatabase(
 	dbname string,
@@ -41,7 +52,8 @@ func CreateDatabase(
 	return db, nil
 }
 
-func Init(Bun *bun.DB) (*bun.DB, error) {
+func Init() (*bun.DB, error) {
+	var Bun *bun.DB
 	host := os.Getenv("DB_HOST")
 	if len(host) == 0 {
 		log.Fatal("DB_HOST is mandatory")
