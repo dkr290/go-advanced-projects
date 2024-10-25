@@ -1,159 +1,174 @@
 package userauth
 
 import (
-	"github.com/dkr290/go-advanced-projects/pic-dream-api/view/layout"
-	"github.com/nedpals/supabase-go"
+"github.com/dkr290/go-advanced-projects/pic-dream-api/view/layout"
+"github.com/nedpals/supabase-go"
 )
 
-templ LogIn() {
-	@layout.App(false) {
-		<div class="flex justify-center mt-[calc(100vh-100vh+8rem)]">
-			<div class="max-w-md w-full bg-base-300 py-10 px-8 rounded-xl">
-				<h1 class="text-center text-xl font-black mb-8">LogIn to Pic API</h1>
-				@LoginForm(supabase.UserCredentials{}, LoginErrors{})
-			</div>
+templ AccountSetup() {
+@layout.App(true) {
+<div class="max-w-2xl w-full mx-auto px-6 py-12  bg-base-300 mt-4">
+	<h1 class="text-xl font-black mb-8 text-center">Setup your account</h1>
+	@AccountSetupForm(AccountSetupFormParams{}, AccountSetupFormErrors{})
+</div>
+}
+}
+
+type AccountSetupFormErrors struct {
+Username string
+}
+
+type AccountSetupFormParams struct {
+Username string
+}
+
+templ AccountSetupForm(params AccountSetupFormParams, errors AccountSetupFormErrors) {
+<form hx-post="/account/setup" hx-swap="outerHTML" class="space-y-4">
+	<label class="input input-bordered flex items-center gap-2 mb-4">
+		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="h-4 w-4 opacity-70">
+			<path
+				d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.735 14c.618 0 1.093-.561.872-1.139a6.002 6.002 0 0 0-11.215 0c-.22.578.254 1.139.872 1.139h9.47Z">
+			</path>
+		</svg>
+		<input type="text" name="username" class="grow" placeholder="Username" />
+		<div class="label">
+			if len(errors.Username) > 0 {
+			<span class="label-text-alt text-error">{ errors.Username }</span>
+			}
 		</div>
-	}
+	</label> <button type="button" class="btn btn-active btn-primary w-20">submit</button>
+</form>
+}
+
+templ LogIn() {
+@layout.App(false) {
+<div class="flex justify-center mt-[calc(100vh-100vh+8rem)]">
+	<div class="max-w-md w-full bg-base-300 py-10 px-8 rounded-xl">
+		<h1 class="text-center text-xl font-black mb-8">LogIn to Pic API</h1>
+		@LoginForm(supabase.UserCredentials{}, LoginErrors{})
+	</div>
+</div>
+}
 }
 
 templ SignUp() {
-	@layout.App(false) {
-		<div class="flex justify-center mt-[calc(100vh-100vh+8rem)]">
-			<div class="max-w-md w-full bg-base-300 py-10 px-8 rounded-xl">
-				<h1 class="text-center text-xl font-black mb-8">SignUp to Pic API</h1>
-				@SignUpForm(SignupParams{}, SignupErrors{})
-			</div>
-		</div>
-	}
+@layout.App(false) {
+<div class="flex justify-center mt-[calc(100vh-100vh+8rem)]">
+	<div class="max-w-md w-full bg-base-300 py-10 px-8 rounded-xl">
+		<h1 class="text-center text-xl font-black mb-8">SignUp to Pic API</h1>
+		@SignUpForm(SignupParams{}, SignupErrors{})
+	</div>
+</div>
+}
 }
 
 templ SignupSuccess(email string) {
-	<div>A confirmation email has been send to: <span class="font-semibold text-success">{ email }</span></div>
+<div>A confirmation email has been send to: <span class="font-semibold text-success">{ email }</span></div>
 }
 
 type LoginErrors struct {
-	Email              string
-	Password           string
-	InvalidCredentials string
+Email string
+Password string
+InvalidCredentials string
 }
 
 type SignupParams struct {
-	Email           string
-	Password        string
-	ConfirmPassword string
+Email string
+Password string
+ConfirmPassword string
 }
 
 type SignupErrors struct {
-	Email           string
-	Password        string
-	ConfirmPassword string
+Email string
+Password string
+ConfirmPassword string
 }
 
 templ SignUpForm(params SignupParams, errors SignupErrors) {
-	<form hx-post="/signup" hx-swap="outerHTML" class="space-y-4">
-		<div class="w-full">
-			<div class="label">
-				<span class="label-text">Email address</span>
-			</div>
-			<input
-				type="email"
-				value={ params.Email }
-				name="email"
-				required
-				autocoimplete="off"
-				placeholder="email@email.com"
-				class="input input-bordered w-full"
-			/>
-			if len(errors.Email) > 0 {
-				<div class="text-sm text-error">
-					<div class="label">
-						<span class="label-text-alt text-error">{ errors.Email }</span>
-					</div>
-				</div>
-			}
+<form hx-post="/signup" hx-swap="outerHTML" class="space-y-4">
+	<div class="w-full">
+		<div class="label">
+			<span class="label-text">Email address</span>
 		</div>
-		<div class="w-full">
+		<input type="email" value={ params.Email } name="email" required autocoimplete="off" placeholder="email@email.com"
+			class="input input-bordered w-full" />
+		if len(errors.Email) > 0 {
+		<div class="text-sm text-error">
 			<div class="label">
-				<span class="label-text">Password</span>
+				<span class="label-text-alt text-error">{ errors.Email }</span>
 			</div>
-			<input type="password" name="password" required autocomplete="off" class="input input-bordered w-full"/>
-			if len(errors.Password) > 0 {
-				<div class="label">
-					<span class="label-text-alt text-error">{ errors.Password }</span>
-				</div>
-			}
 		</div>
-		<div class="w-full">
-			<div class="label">
-				<span class="label-text">Confirm Password</span>
-			</div>
-			<input type="password" name="confirmPassword" required autocomplete="off" class="input input-bordered w-full"/>
-			if len(errors.ConfirmPassword) > 0 {
-				<div class="label">
-					<span class="label-text-alt text-error">{ errors.ConfirmPassword }</span>
-				</div>
-			}
+		}
+	</div>
+	<div class="w-full">
+		<div class="label">
+			<span class="label-text">Password</span>
 		</div>
-		<button type="submit" class="btn btn-active btn-primary w-full">Login<i class="fa-solid fa-arrow-right"></i></button>
-	</form>
+		<input type="password" name="password" required autocomplete="off" class="input input-bordered w-full" />
+		if len(errors.Password) > 0 {
+		<div class="label">
+			<span class="label-text-alt text-error">{ errors.Password }</span>
+		</div>
+		}
+	</div>
+	<div class="w-full">
+		<div class="label">
+			<span class="label-text">Confirm Password</span>
+		</div>
+		<input type="password" name="confirmPassword" required autocomplete="off" class="input input-bordered w-full" />
+		if len(errors.ConfirmPassword) > 0 {
+		<div class="label">
+			<span class="label-text-alt text-error">{ errors.ConfirmPassword }</span>
+		</div>
+		}
+	</div>
+	<button type="submit" class="btn btn-active btn-primary w-full">Login<i class="fa-solid fa-arrow-right"></i></button>
+</form>
 }
 
 templ LoginForm(creds supabase.UserCredentials, errors LoginErrors) {
-	<form hx-post="/login" hx-swap="outerHTML" class="space-y-4">
-		<div class="w-full">
-			<div class="label">
-				<span class="label-text">Email address</span>
-			</div>
-			<input
-				type="email"
-				value={ creds.Email }
-				name="email"
-				required
-				autocoimplete="off"
-				placeholder="Type here"
-				class="input input-bordered w-full"
-			/>
-			if len(errors.Email) > 0 {
-				<div class="text-sm text-error">
-					<div class="label">
-						<span class="label-text-alt text-error">{ errors.Email }</span>
-					</div>
-				</div>
-			}
+<form hx-post="/login" hx-swap="outerHTML" class="space-y-4">
+	<div class="w-full">
+		<div class="label">
+			<span class="label-text">Email address</span>
 		</div>
-		<div class="w-full">
+		<input type="email" value={ creds.Email } name="email" required autocoimplete="off" placeholder="Type here"
+			class="input input-bordered w-full" />
+		if len(errors.Email) > 0 {
+		<div class="text-sm text-error">
 			<div class="label">
-				<span class="label-text">Password</span>
+				<span class="label-text-alt text-error">{ errors.Email }</span>
 			</div>
-			<input
-				type="password"
-				name="password"
-				required
-				autocomplete="off"
-				placeholder="Type here"
-				class="input input-bordered w-full"
-			/>
-			if len(errors.Password) > 0 {
-				<div class="label">
-					<span class="label-text-alt text-error">{ errors.Password }</span>
-				</div>
-			}
 		</div>
-		if len(errors.InvalidCredentials) > 0 {
-			<div class="text-sm text-error">
-				{ errors.InvalidCredentials }
-			</div>
 		}
-		<button type="submit" class="btn btn-active btn-primary w-full">Login<i class="fa-solid fa-arrow-right"></i></button>
-		<div class="divider">OR</div>
-		<a href="/login/provider/google" class="btn btn-active btn-accent w-full">
-			Login with github<i class="fa-brands fa-github"></i>
-		</a>
-	</form>
+	</div>
+	<div class="w-full">
+		<div class="label">
+			<span class="label-text">Password</span>
+		</div>
+		<input type="password" name="password" required autocomplete="off" placeholder="Type here"
+			class="input input-bordered w-full" />
+		if len(errors.Password) > 0 {
+		<div class="label">
+			<span class="label-text-alt text-error">{ errors.Password }</span>
+		</div>
+		}
+	</div>
+	if len(errors.InvalidCredentials) > 0 {
+	<div class="text-sm text-error">
+		{ errors.InvalidCredentials }
+	</div>
+	}
+	<button type="submit" class="btn btn-active btn-primary w-full">Login<i class="fa-solid fa-arrow-right"></i></button>
+	<div class="divider">OR</div>
+	<a href="/login/provider/google" class="btn btn-active btn-accent w-full">
+		Login with github<i class="fa-brands fa-github"></i>
+	</a>
+</form>
 }
 
 templ CallbackScript() {
-	<script>
+<script>
 	// Get the access token from the URL fragment
 	var hash = window.location.hash.substring(1);
 	var params = new URLSearchParams(hash);

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -15,6 +16,29 @@ const (
 	sessionUserKey        = "user"
 	sessionAccessTokenKey = "accessToken"
 )
+
+func (s *Handlers) HandleAccountSetupIndex(w http.ResponseWriter, r *http.Request) error {
+	return helpers.Render(r, w, userauth.AccountSetup())
+}
+
+func (s *Handlers) HandleAccountSetupCreate(w http.ResponseWriter, r *http.Request) error {
+	params := userauth.AccountSetupFormParams{
+		Username: r.FormValue("username"),
+	}
+	fmt.Println("test")
+	if err := helpers.ValidateUser(params.Username); err != nil {
+		slog.Error("username is not valid")
+		return helpers.Render(
+			r,
+			w,
+			userauth.AccountSetupForm(params, userauth.AccountSetupFormErrors{
+				Username: "Username is invalid",
+			}),
+		)
+	}
+
+	return helpers.HxRedirect(w, r, "/")
+}
 
 func (s *Handlers) HandleLoginIndex(w http.ResponseWriter, r *http.Request) error {
 	return helpers.Render(r, w, userauth.LogIn())

@@ -59,3 +59,14 @@ func HxRedirect(w http.ResponseWriter, r *http.Request, to string) error {
 	http.Redirect(w, r, to, http.StatusSeeOther)
 	return nil
 }
+
+func ValidateUser(username string) error {
+	if len(username) < 2 {
+		return errors.New("username must be at least 2 characters long")
+	}
+	if len(username) > 20 {
+		return errors.New("username must be no more than 20 characters long")
+	}
+
+	return nil
+}
