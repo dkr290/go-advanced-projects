@@ -19,6 +19,7 @@ import (
 type PictureDatabase interface {
 	CreateAccount(account *types.Account) error
 	GetAccountByUserID(userID uuid.UUID) (types.Account, error)
+	UpdateAccount(account *types.Account) error
 }
 
 type SupabasePostgresql struct {

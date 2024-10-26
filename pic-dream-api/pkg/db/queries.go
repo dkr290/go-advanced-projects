@@ -18,3 +18,8 @@ func (s *SupabasePostgresql) GetAccountByUserID(userID uuid.UUID) (types.Account
 
 	return account, err
 }
+
+func (s *SupabasePostgresql) UpdateAccount(account *types.Account) error {
+	_, err := s.Bun.NewUpdate().Model(account).WherePK().Exec(context.Background())
+	return err
+}
