@@ -53,6 +53,7 @@ func main() {
 	router.Handle("/public/*", http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
 	// router.Handle("/*", http.StripPrefix("/", http.FileServer(http.FS(FS))))
 
+	router.Get("/", helpers.MakeHandler(h.HandleHomeIndex))
 	router.Get("/login", helpers.MakeHandler(h.HandleLoginIndex))
 	router.Get("/login/provider/google", helpers.MakeHandler(h.HandleLoginGithub))
 	router.Post("/login", helpers.MakeHandler(h.HandleLoginCreate))
@@ -66,7 +67,7 @@ func main() {
 
 	router.Group(func(auth chi.Router) {
 		auth.Use(h.WithAccountSetup)
-		auth.Get("/", helpers.MakeHandler(h.HandleHomeIndex))
+		// auth.Get("/", helpers.MakeHandler(h.HandleHomeIndex))
 		auth.Get("/settings", helpers.MakeHandler(h.HandleSettingsIndex))
 	})
 

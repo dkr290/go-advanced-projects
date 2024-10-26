@@ -1,12 +1,12 @@
 package handlers
 
 import (
-	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 
 	"github.com/dkr290/go-advanced-projects/pic-dream-api/helpers"
+	"github.com/dkr290/go-advanced-projects/pic-dream-api/types"
 	"github.com/dkr290/go-advanced-projects/pic-dream-api/view/userauth"
 	"github.com/gorilla/sessions"
 	"github.com/nedpals/supabase-go"
@@ -25,7 +25,7 @@ func (s *Handlers) HandleAccountSetupCreate(w http.ResponseWriter, r *http.Reque
 	params := userauth.AccountSetupFormParams{
 		Username: r.FormValue("username"),
 	}
-	fmt.Println("test")
+	user := getAuthenticatedUser(r)
 	if err := helpers.ValidateUser(params.Username); err != nil {
 		slog.Error("username is not valid")
 		return helpers.Render(
@@ -35,6 +35,15 @@ func (s *Handlers) HandleAccountSetupCreate(w http.ResponseWriter, r *http.Reque
 				Username: "Username is invalid",
 			}),
 		)
+	}
+
+	account := types.Account{
+		UserID:   user.ID,
+		Username: params.Username,
+	}
+
+	if err := s.Bun.CreateAccount(&account); err != nil {
+		return err
 	}
 
 	return helpers.HxRedirect(w, r, "/")
