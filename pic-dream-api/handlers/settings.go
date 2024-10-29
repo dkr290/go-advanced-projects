@@ -34,6 +34,12 @@ func (h *Handlers) HandleSettingsUsernameUpdate(w http.ResponseWriter, r *http.R
 	if err := h.Bun.UpdateAccount(&user.Account); err != nil {
 		return err
 	}
+	params.Success = true
 	log.Println("setting updated user ")
 	return helpers.Render(r, w, settings.ProfileForm(params, settings.ProfileErrors{}))
+}
+
+func (h *Handlers) HandleSettingsPasswordReset(w http.ResponseWriter, r *http.Request) error {
+	user := getAuthenticatedUser(r)
+	return h.sb.Auth.ResetPasswordForEmail(r.Context(), user.Email)
 }
