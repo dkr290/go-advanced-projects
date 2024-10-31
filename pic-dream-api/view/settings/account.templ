@@ -65,22 +65,3 @@ templ ProfileForm(params ProfileParams, errors ProfileErrors) {
 	</div>
 </form>
 }
-
-type ResetPasswordParams struct {
-CurrentPassword string
-NewPassword string
-Success bool
-}
-
-type ResetPasswordErrors struct {
-CurrentPassword string
-NewPassword string
-}
-
-templ ResetPasswordForm(params ResetPasswordParams, errors ResetPasswordErrors) {
-<form hx-put="/settings/account/password" hx-swap="outerHTML">
-	if params.Success {
-	@ui.Toast("Password updated successfully")
-	}
-</form>
-}

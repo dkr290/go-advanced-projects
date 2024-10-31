@@ -17,6 +17,18 @@ const (
 	sessionAccessTokenKey = "accessToken"
 )
 
+func (*Handlers) HandleResetPasswordIndex(w http.ResponseWriter, r *http.Request) error {
+	return helpers.Render(r, w, userauth.ResetPassword())
+}
+
+func (*Handlers) HandleResetPasswordCreate(w http.ResponseWriter, r *http.Request) error {
+	return helpers.Render(r, w, userauth.ResetPassword())
+}
+
+func (*Handlers) HandleResetPasswordUpdate(w http.ResponseWriter, r *http.Request) error {
+	return helpers.HxRedirect(w, r, "/")
+}
+
 func (s *Handlers) HandleAccountSetupIndex(w http.ResponseWriter, r *http.Request) error {
 	return helpers.Render(r, w, userauth.AccountSetup())
 }
