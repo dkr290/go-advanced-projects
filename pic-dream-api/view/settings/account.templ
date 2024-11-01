@@ -1,67 +1,73 @@
 package settings
 
 import (
-"github.com/dkr290/go-advanced-projects/pic-dream-api/types"
-"github.com/dkr290/go-advanced-projects/pic-dream-api/view/layout"
-"github.com/dkr290/go-advanced-projects/pic-dream-api/view/ui"
+	"github.com/dkr290/go-advanced-projects/pic-dream-api/types"
+	"github.com/dkr290/go-advanced-projects/pic-dream-api/view/layout"
+	"github.com/dkr290/go-advanced-projects/pic-dream-api/view/ui"
 )
 
 templ Index(user types.AuthenticatedUser) {
-@layout.App(true) {
-<div class="max-w-2xl w-full mx-auto mt-4">
-	<div>
-		<h1 class="text-lg font-bold border-b border-gray-700 pb-2 mb-6 text-center">Profile Settings</h1>
-		@ProfileForm(ProfileParams{
-		Username: user.Account.Username,
-		}, ProfileErrors{})
-		<div class="mt-10">
-			<h1 class="text-lg font-bold border-b border-gray-700 pb-2 mb-6 text-center">Password Settings</h1>
-			<div class="mt-6">
-				<label class="block text-sm font-extrabold leading-7 text-cyan-700">
-					Reset Password
-				</label>
+	@layout.App(true) {
+		<div class="max-w-2xl w-full mx-auto mt-4">
+			<div>
+				<h1 class="text-lg font-bold border-b border-gray-700 pb-2 mb-6 text-center">Profile Settings</h1>
+				@ProfileForm(ProfileParams{
+					Username: user.Account.Username,
+				}, ProfileErrors{})
+				<div class="mt-10">
+					<h1 class="text-lg font-bold border-b border-gray-700 pb-2 mb-6 text-center">Password Settings</h1>
+					<div class="mt-6">
+						<label class="block text-sm font-extrabold leading-7 text-cyan-700">
+							Reset Password
+						</label>
+					</div>
+					<dt></dt>
+					<dd class="sm:col-span-4 sm:mt-4">
+						<form hx-post="/auth/reset-password" hx-swap="outerHTML">
+							<button class="btn btn-primary">Reset Password</button>
+						</form>
+					</dd>
+				</div>
 			</div>
-			<dt></dt>
-			<dd class="sm:col-span-4 sm:mt-4">
-				<a href="/settings/account/reset-password" class="btn btn-primary">Reset Password</a>
-			</dd>
 		</div>
-	</div>
-</div>
-}
+	}
 }
 
 type ProfileParams struct {
-Username string
-Success bool
+	Username string
+	Success  bool
 }
 
 type ProfileErrors struct {
-Username string
+	Username string
 }
 
 templ ProfileForm(params ProfileParams, errors ProfileErrors) {
-<form hx-put="/settings/account/profile" hx-swap="outerHTML">
-	<div class="mt-6">
-		if params.Success {
-		@ui.Toast("Username updated successfully")
-		}
-		<label for="Username" class="block text-sm font-extrabold leading-7 text-cyan-700 mb-1">
-			Username
-		</label>
-		<div class="flex items-center space-x-3">
-			<input name="username" value={ params.Username } placeholder="Change username"
-				class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:shadow-outline-blue focus:border-blue-300 transition duration-150 ease-in-out sm:text-sm sm:leading-5" />
-			if len(errors.Username) >0 {
-			<div class="label">
-				<span class="label-text-alt text-error">{ errors.Username }</span>
-			</div>
+	<form hx-put="/settings/account/profile" hx-swap="outerHTML">
+		<div class="mt-6">
+			if params.Success {
+				@ui.Toast("Username updated successfully")
 			}
+			<label for="Username" class="block text-sm font-extrabold leading-7 text-cyan-700 mb-1">
+				Username
+			</label>
+			<div class="flex items-center space-x-3">
+				<input
+					name="username"
+					value={ params.Username }
+					placeholder="Change username"
+					class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:shadow-outline-blue focus:border-blue-300 transition duration-150 ease-in-out sm:text-sm sm:leading-5"
+				/>
+				if len(errors.Username) >0 {
+					<div class="label">
+						<span class="label-text-alt text-error">{ errors.Username }</span>
+					</div>
+				}
+			</div>
+			<dt></dt>
+			<dd class="sm:col-span-4 sm:mt-4">
+				<button type="submit" class="btn btn-primary">save</button>
+			</dd>
 		</div>
-		<dt></dt>
-		<dd class="sm:col-span-4 sm:mt-4">
-			<button type="submit" class="btn btn-primary">save</button>
-		</dd>
-	</div>
-</form>
+	</form>
 }

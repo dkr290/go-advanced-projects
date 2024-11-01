@@ -17,15 +17,19 @@ const (
 	sessionAccessTokenKey = "accessToken"
 )
 
-func (*Handlers) HandleResetPasswordIndex(w http.ResponseWriter, r *http.Request) error {
+func (h *Handlers) HandleResetPasswordIndex(w http.ResponseWriter, r *http.Request) error {
 	return helpers.Render(r, w, userauth.ResetPassword())
 }
 
-func (*Handlers) HandleResetPasswordCreate(w http.ResponseWriter, r *http.Request) error {
-	return helpers.Render(r, w, userauth.ResetPassword())
+func (h *Handlers) HandleResetPasswordCreate(w http.ResponseWriter, r *http.Request) error {
+	user := getAuthenticatedUser(r)
+	if err := h.sb.Auth.ResetPasswordForEmail(r.Context(), user.Email); err != nil {
+		return err
+	}
+	return helpers.Render(r, w, userauth.ResetPasswordInitiated(user.Email))
 }
 
-func (*Handlers) HandleResetPasswordUpdate(w http.ResponseWriter, r *http.Request) error {
+func (h *Handlers) HandleResetPasswordUpdate(w http.ResponseWriter, r *http.Request) error {
 	return helpers.HxRedirect(w, r, "/")
 }
 
