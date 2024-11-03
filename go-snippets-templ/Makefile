@@ -1,5 +1,5 @@
 run: build
-	@./bin/pic-dream-api
+	@./bin/snippet-api
 
 install:
 	@go install github.com/a-h/templ/cmd/templ@latest
@@ -19,19 +19,4 @@ templ:
 build:
 	npx tailwindcss -i view/css/app.css -o public/styles.css
 	@templ generate view
-	@go build -tags dev -o bin/pic-dream-api main.go 
-
-up: ## Database migration up
-	@go run cmd/migrate/main.go up
-
-reset:
-	@go run cmd/reset/main.go up
-
-down: ## Database migration down
-	@go run cmd/migrate/main.go dsudoown
-
-migration: ## Migrations against the database
-	@migrate create -ext sql -dir cmd/migrate/migrations $(filter-out $@,$(MAKECMDGOALS))
-
-seed:
-	@go run cmd/seed/main.go
+	@go build -tags dev -o bin/snippet-api main.go 

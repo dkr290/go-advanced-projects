@@ -2,12 +2,11 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"os"
 
 	"github.com/dkr290/go-advanced-projects/pic-dream-api/pkg/db"
-	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -43,30 +42,14 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Create migration instance
-	driver, err := postgres.WithInstance(db, &postgres.Config{})
-	if err != nil {
-		log.Fatal(err)
+	tables := []string{
+		"schema_migrations",
+		"accounts",
 	}
 
-	// Point to your migration files. Here we're using local files, but it could be other sources.
-	m, err := migrate.NewWithDatabaseInstance(
-		"file://cmd/migrate/migrations", // source URL
-		"postgres",                      // database name
-		driver,                          // database instance
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	cmd := os.Args[len(os.Args)-1]
-	if cmd == "up" {
-		if err := m.Up(); err != nil && err != migrate.ErrNoChange {
-			log.Fatal(err)
-		}
-	}
-	if cmd == "down" {
-		if err := m.Down(); err != nil && err != migrate.ErrNoChange {
+	for _, table := range tables {
+		query := fmt.Sprintf("drop table if exists %s cascade", table)
+		if _, err := db.Exec(query); err != nil {
 			log.Fatal(err)
 		}
 	}

@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/dkr290/go-advanced-projects/pic-dream-api/helpers"
+	"github.com/dkr290/go-advanced-projects/pic-dream-api/types"
 	"github.com/dkr290/go-advanced-projects/pic-dream-api/view/userauth"
 	"github.com/gorilla/sessions"
 	"github.com/nedpals/supabase-go"
@@ -15,6 +16,54 @@ const (
 	sessionUserKey        = "user"
 	sessionAccessTokenKey = "accessToken"
 )
+
+func (h *Handlers) HandleResetPasswordIndex(w http.ResponseWriter, r *http.Request) error {
+	return helpers.Render(r, w, userauth.ResetPassword())
+}
+
+func (h *Handlers) HandleResetPasswordCreate(w http.ResponseWriter, r *http.Request) error {
+	user := getAuthenticatedUser(r)
+	if err := h.sb.Auth.ResetPasswordForEmail(r.Context(), user.Email); err != nil {
+		return err
+	}
+	return helpers.Render(r, w, userauth.ResetPasswordInitiated(user.Email))
+}
+
+func (h *Handlers) HandleResetPasswordUpdate(w http.ResponseWriter, r *http.Request) error {
+	return helpers.HxRedirect(w, r, "/")
+}
+
+func (s *Handlers) HandleAccountSetupIndex(w http.ResponseWriter, r *http.Request) error {
+	return helpers.Render(r, w, userauth.AccountSetup())
+}
+
+func (s *Handlers) HandleAccountSetupCreate(w http.ResponseWriter, r *http.Request) error {
+	params := userauth.AccountSetupFormParams{
+		Username: r.FormValue("username"),
+	}
+	user := getAuthenticatedUser(r)
+	if err := helpers.ValidateUser(params.Username); err != nil {
+		slog.Error("username is not valid")
+		return helpers.Render(
+			r,
+			w,
+			userauth.AccountSetupForm(params, userauth.AccountSetupFormErrors{
+				Username: "Username is invalid",
+			}),
+		)
+	}
+
+	account := types.Account{
+		UserID:   user.ID,
+		Username: params.Username,
+	}
+
+	if err := s.Bun.CreateAccount(&account); err != nil {
+		return err
+	}
+
+	return helpers.HxRedirect(w, r, "/")
+}
 
 func (s *Handlers) HandleLoginIndex(w http.ResponseWriter, r *http.Request) error {
 	return helpers.Render(r, w, userauth.LogIn())

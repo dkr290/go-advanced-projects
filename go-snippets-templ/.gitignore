@@ -1,0 +1,6 @@
+.env
+bin
+*_templ.go*
+tmp
+vendor
+node_modules/

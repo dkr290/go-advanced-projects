@@ -3,9 +3,12 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
+	"github.com/dkr290/go-advanced-projects/pic-dream-api/types"
+	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 
 	"github.com/uptrace/bun"
@@ -13,7 +16,15 @@ import (
 	"github.com/uptrace/bun/extra/bundebug"
 )
 
-var Bun *bun.DB
+type PictureDatabase interface {
+	CreateAccount(account *types.Account) error
+	GetAccountByUserID(userID uuid.UUID) (types.Account, error)
+	UpdateAccount(account *types.Account) error
+}
+
+type SupabasePostgresql struct {
+	Bun *bun.DB
+}
 
 func CreateDatabase(
 	dbname string,
@@ -42,23 +53,34 @@ func CreateDatabase(
 	return db, nil
 }
 
-func Init() error {
-	var (
-		host   = os.Getenv("DB_HOST")
-		user   = os.Getenv("DB_USER")
-		pass   = os.Getenv("DB_PASSWORD")
-		dbname = os.Getenv("DB_NAME")
-	)
+func Init() (*bun.DB, error) {
+	var Bun *bun.DB
+	host := os.Getenv("DB_HOST")
+	if len(host) == 0 {
+		log.Fatal("DB_HOST is mandatory")
+	}
+	user := os.Getenv("DB_USER")
+	if len(user) == 0 {
+		log.Fatal("DB_USER is mandatory")
+	}
+	pass := os.Getenv("DB_PASSWORD")
+	if len(pass) == 0 {
+		log.Fatal("DB_PASSWORD is mandatory")
+	}
+	dbname := os.Getenv("DB_NAME")
+	if len(dbname) == 0 {
+		log.Fatal("DB_NAME is mandatory")
+	}
 	db, err := CreateDatabase(dbname, user, pass, host)
 	if err != nil {
-		return err
+		return &bun.DB{}, err
 	}
 	if err := db.Ping(); err != nil {
-		return err
+		return &bun.DB{}, err
 	}
 	Bun = bun.NewDB(db, pgdialect.New())
 	if len(os.Getenv("APP_DEBUG")) > 0 {
 		Bun.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
 	}
-	return nil
+	return Bun, nil
 }

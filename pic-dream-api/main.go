@@ -8,6 +8,7 @@ import (
 
 	"github.com/dkr290/go-advanced-projects/pic-dream-api/handlers"
 	"github.com/dkr290/go-advanced-projects/pic-dream-api/helpers"
+	"github.com/dkr290/go-advanced-projects/pic-dream-api/pkg/db"
 	"github.com/dkr290/go-advanced-projects/pic-dream-api/pkg/sb"
 	"github.com/go-chi/chi/v5"
 	"github.com/joho/godotenv"
@@ -15,6 +16,7 @@ import (
 
 // embed public
 // var FS embed.FS
+
 func main() {
 	if err := getEnv(); err != nil {
 		log.Fatal(err)
@@ -31,9 +33,19 @@ func main() {
 	if len(github_redirect_url) == 0 {
 		log.Fatal("Need github callback redirect url")
 	}
+
+	bunDB, err := db.Init()
+	if err != nil {
+		log.Fatal("Cannot initialize the database", err)
+	}
+
+	psDB := db.SupabasePostgresql{
+		Bun: bunDB,
+	}
+
 	sbClient := sb.InitDB(sbHost, sbSecret)
 	// to change this when we pass the variable
-	h := handlers.NewHandlers(*sbClient, github_redirect_url)
+	h := handlers.NewHandlers(*sbClient, github_redirect_url, &psDB)
 
 	router := chi.NewMux()
 	router.Use(h.IsLoggedIn)
@@ -50,10 +62,16 @@ func main() {
 	router.Post("/signup", helpers.MakeHandler(h.HandleSignupCretate))
 	router.Get("/auth/callback", helpers.MakeHandler(h.HandleAuthCallback))
 	router.Get("/auth/v1/callback", helpers.MakeHandler(h.HandleAuthCallback))
+	router.Get("/account/setup", helpers.MakeHandler(h.HandleAccountSetupIndex))
+	router.Post("/account/setup", helpers.MakeHandler(h.HandleAccountSetupCreate))
 
 	router.Group(func(auth chi.Router) {
-		auth.Use(h.WithAuth)
+		auth.Use(h.WithAccountSetup)
 		auth.Get("/settings", helpers.MakeHandler(h.HandleSettingsIndex))
+		auth.Put("/settings/account/profile", helpers.MakeHandler(h.HandleSettingsUsernameUpdate))
+		auth.Post("/auth/reset-password", helpers.MakeHandler(h.HandleResetPasswordCreate))
+		auth.Put("/auth/reset-password", helpers.MakeHandler(h.HandleResetPasswordUpdate))
+		auth.Get("/auth/reset-password", helpers.MakeHandler(h.HandleResetPasswordIndex))
 	})
 
 	port := os.Getenv("HTTP_LISTEN_ADDR")

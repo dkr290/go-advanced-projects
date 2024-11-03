@@ -5,6 +5,44 @@ import (
 	"github.com/nedpals/supabase-go"
 )
 
+templ AccountSetup() {
+	@layout.App(true) {
+		<div class="max-w-2xl w-full mx-auto px-6 py-12  bg-base-300 mt-4">
+			<h1 class="text-xl font-black mb-8 text-center">Setup your account</h1>
+			@AccountSetupForm(AccountSetupFormParams{}, AccountSetupFormErrors{})
+		</div>
+	}
+}
+
+type AccountSetupFormErrors struct {
+	Username string
+}
+
+type AccountSetupFormParams struct {
+	Username string
+}
+
+templ AccountSetupForm(params AccountSetupFormParams, errors AccountSetupFormErrors) {
+	<form hx-post="/account/setup" hx-swap="outerHTML" class="space-y-4">
+		<label class="input input-bordered flex items-center gap-2 mb-4">
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="h-4 w-4 opacity-70">
+				<path
+					d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.735 14c.618 0 1.093-.561.872-1.139a6.002 6.002 0 0 0-11.215 0c-.22.578.254 1.139.872 1.139h9.47Z"
+				></path>
+			</svg>
+			<input type="text" name="username" class="grow" placeholder="Username"/>
+			<div class="label">
+				if len(errors.Username) > 0 {
+					<span class="label-text-alt text-error">{ errors.Username }</span>
+				}
+			</div>
+		</label>
+		<button type="submit" class="btn btn-active btn-primary w-40">
+			setup account<i class="fa-solid fa-arrow-right"></i>
+		</button>
+	</form>
+}
+
 templ LogIn() {
 	@layout.App(false) {
 		<div class="flex justify-center mt-[calc(100vh-100vh+8rem)]">
@@ -149,6 +187,55 @@ templ LoginForm(creds supabase.UserCredentials, errors LoginErrors) {
 		<a href="/login/provider/google" class="btn btn-active btn-accent w-full">
 			Login with github<i class="fa-brands fa-github"></i>
 		</a>
+	</form>
+}
+
+type ResetPasswordParams struct {
+	NewPassword string
+}
+
+type ResetPasswordErrors struct {
+	NewPassword string
+}
+
+templ ResetPassword() {
+	@layout.App(true) {
+		<div class="max-w-2xl w-full mx-auto mt-4">
+			<div>
+				<h1 class="text-lg font-bold border-b border-gray-700 pb-2 mb-6 text-left">Reset Password</h1>
+				<div class="py-6">
+					@ResetPasswordForm(ResetPasswordErrors{})
+				</div>
+			</div>
+		</div>
+	}
+}
+
+templ ResetPasswordInitiated(email string) {
+	<div>
+		A password reset link has been send to <span class="text-info font-semibold">{ email }</span>
+	</div>
+}
+
+templ ResetPasswordForm(errors ResetPasswordErrors) {
+	<form hx-put="/auth/reset-password" hx-swap="outerHTML">
+		<div>
+			<input
+				name="password"
+				type="password"
+				placeholder="New password"
+				class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:shadow-outline-blue focus:border-blue-300 transition duration-150 ease-in-out sm:text-sm sm:leading-5"
+			/>
+			if len(errors.NewPassword) >0 {
+				<div class="label">
+					<span class="label-text-alt text-error">{ errors.NewPassword }</span>
+				</div>
+			}
+			<dt></dt>
+			<dd class="sm:col-span-4 sm:mt-4">
+				<button type="submit" class="btn btn-primary">Update Password</button>
+			</dd>
+		</div>
 	</form>
 }
 

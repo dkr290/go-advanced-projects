@@ -2,11 +2,14 @@ package handlers
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"net/http"
 	"os"
 	"strings"
 
 	"github.com/dkr290/go-advanced-projects/pic-dream-api/types"
+	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
 )
 
@@ -50,6 +53,7 @@ func (h *Handlers) IsLoggedIn(next http.Handler) http.Handler {
 		}
 
 		user := types.AuthenticatedUser{
+			ID:       uuid.MustParse(resp.ID),
 			Email:    resp.Email,
 			LoggedIn: true,
 		}
@@ -67,4 +71,25 @@ func getAuthenticatedUser(r *http.Request) types.AuthenticatedUser {
 	}
 
 	return user
+}
+
+func (h *Handlers) WithAccountSetup(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := getAuthenticatedUser(r)
+		account, err := h.Bun.GetAccountByUserID(user.ID)
+		// user has not setup account yet
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				http.Redirect(w, r, "/account/setup", http.StatusSeeOther)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+		user.Account = account
+		ctx := context.WithValue(r.Context(), types.UserContextKey, user)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
