@@ -4,6 +4,12 @@ import "github.com/dkr290/go-advanced-projects/pic-dream-api/view/layout"
 
 templ Index() {
 	@layout.App(true) {
-		<div class="text-5xl text-sky-500">hello from home page test</div>
+		<div class="w-full max-w-screen-xl max-auto text-center py-12">
+			<h1 class="text-5xl font-black">
+				hello from home page test
+			</h1>
+			<h2 class="text-xl font-semibold mb-8">This is some nice application</h2>
+			<button type="submit" class="btn btn-primary">Generate images now<i class="fa-solid fa-arrow-right"></i></button>
+		</div>
 	}
 }
