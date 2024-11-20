@@ -29,6 +29,10 @@ func (h *Handlers) HandleGenereateCreate(w http.ResponseWriter, r *http.Request)
 
 func (h *Handlers) HandleGenerateImageStatus(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
+	// fetch from db
+	image := types.Image{
+		ImageStatus: types.ImageStatusPending,
+	}
 	slog.Info("checkiung image status", "id", id)
-	return nil
+	return helpers.Render(r, w, generate.GalerryImage(image))
 }
