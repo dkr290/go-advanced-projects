@@ -62,16 +62,23 @@ func main() {
 	router.Post("/signup", helpers.MakeHandler(h.HandleSignupCretate))
 	router.Get("/auth/callback", helpers.MakeHandler(h.HandleAuthCallback))
 	router.Get("/auth/v1/callback", helpers.MakeHandler(h.HandleAuthCallback))
-	router.Get("/account/setup", helpers.MakeHandler(h.HandleAccountSetupIndex))
-	router.Post("/account/setup", helpers.MakeHandler(h.HandleAccountSetupCreate))
+
+	router.Group(func(r chi.Router) {
+		r.Use(h.WithAuth)
+		r.Get("/account/setup", helpers.MakeHandler(h.HandleAccountSetupIndex))
+		r.Post("/account/setup", helpers.MakeHandler(h.HandleAccountSetupCreate))
+	})
 
 	router.Group(func(auth chi.Router) {
-		auth.Use(h.WithAccountSetup)
+		auth.Use(h.WithAuth, h.WithAccountSetup)
 		auth.Get("/settings", helpers.MakeHandler(h.HandleSettingsIndex))
 		auth.Put("/settings/account/profile", helpers.MakeHandler(h.HandleSettingsUsernameUpdate))
 		auth.Post("/auth/reset-password", helpers.MakeHandler(h.HandleResetPasswordCreate))
 		auth.Put("/auth/reset-password", helpers.MakeHandler(h.HandleResetPasswordUpdate))
 		auth.Get("/auth/reset-password", helpers.MakeHandler(h.HandleResetPasswordIndex))
+		auth.Get("/generate", helpers.MakeHandler(h.HandleGenereateIndex))
+		auth.Post("/generate", helpers.MakeHandler(h.HandleGenereateCreate))
+		auth.Get("/generate/image/status/{id}", helpers.MakeHandler(h.HandleGenerateImageStatus))
 	})
 
 	port := os.Getenv("HTTP_LISTEN_ADDR")

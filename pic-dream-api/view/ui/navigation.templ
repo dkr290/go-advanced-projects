@@ -3,35 +3,36 @@ package ui
 import "github.com/dkr290/go-advanced-projects/pic-dream-api/view"
 
 templ Navigation() {
-<div class="navbar bg-base-100 border-b border-teal-900">
-	<div class="flex-1">
-		<a class="text-2xl font-mono text-primary">Pic APP</a>
+	<div class="navbar bg-base-100 border-b border-teal-900">
+		<div class="flex-1">
+			<a class="text-2xl font-mono text-primary">Pic APP</a>
+		</div>
+		<div class="flex-none">
+			<ul class="menu menu-horizontal px-1">
+				// in templ always have the access to ctx context
+				if view.AuthenticatedUser(ctx).LoggedIn {
+					<li><a href="/generate">Generate<i class="fa-solid fa-wand-magic"></i></a></li>
+					<li>
+						<details>
+							<summary>
+								{ view.AuthenticatedUser(ctx).Email }
+							</summary>
+							<ul class="p-2 bg-base-100 rounded-t-none">
+								<li><a href="/settings">Settings</a></li>
+								@LogoutForm()
+							</ul>
+						</details>
+					</li>
+				} else {
+					<a href="/login" class="btn btn-primary">Log in</a>
+				}
+			</ul>
+		</div>
 	</div>
-	<div class="flex-none">
-		<ul class="menu menu-horizontal px-1">
-			// in templ always have the access to ctx context
-			if view.AuthenticatedUser(ctx).LoggedIn {
-			<li>
-				<details>
-					<summary>
-						{ view.AuthenticatedUser(ctx).Email }
-					</summary>
-					<ul class="p-2 bg-base-100 rounded-t-none">
-						<li><a href="/settings">Settings</a></li>
-						@LogoutForm()
-					</ul>
-				</details>
-			</li>
-			} else {
-			<a href="/login" class="btn btn-primary">Log in</a>
-			}
-		</ul>
-	</div>
-</div>
 }
 
 templ LogoutForm() {
-<form method="POST" action="/logout">
-	<li><button type="submit" class="btn btn-link">Logout</button></li>
-</form>
+	<form method="POST" action="/logout">
+		<li><button type="submit" class="btn btn-link">Logout</button></li>
+	</form>
 }
