@@ -2,13 +2,17 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"time"
 
+	"github.com/dkr290/go-advanced-projects/go-templ-cruid/models"
 	"github.com/go-sql-driver/mysql"
 )
 
-type TodoDatabase interface{}
+type TodoDatabase interface {
+	GetAllTasks() ([]models.Task, error)
+}
 
 type MysqlDatabase struct {
 	DB *sql.DB
@@ -19,7 +23,7 @@ func InitDB(cfg mysql.Config) (*sql.DB, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	fmt.Println(cfg.FormatDSN())
 	count := 0
 
 	retryInterval := 2 * time.Second
@@ -36,4 +40,29 @@ func InitDB(cfg mysql.Config) (*sql.DB, error) {
 			}
 		}
 	}
+}
+
+func (d *MysqlDatabase) GetAllTasks() ([]models.Task, error) {
+	query := "SELECT id,task,done FROM tasks"
+
+	rows, err := d.DB.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tasks []models.Task
+
+	for rows.Next() {
+		var todo models.Task
+		rowErr := rows.Scan(&todo.Id, &todo.Task, &todo.Done)
+		if rowErr != nil {
+			return nil, rowErr
+		}
+		tasks = append(tasks, todo)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return tasks, nil
 }

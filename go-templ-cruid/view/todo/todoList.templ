@@ -1,0 +1,11 @@
+package todo
+
+import "github.com/dkr290/go-advanced-projects/go-templ-cruid/models"
+
+templ TodoList(tasks []models.Task) {
+<ul>
+  for _, task := range tasks {
+  <li>{ task.Task } </li>
+  }
+</ul>
+}

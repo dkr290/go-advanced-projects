@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/dkr290/go-advanced-projects/go-templ-cruid/handlers"
+	"github.com/dkr290/go-advanced-projects/go-templ-cruid/helpers"
 	"github.com/dkr290/go-advanced-projects/go-templ-cruid/pkg/db"
 	"github.com/go-chi/chi"
 	"github.com/go-sql-driver/mysql"
@@ -34,8 +36,10 @@ func main() {
 }
 
 func Run(mdb db.MysqlDatabase) error {
-	r := chi.NewRouter()
+	h := handlers.NewHandlers(mdb)
 
+	r := chi.NewRouter()
+	r.Get("/", helpers.MakeHandler(h.HandleHome))
 	port := os.Getenv("HTTP_LISTEN_ADDR")
 	slog.Info("application is running", "port", port)
 	return http.ListenAndServe(os.Getenv("HTTP_LISTEN_ADDR"), r)
