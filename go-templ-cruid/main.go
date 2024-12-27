@@ -36,10 +36,12 @@ func main() {
 }
 
 func Run(mdb db.MysqlDatabase) error {
-	h := handlers.NewHandlers(mdb)
+	h := handlers.NewHandlers(&mdb)
 
 	r := chi.NewRouter()
 	r.Get("/", helpers.MakeHandler(h.HandleHome))
+	// get all tasks
+	r.Get("/tasks", helpers.MakeHandler(h.HandleFetchTasks))
 	port := os.Getenv("HTTP_LISTEN_ADDR")
 	slog.Info("application is running", "port", port)
 	return http.ListenAndServe(os.Getenv("HTTP_LISTEN_ADDR"), r)

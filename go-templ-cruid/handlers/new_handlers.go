@@ -5,10 +5,10 @@ import (
 )
 
 type Handlers struct {
-	MYDB db.MysqlDatabase
+	MYDB db.TodoDatabase
 }
 
-func NewHandlers(db db.MysqlDatabase) *Handlers {
+func NewHandlers(db db.TodoDatabase) *Handlers {
 	return &Handlers{
 		MYDB: db,
 	}
