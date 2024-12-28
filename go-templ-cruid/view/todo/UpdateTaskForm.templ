@@ -1,0 +1,25 @@
+package todo
+
+import (
+	"fmt"
+	"github.com/dkr290/go-advanced-projects/go-templ-cruid/models"
+)
+
+templ UpdateTaskForm(task *models.Task) {
+	<form>
+		<div>
+			<input type="text" name="task" value={ task.Task } class="form-control"/>
+		</div>
+		<div>
+			<input type="checkbox" name="done" if task.Done {
+	checked
+}/>
+		</div>
+		<div class="mt-2">
+			<button hx-put={ fmt.Sprintf("/task/%d", task.Id) } hx-target="#taskList" class="btn btn-warning">
+				Update
+				Task
+			</button>
+		</div>
+	</form>
+}
