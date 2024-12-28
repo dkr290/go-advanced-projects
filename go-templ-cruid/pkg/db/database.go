@@ -12,6 +12,10 @@ import (
 
 type TodoDatabase interface {
 	GetAllTasks() ([]models.Task, error)
+	AddTask(string) error
+	GetTaskByID(int) (*models.Task, error)
+	UpdateTaskByID(models.Task) error
+	DeleteTaskByID(int) error
 }
 
 type MysqlDatabase struct {
@@ -65,4 +69,64 @@ func (d *MysqlDatabase) GetAllTasks() ([]models.Task, error) {
 		return nil, err
 	}
 	return tasks, nil
+}
+
+func (d *MysqlDatabase) AddTask(task string) error {
+	query := "INSERT INTO tasks (task) VALUES (?)"
+	stmt, err := d.DB.Prepare(query)
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(task)
+	if err != nil {
+		return err
+	}
+	stmt.Close()
+	return nil
+}
+
+func (d *MysqlDatabase) GetTaskByID(id int) (*models.Task, error) {
+	query := "SELECT id, task, done FROM tasks WHERE id = ?"
+	var task models.Task
+	row := d.DB.QueryRow(query, id)
+	err := row.Scan(&task.Id, &task.Task, &task.Done)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("No task was found with id %d", id)
+		}
+		return nil, err
+	}
+
+	return &task, nil
+}
+
+func (d *MysqlDatabase) UpdateTaskByID(task models.Task) error {
+	query := "UPDATE tasks SET task = ?, done = ? WHERE id = ?"
+	result, err := d.DB.Exec(query, task.Task, task.Done, task.Id)
+	if err != nil {
+		return err
+	}
+	rowsAffecter, err := result.RowsAffected()
+	if rowsAffecter == 0 {
+		return fmt.Errorf("no rows affected error:  %v", err)
+	}
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *MysqlDatabase) DeleteTaskByID(id int) error {
+	query := "DELETE FROM tasks WHERE id = ?"
+	stmt, err := d.DB.Prepare(query)
+	if err != nil {
+		return err
+	}
+	_, err = stmt.Exec(id)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	return nil
 }

@@ -42,6 +42,21 @@ func Run(mdb db.MysqlDatabase) error {
 	r.Get("/", helpers.MakeHandler(h.HandleHome))
 	// get all tasks
 	r.Get("/tasks", helpers.MakeHandler(h.HandleFetchTasks))
+	// Fetch add task form
+	r.Get("/getnewtaskform", helpers.MakeHandler(h.HandleGetTaskForm))
+	// add task post handler
+	r.Post("/tasks", helpers.MakeHandler(h.HandleAddTask))
+
+	// fetch update form for update by ID
+	r.Get("/gettaskupdateform/{id}", helpers.MakeHandler(h.HandleGetTaskUpdateForm))
+
+	// update the task
+	r.Put("/task/{id}", helpers.MakeHandler(h.HandleUpdateTask))
+	r.Post("/task/{id}", helpers.MakeHandler(h.HandleUpdateTask))
+
+	// delete the task
+	r.Delete("/task/{id}", helpers.MakeHandler(h.HandleDeleteTask))
+
 	port := os.Getenv("HTTP_LISTEN_ADDR")
 	slog.Info("application is running", "port", port)
 	return http.ListenAndServe(os.Getenv("HTTP_LISTEN_ADDR"), r)
