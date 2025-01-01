@@ -1,8 +1,6 @@
 package handlers
 
-import (
-	"github.com/dkr290/go-advanced-projects/go-templ-cruid/pkg/db"
-)
+import "github.com/dkr290/go-advanced-projects/go-templ-cruid-microservice/backend/pkg/db"
 
 type Handlers struct {
 	MYDB db.TodoDatabase

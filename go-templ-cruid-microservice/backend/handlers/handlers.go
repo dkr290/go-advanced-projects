@@ -2,13 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/dkr290/go-advanced-projects/go-templ-cruid-microservice/backend/models"
-	"github.com/dkr290/go-advanced-projects/go-templ-cruid/view/todo"
 	"github.com/go-chi/chi"
 )
 
@@ -26,7 +23,7 @@ func (h *Handlers) HandleGetAllTasks(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) HandleAddTask(w http.ResponseWriter, r *http.Request) {
-	var task models.JsonTask
+	var task models.Task
 	err := json.NewDecoder(r.Body).Decode(&task)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -40,74 +37,63 @@ func (h *Handlers) HandleAddTask(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
-func (h *Handlers) HandleGetTaskUpdateForm(w http.ResponseWriter, r *http.Request) error {
-	id := chi.URLParam(r, "id")
-
-	taskID, err := strconv.Atoi(id)
-	if err != nil {
-		return fmt.Errorf("error converting the id %v", err)
-	}
-
-	task, err := h.MYDB.GetTaskByID(taskID)
-	if err != nil {
-		return err
-	}
-
-	return todo.UpdateTaskForm(task).Render(r.Context(), w)
-}
-
-func (h *Handlers) HandleUpdateTask(w http.ResponseWriter, r *http.Request) error {
-	taskItem := r.FormValue("task")
-	isDone := r.FormValue("done")
+func (h *Handlers) HandleUpdateTask(w http.ResponseWriter, r *http.Request) {
 	tid := chi.URLParam(r, "id")
-	var taskStatus bool
 
-	switch strings.ToLower(isDone) {
-	case "yes", "on":
-		taskStatus = true
-	case "no", "off":
-		taskStatus = false
-	default:
-		taskStatus = false
-	}
 	taskId, err := strconv.Atoi(tid)
 	if err != nil {
-		return fmt.Errorf("error converting the id %v, for %v", err, taskItem)
+		http.Error(w, "Invalid task ID", http.StatusBadRequest)
+		return
+	}
+	task := models.Task{
+		Id: taskId,
 	}
 
-	task := models.Task{
-		Id:   taskId,
-		Task: taskItem,
-		Done: taskStatus,
+	err = json.NewDecoder(r.Body).Decode(&task)
+	if err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
 	}
 
 	// do the update task by ID and also passing the task
 	err = h.MYDB.UpdateTaskByID(task)
 	if err != nil {
-		return err
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
-	todos, err := h.MYDB.GetAllTasks()
-	if err != nil {
-		return err
-	}
-	// return a fresh list of tasks again to the end user
-	return todo.TodoList(todos).Render(r.Context(), w)
+	w.WriteHeader(http.StatusCreated)
 }
 
-func (h *Handlers) HandleDeleteTask(w http.ResponseWriter, r *http.Request) error {
+func (h *Handlers) HandleDeleteTask(w http.ResponseWriter, r *http.Request) {
 	tid := chi.URLParam(r, "id")
 	taskId, err := strconv.Atoi(tid)
 	if err != nil {
-		return fmt.Errorf("error converting the id %v", err)
+		http.Error(w, "Invalid task ID", http.StatusBadRequest)
+		return
 	}
 	err = h.MYDB.DeleteTaskByID(taskId)
 	if err != nil {
-		return err
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
-	todos, err := h.MYDB.GetAllTasks()
+	w.WriteHeader(http.StatusAccepted)
+}
+
+func (h *Handlers) HandleGetTaskById(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	taskID, err := strconv.Atoi(id)
 	if err != nil {
-		return err
+		http.Error(w, "Invalid task ID", http.StatusBadRequest)
+		return
 	}
-	// return a fresh list of tasks again to the end user
-	return todo.TodoList(todos).Render(r.Context(), w)
+
+	task, err := h.MYDB.GetTaskByID(taskID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	// Respond with the task as JSON
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(task)
 }

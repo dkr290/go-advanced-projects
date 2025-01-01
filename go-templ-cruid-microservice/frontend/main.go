@@ -6,37 +6,23 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/dkr290/go-advanced-projects/go-templ-cruid/handlers"
-	"github.com/dkr290/go-advanced-projects/go-templ-cruid/helpers"
-	"github.com/dkr290/go-advanced-projects/go-templ-cruid/pkg/db"
+	"github.com/dkr290/go-advanced-projects/go-templ-cruid-microservice/frontend/handlers"
+	"github.com/dkr290/go-advanced-projects/go-templ-cruid-microservice/frontend/helpers"
 	"github.com/go-chi/chi"
-	"github.com/go-sql-driver/mysql"
+)
+
+var (
+	backendService string
+	portAddress    string
 )
 
 func main() {
-	database, err := db.InitDB(mysql.Config{
-		User:                 db.Envs.DBUser,
-		Passwd:               db.Envs.DBPassword,
-		Addr:                 db.Envs.DBAddress,
-		DBName:               db.Envs.DBName,
-		Net:                  "tcp",
-		AllowNativePasswords: true,
-		ParseTime:            true,
-	})
-	if err != nil {
-		log.Fatal("Fatal error loading environment for mysql connection", err)
-		return
-	}
-
-	mdb := db.MysqlDatabase{
-		DB: database,
-	}
-
-	log.Fatal(Run(mdb))
+	getEnvs()
+	log.Fatal(Run())
 }
 
-func Run(mdb db.MysqlDatabase) error {
-	h := handlers.NewHandlers(&mdb)
+func Run() error {
+	h := handlers.NewHandlers(backendService)
 
 	r := chi.NewRouter()
 	r.Get("/", helpers.MakeHandler(h.HandleHome))
@@ -57,7 +43,17 @@ func Run(mdb db.MysqlDatabase) error {
 	// delete the task
 	r.Delete("/task/{id}", helpers.MakeHandler(h.HandleDeleteTask))
 
-	port := os.Getenv("HTTP_LISTEN_ADDR")
-	slog.Info("application is running", "port", port)
-	return http.ListenAndServe(os.Getenv("HTTP_LISTEN_ADDR"), r)
+	slog.Info("application is running", "port", portAddress)
+	return http.ListenAndServe(portAddress, r)
+}
+
+func getEnvs() {
+	backendService = os.Getenv("BACKEND_SERVICE")
+	if len(backendService) == 0 {
+		backendService = "backend:3000"
+	}
+	portAddress = os.Getenv("HTTP_LISTEN_ADDR")
+	if len(portAddress) == 0 {
+		portAddress = "localhost:8090"
+	}
 }

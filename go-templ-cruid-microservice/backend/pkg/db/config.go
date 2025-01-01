@@ -27,7 +27,7 @@ func initConfig() Config {
 	}
 	return Config{
 		PublicHost: getEnv("HOST", "http://localhost"),
-		Port:       getEnv("PORT", "8080"),
+		Port:       getEnv("PORT", "3000"),
 		DBUser:     getEnv("DB_USER", "root"),
 		DBPassword: getEnv("DB_PASSWORD", "Password123"),
 		DBAddress: fmt.Sprintf(
