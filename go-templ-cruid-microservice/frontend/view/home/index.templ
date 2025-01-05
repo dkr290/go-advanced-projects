@@ -31,9 +31,6 @@ templ Index() {
 								<h2 class="mb-0">Tasks</h2>
 							</div>
 							<div class="card-body">
-								<button class="btn btn-success mb-3" hx-get="/getnewtaskform" hx-target="#taskForm">
-									<i class="bi bi-plus-circle me-2"></i>Add New Task
-								</button>
 								<div id="taskList" hx-get="/tasks" hx-trigger="load"></div>
 							</div>
 						</div>
@@ -44,6 +41,11 @@ templ Index() {
 								<h2 class="mb-0">Task Form</h2>
 							</div>
 							<div class="card-body">
+								<div class="mb-3">
+									<button class="btn btn-success mb-3" hx-get="/getnewtaskform" hx-target="#taskForm">
+										<i class="bi bi-plus-circle me-2"></i>Clean Form
+									</button>
+								</div>
 								<div id="taskForm">
 									@todo.AddTaskForm()
 								</div>

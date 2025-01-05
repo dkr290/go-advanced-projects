@@ -34,6 +34,7 @@ func InitDB(cfg mysql.Config) (*sql.DB, error) {
 	for {
 		if err := db.Ping(); err == nil {
 			log.Println("Sucesfully connected to the database")
+			CreateTables(db)
 			return db, nil
 		} else {
 			log.Printf("Attempt %d: Failed to connect to the database. Retrying in %v...\n", count, retryInterval)
@@ -43,6 +44,23 @@ func InitDB(cfg mysql.Config) (*sql.DB, error) {
 				return nil, err
 			}
 		}
+	}
+}
+
+func CreateTables(db *sql.DB) {
+	createTasksTable := `
+       CREATE TABLE IF NOT EXISTS tasks(
+      	id INT NOT NULL AUTO_INCREMENT,
+        task VARCHAR(200) NOT NULL,
+       	done INT DEFAULT 0,
+	    PRIMARY KEY (id)
+      )  
+    `
+	_, err := db.Exec(createTasksTable)
+	if err != nil {
+		fmt.Println(err)
+		panic("could not create tasks table")
+
 	}
 }
 
