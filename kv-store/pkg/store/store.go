@@ -9,7 +9,7 @@ import (
 )
 
 type Store interface {
-	Set(key string, value string, req models.JsonReqiest)
+	Set(key string, value string, req models.JsonRequest)
 	Get(key string, database string) (string, bool)
 	Delete(key string, database string)
 	Save(filename string) error
@@ -31,27 +31,27 @@ func NewKeyValuesStore() *KeyValuesStore {
 	}
 }
 
-func (s *KeyValuesStore) Set(key string, value string, req models.JsonReqiest) {
-	if _, ok := s.databases[req.Database]; !ok {
-		s.databases[req.Database] = &sync.Map{}
-	}
+func (s *KeyValuesStore) Set(key string, value string, req models.JsonRequest) {
+	s.databases[req.Database] = &sync.Map{}
 	s.databases[req.Database].Store(key, value)
+	// todo if key exists do not set
 }
 
 func (s *KeyValuesStore) Get(key string, database string) (string, bool) {
-	db, ok := s.databases[database]
-	if !ok {
-		return "", false
-	}
-	value, ok := db.Load(key)
+	_ = s.Load(database + ".gob")
 
-	return value.(string), ok
+	db := s.databases[database]
+	if d, ok := db.Load(key); ok {
+		return d.(string), ok
+	}
+	return "", false
 }
 
 func (s *KeyValuesStore) Delete(key string, database string) {
-	if db, ok := s.databases[database]; ok {
-		db.Delete(key)
-	}
+	// if db, ok := s.databases[database]; ok {
+	// 	db.Delete(key)
+	// }
+	// todo
 }
 
 func (s *KeyValuesStore) Load(filename string) error {

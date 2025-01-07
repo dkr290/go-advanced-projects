@@ -25,7 +25,7 @@ func Run() error {
 	app := fiber.New()
 	api := app.Group("api/v1")
 	api.Post("/set", h.HandlerSet)
-	api.Get("/get", h.HandlerGet)
+	api.Get("/get/:database/:key", h.HandlerGet)
 	api.Delete("/del", h.HandleDelete)
 	api.Get("/all", h.HandlerGetAllRecords)
 

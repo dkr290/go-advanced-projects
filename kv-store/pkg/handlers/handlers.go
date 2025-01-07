@@ -21,7 +21,7 @@ func NewHandlers(s store.Store, m *sync.Mutex) *Handlers {
 }
 
 func (h *Handlers) HandlerSet(c *fiber.Ctx) error {
-	var req models.JsonReqiest
+	var req models.JsonRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request"})
 	}
@@ -38,23 +38,21 @@ func (h *Handlers) HandlerSet(c *fiber.Ctx) error {
 }
 
 func (h *Handlers) HandlerGet(c *fiber.Ctx) error {
-	var req models.JsonReqiest
-	if err := c.QueryParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request"})
-	}
+	key := c.Params("key")
+	database := c.Params("database")
 
-	if req.Database == "" || req.Key == "" {
+	if key == "" || database == "" {
 		return c.Status(fiber.StatusBadRequest).
 			JSON(fiber.Map{"error": "Database and key are required"})
 	}
 	h.Mutext.Lock()
 	defer h.Mutext.Unlock()
-	value, exists := h.Store.Get(req.Key, req.Database)
+	value, exists := h.Store.Get(key, database)
 	if !exists {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Key not found in database"})
 	}
 
-	return c.JSON(fiber.Map{"key": req.Key, "value": value})
+	return c.JSON(fiber.Map{"key": key, "value": value})
 }
 
 func (h *Handlers) HandlerGetAllRecords(c *fiber.Ctx) error {
