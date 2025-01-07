@@ -10,12 +10,13 @@ import (
 
 type Handlers struct {
 	Store  store.Store
-	Mutext sync.Mutex
+	Mutext *sync.Mutex
 }
 
-func NewHandlers(s store.Store, db string) *Handlers {
+func NewHandlers(s store.Store, m *sync.Mutex) *Handlers {
 	return &Handlers{
-		Store: s,
+		Store:  s,
+		Mutext: m,
 	}
 }
 
@@ -37,13 +38,51 @@ func (h *Handlers) HandlerSet(c *fiber.Ctx) error {
 }
 
 func (h *Handlers) HandlerGet(c *fiber.Ctx) error {
+	var req models.JsonReqiest
+	if err := c.QueryParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request"})
+	}
+
+	if req.Database == "" || req.Key == "" {
+		return c.Status(fiber.StatusBadRequest).
+			JSON(fiber.Map{"error": "Database and key are required"})
+	}
+	h.Mutext.Lock()
+	defer h.Mutext.Unlock()
+	value, exists := h.Store.Get(req.Key, req.Database)
+	if !exists {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Key not found in database"})
+	}
+
+	return c.JSON(fiber.Map{"key": req.Key, "value": value})
+}
+
+func (h *Handlers) HandlerGetAllRecords(c *fiber.Ctx) error {
+	filename := c.Query("database") + ".gob"
+
+	h.Mutext.Lock()
+	defer h.Mutext.Unlock()
+
+	allData, err := h.Store.LoadAll(filename)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to load data: " + err.Error(),
+		})
+	}
+
+	return c.JSON(allData)
+}
+
+func (h *Handlers) HandleDelete(c *fiber.Ctx) error {
 	key := c.Query("key")
 	database := c.Query("database")
 	h.Mutext.Lock()
 	defer h.Mutext.Unlock()
 
-	if value, ok := h.Store.Get(key, database); ok {
-		return c.JSON(fiber.Map{"value": value})
+	h.Store.Delete(key, database)
+	if err := h.Store.Save(database + ".gob"); err != nil {
+		return c.Status(fiber.StatusInternalServerError).
+			JSON(fiber.Map{"error": "Failed to save the data after delete" + err.Error()})
 	}
-	return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "key not found"})
+	return c.SendStatus(fiber.StatusNoContent)
 }

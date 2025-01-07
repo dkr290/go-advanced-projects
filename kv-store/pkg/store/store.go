@@ -11,58 +11,47 @@ import (
 type Store interface {
 	Set(key string, value string, req models.JsonReqiest)
 	Get(key string, database string) (string, bool)
-	Delete(key string)
+	Delete(key string, database string)
 	Save(filename string) error
 	Load(filename string) error
+	LoadAll(filename string) (map[string]map[string]interface{}, error)
 }
 
 type KeyValuesStore struct {
-	Databases map[string]*sync.Map
-	mutex     sync.Mutex
+	databases map[string]*sync.Map
+}
+
+func init() {
+	_ = NewKeyValuesStore()
 }
 
 func NewKeyValuesStore() *KeyValuesStore {
-	return &KeyValuesStore{}
+	return &KeyValuesStore{
+		databases: make(map[string]*sync.Map),
+	}
 }
 
 func (s *KeyValuesStore) Set(key string, value string, req models.JsonReqiest) {
-	if _, ok := s.Databases[req.Database]; !ok {
-		s.Databases[req.Database] = &sync.Map{}
+	if _, ok := s.databases[req.Database]; !ok {
+		s.databases[req.Database] = &sync.Map{}
 	}
-	s.Databases[req.Database].Store(key, value)
+	s.databases[req.Database].Store(key, value)
 }
 
 func (s *KeyValuesStore) Get(key string, database string) (string, bool) {
-	if db, ok := s.Databases[database]; ok {
-		if value, ok := db.Load(key); ok {
-			return value.(string), ok
-		}
+	db, ok := s.databases[database]
+	if !ok {
+		return "", false
 	}
-	return "", false
+	value, ok := db.Load(key)
+
+	return value.(string), ok
 }
 
-func (s *KeyValuesStore) Delete(key string) {
-	s.data.Delete(key)
-}
-
-func (s *KeyValuesStore) Save(filename string) error {
-	file, err := os.Create(filename)
-	if err != nil {
-		return err
+func (s *KeyValuesStore) Delete(key string, database string) {
+	if db, ok := s.databases[database]; ok {
+		db.Delete(key)
 	}
-	defer file.Close()
-
-	encoder := gob.NewEncoder(file)
-	s.data.Range(func(key, value any) bool {
-		if err := encoder.Encode(key); err != nil {
-			return false
-		}
-		if err := encoder.Encode(value); err != nil {
-			return false
-		}
-		return true
-	})
-	return nil
 }
 
 func (s *KeyValuesStore) Load(filename string) error {
@@ -72,17 +61,55 @@ func (s *KeyValuesStore) Load(filename string) error {
 	}
 	defer file.Close()
 	decoder := gob.NewDecoder(file)
-	for {
-		var key string
-		var value string
-		if err := decoder.Decode(&key); err != nil {
-			break
+	var regularMap map[string]map[string]interface{}
+	if err := decoder.Decode(&regularMap); err != nil {
+		return err
+	}
+	s.databases = make(map[string]*sync.Map)
+	for dbName, innerMap := range regularMap {
+		syncMap := &sync.Map{}
+		for key, value := range innerMap {
+			syncMap.Store(key, value)
 		}
-		if err := decoder.Decode(&value); err != nil {
-			break
-		}
-		s.Set(key, value)
+		s.databases[dbName] = syncMap
 	}
 
 	return nil
+}
+
+func (s *KeyValuesStore) LoadAll(filename string) (map[string]map[string]interface{}, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	decoder := gob.NewDecoder(file)
+	var regularMap map[string]map[string]interface{}
+	if err := decoder.Decode(&regularMap); err != nil {
+		return nil, err
+	}
+
+	return regularMap, nil
+}
+
+func (s *KeyValuesStore) Save(filename string) error {
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	// Convert map[string]*sync.Map to a regular map
+	regularMap := make(map[string]map[string]interface{})
+	for dbName, syncMap := range s.databases {
+		innerMap := make(map[string]interface{})
+		syncMap.Range(func(key, value interface{}) bool {
+			innerMap[key.(string)] = value
+			return true
+		})
+		regularMap[dbName] = innerMap
+	}
+
+	encoder := gob.NewEncoder(file)
+	return encoder.Encode(regularMap)
 }
