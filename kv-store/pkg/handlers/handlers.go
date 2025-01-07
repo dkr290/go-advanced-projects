@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"sync"
+
 	"github.com/dkr290/go-advanced-projects/kv-store/pkg/models"
 	"github.com/dkr290/go-advanced-projects/kv-store/pkg/store"
 	"github.com/gofiber/fiber/v2"
@@ -8,13 +10,12 @@ import (
 
 type Handlers struct {
 	Store  store.Store
-	Dbname string
+	Mutext sync.Mutex
 }
 
 func NewHandlers(s store.Store, db string) *Handlers {
 	return &Handlers{
-		Store:  s,
-		Dbname: db,
+		Store: s,
 	}
 }
 
@@ -23,17 +24,25 @@ func (h *Handlers) HandlerSet(c *fiber.Ctx) error {
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request"})
 	}
-	h.Store.Set(req.Key, req.Value)
-	err := h.Store.Save(h.Dbname)
+	h.Mutext.Lock()
+	defer h.Mutext.Unlock()
+
+	h.Store.Set(req.Key, req.Value, req)
+	err := h.Store.Save(req.Database + ".gob")
 	if err != nil {
-		return err
+		return c.Status(fiber.StatusInternalServerError).
+			JSON(fiber.Map{"error": "Failed to save the data" + err.Error()})
 	}
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
 func (h *Handlers) HandlerGet(c *fiber.Ctx) error {
 	key := c.Query("key")
-	if value, ok := h.Store.Get(key); ok {
+	database := c.Query("database")
+	h.Mutext.Lock()
+	defer h.Mutext.Unlock()
+
+	if value, ok := h.Store.Get(key, database); ok {
 		return c.JSON(fiber.Map{"value": value})
 	}
 	return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "key not found"})

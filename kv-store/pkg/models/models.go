@@ -1,6 +1,7 @@
 package models
 
 type JsonReqiest struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
+	Database string `json:"database"`
+	Key      string `json:"key"`
+	Value    string `json:"value"`
 }

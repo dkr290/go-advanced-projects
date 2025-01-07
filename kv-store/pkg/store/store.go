@@ -4,34 +4,41 @@ import (
 	"encoding/gob"
 	"os"
 	"sync"
+
+	"github.com/dkr290/go-advanced-projects/kv-store/pkg/models"
 )
 
 type Store interface {
-	Set(key string, value string)
-	Get(key string) (string, bool)
+	Set(key string, value string, req models.JsonReqiest)
+	Get(key string, database string) (string, bool)
 	Delete(key string)
 	Save(filename string) error
 	Load(filename string) error
 }
 
 type KeyValuesStore struct {
-	data sync.Map
+	Databases map[string]*sync.Map
+	mutex     sync.Mutex
 }
 
 func NewKeyValuesStore() *KeyValuesStore {
 	return &KeyValuesStore{}
 }
 
-func (s *KeyValuesStore) Set(key string, value string) {
-	s.data.Store(key, value)
+func (s *KeyValuesStore) Set(key string, value string, req models.JsonReqiest) {
+	if _, ok := s.Databases[req.Database]; !ok {
+		s.Databases[req.Database] = &sync.Map{}
+	}
+	s.Databases[req.Database].Store(key, value)
 }
 
-func (s *KeyValuesStore) Get(key string) (string, bool) {
-	value, ok := s.data.Load(key)
-	if !ok {
-		return "", false
+func (s *KeyValuesStore) Get(key string, database string) (string, bool) {
+	if db, ok := s.Databases[database]; ok {
+		if value, ok := db.Load(key); ok {
+			return value.(string), ok
+		}
 	}
-	return value.(string), true
+	return "", false
 }
 
 func (s *KeyValuesStore) Delete(key string) {
