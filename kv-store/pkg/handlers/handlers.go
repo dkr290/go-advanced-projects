@@ -15,8 +15,7 @@ type Handlers struct {
 
 func NewHandlers(s store.Store, m *sync.Mutex) *Handlers {
 	return &Handlers{
-		Store:  s,
-		Mutext: m,
+		Store: s,
 	}
 }
 
@@ -25,15 +24,16 @@ func (h *Handlers) HandlerSet(c *fiber.Ctx) error {
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request"})
 	}
-	h.Mutext.Lock()
-	defer h.Mutext.Unlock()
 
-	h.Store.Set(req.Key, req.Value, req)
-	err := h.Store.Save(req.Database + ".gob")
+	err := h.Store.Set(req.Key, req.Value, req)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).
-			JSON(fiber.Map{"error": "Failed to save the data" + err.Error()})
+		return err
 	}
+	// err = h.Store.Save(req.Database + ".gob")
+	// if err != nil {
+	// 	return c.Status(fiber.StatusInternalServerError).
+	// 		JSON(fiber.Map{"error": "Failed to save the data" + err.Error()})
+	// }
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
@@ -45,8 +45,6 @@ func (h *Handlers) HandlerGet(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).
 			JSON(fiber.Map{"error": "Database and key are required"})
 	}
-	h.Mutext.Lock()
-	defer h.Mutext.Unlock()
 	value, exists := h.Store.Get(key, database)
 	if !exists {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Key not found in database"})
@@ -56,10 +54,7 @@ func (h *Handlers) HandlerGet(c *fiber.Ctx) error {
 }
 
 func (h *Handlers) HandlerGetAllRecords(c *fiber.Ctx) error {
-	filename := c.Query("database") + ".gob"
-
-	h.Mutext.Lock()
-	defer h.Mutext.Unlock()
+	filename := c.Query("database") + ".jsonl"
 
 	allData, err := h.Store.LoadAll(filename)
 	if err != nil {
@@ -74,13 +69,8 @@ func (h *Handlers) HandlerGetAllRecords(c *fiber.Ctx) error {
 func (h *Handlers) HandleDelete(c *fiber.Ctx) error {
 	key := c.Query("key")
 	database := c.Query("database")
-	h.Mutext.Lock()
-	defer h.Mutext.Unlock()
 
 	h.Store.Delete(key, database)
-	if err := h.Store.Save(database + ".gob"); err != nil {
-		return c.Status(fiber.StatusInternalServerError).
-			JSON(fiber.Map{"error": "Failed to save the data after delete" + err.Error()})
-	}
+
 	return c.SendStatus(fiber.StatusNoContent)
 }
