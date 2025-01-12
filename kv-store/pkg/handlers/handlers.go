@@ -67,10 +67,14 @@ func (h *Handlers) HandlerGetAllRecords(c *fiber.Ctx) error {
 }
 
 func (h *Handlers) HandleDelete(c *fiber.Ctx) error {
-	key := c.Query("key")
-	database := c.Query("database")
+	key := c.Params("key")
+	database := c.Params("database")
 
-	h.Store.Delete(key, database)
-
+	err := h.Store.Delete(key, database)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to delete the key: " + err.Error(),
+		})
+	}
 	return c.SendStatus(fiber.StatusNoContent)
 }

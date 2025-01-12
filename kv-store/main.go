@@ -26,7 +26,7 @@ func Run() error {
 	api := app.Group("api/v1")
 	api.Post("/set", h.HandlerSet)
 	api.Get("/get/:database/:key", h.HandlerGet)
-	api.Delete("/del", h.HandleDelete)
+	api.Delete("/del/:database/:key", h.HandleDelete)
 	api.Get("/all", h.HandlerGetAllRecords)
 
 	return app.Listen(port)
