@@ -27,7 +27,7 @@ func Run() error {
 	api.Post("/set", h.HandlerSet)
 	api.Get("/get/:database/:key", h.HandlerGet)
 	api.Delete("/del/:database/:key", h.HandleDelete)
-	api.Get("/all", h.HandlerGetAllRecords)
+	api.Get("/all/:database", h.HandlerGetAllRecords)
 
 	return app.Listen(port)
 }

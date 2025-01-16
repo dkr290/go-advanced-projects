@@ -54,7 +54,7 @@ func (h *Handlers) HandlerGet(c *fiber.Ctx) error {
 }
 
 func (h *Handlers) HandlerGetAllRecords(c *fiber.Ctx) error {
-	filename := c.Query("database") + ".jsonl"
+	filename := c.Params("database") + ".jsonl"
 
 	allData, err := h.Store.LoadAll(filename)
 	if err != nil {
