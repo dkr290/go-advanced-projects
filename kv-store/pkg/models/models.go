@@ -1,9 +1,9 @@
 package models
 
 type JsonRequest struct {
-	Database string `json:"database"`
-	Key      string `json:"key"`
-	Value    string `json:"value"`
+	Database string   `json:"database"`
+	Key      string   `json:"key"`
+	Value    []string `json:"value"`
 }
 type JsonRequestGet struct {
 	Database string `json:"database"`
@@ -11,6 +11,6 @@ type JsonRequestGet struct {
 }
 
 type KvJson struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
+	Key   string   `json:"key"`
+	Value []string `json:"value"`
 }

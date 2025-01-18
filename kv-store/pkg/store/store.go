@@ -12,8 +12,8 @@ import (
 )
 
 type Store interface {
-	Set(key string, value string, req models.JsonRequest) error
-	Get(key string, database string) (string, bool)
+	Set(key string, value []string, req models.JsonRequest) error
+	Get(key string, database string) ([]string, bool)
 	Delete(key string, database string) error
 	Load(filename string) error
 	LoadAll(filename string) (map[string]any, error)
@@ -33,7 +33,7 @@ func NewKeyValuesStore() *KeyValuesStore {
 	}
 }
 
-func (s *KeyValuesStore) Set(key string, value string, req models.JsonRequest) error {
+func (s *KeyValuesStore) Set(key string, value []string, req models.JsonRequest) error {
 	// Check if the database exists in memory
 	db, ok := s.databases[req.Database]
 	if !ok {
@@ -54,7 +54,7 @@ func (s *KeyValuesStore) Set(key string, value string, req models.JsonRequest) e
 	}
 	defer file.Close()
 	// Write the key-value pair as a JSON object
-	entry := map[string]string{
+	entry := map[string]any{
 		"key":   key,
 		"value": value,
 	}
@@ -69,14 +69,14 @@ func (s *KeyValuesStore) Set(key string, value string, req models.JsonRequest) e
 	return nil
 }
 
-func (s *KeyValuesStore) Get(key string, database string) (string, bool) {
+func (s *KeyValuesStore) Get(key string, database string) ([]string, bool) {
 	_ = s.Load(database + ".jsonl")
 
 	db := s.databases[database]
 	if d, ok := db.Load(key); ok {
-		return d.(string), ok
+		return d.([]string), ok
 	}
-	return "", false
+	return nil, false
 }
 
 func (s *KeyValuesStore) Delete(key string, database string) error {
@@ -105,7 +105,7 @@ func (s *KeyValuesStore) Delete(key string, database string) error {
 	db.Range(func(key, value any) bool {
 		entries = append(entries, models.KvJson{
 			Key:   key.(string),
-			Value: value.(string),
+			Value: value.([]string),
 		})
 		return true // Continue iteration
 	})
@@ -138,19 +138,19 @@ func (s *KeyValuesStore) Load(filename string) error {
 	// read the file
 	for scanner.Scan() {
 		line := scanner.Text()
-		entry := make(map[string]string)
+		entry := make(map[string]any)
 		if err := json.Unmarshal([]byte(line), &entry); err != nil {
 			return fmt.Errorf("failed to unmarshal line: %v", err)
 		}
 		// Extract the key and value
-		key, keyExists := entry["key"]
-		value, valueExists := entry["value"]
+		key, keyExists := entry["key"].(string)
+		value, valueExists := entry["value"].(string)
 		if !keyExists || !valueExists {
 			return fmt.Errorf("missing key or value in entry: %s", line)
 		}
 
 		// Store the key-value pair in the sync.Map
-		db.Store(key, value)
+		db.Store(key, []string{value})
 	}
 	if err := scanner.Err(); err != nil {
 		return fmt.Errorf("error while reading file: %v", err)
@@ -174,19 +174,32 @@ func (s *KeyValuesStore) LoadAll(filename string) (map[string]any, error) {
 	for scanner.Scan() {
 		// Parse each line as a JSON object
 		line := scanner.Text()
-		entry := make(map[string]string)
+		entry := make(map[string]any)
 		if err := json.Unmarshal([]byte(line), &entry); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal line: %v", err)
 		}
 
 		// Extract key and value and store in the result map
-		key, keyExists := entry["key"]
-		value, valueExists := entry["value"]
-		if !keyExists || !valueExists {
+		key, keyExists := entry["key"].(string)
+		if !keyExists {
 			return nil, fmt.Errorf("missing key or value in entry: %s", line)
 		}
-		result[key] = value
-		db.Store(key, value)
+		var values []string
+		switch v := entry["value"].(type) {
+		case string:
+			values = []string{v}
+		case []any:
+			for _, item := range v {
+				if str, ok := item.(string); ok {
+					values = append(values, str)
+				}
+			}
+		default:
+			return nil, fmt.Errorf("unexpected value type for key: %v", entry["value"])
+		}
+
+		result[key] = values
+		db.Store(key, values)
 	}
 
 	// Check for errors during file scanning
