@@ -1,1 +1,2 @@
 {"key":"sp_secret_dev","value":{"expirydate":"expiry023232","keyvault":"https://kv01.azurekv.net","metadata":"test"}}
+{"key":"sp_secret_uat","value":{"expirydate":"expiry02243434","keyvault":"https://kv02uat.azurekv.net","metadata":"test434343"}}

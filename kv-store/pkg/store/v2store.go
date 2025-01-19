@@ -13,7 +13,7 @@ import (
 
 type V2Store interface {
 	Set(key string, value map[string]string, req models.V2JsonRequest) error
-	Get(key string, database string) ([]string, bool)
+	Get(key string, database string) (map[string]string, bool)
 	Delete(key string, database string) error
 	Load(filename string) error
 	LoadAll(filename string) (map[string]any, error)
@@ -73,12 +73,12 @@ func (s *V2KeyValuesStore) Set(
 	return nil
 }
 
-func (s *V2KeyValuesStore) Get(key string, database string) ([]string, bool) {
+func (s *V2KeyValuesStore) Get(key string, database string) (map[string]string, bool) {
 	_ = s.Load(database + ".jsonl")
 
 	db := s.databases[database]
 	if d, ok := db.Load(key); ok {
-		return d.([]string), ok
+		return d.(map[string]string), ok
 	}
 	return nil, false
 }
