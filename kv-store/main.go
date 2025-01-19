@@ -18,9 +18,9 @@ func main() {
 }
 
 func Run() error {
-	store := store.NewKeyValuesStore()
+	st := store.NewKeyValuesStore()
 	var m sync.Mutex
-	h := handlers.NewHandlers(store, &m)
+	h := handlers.NewHandlers(st, &m)
 
 	app := fiber.New()
 	api := app.Group("api/v1")
@@ -28,6 +28,14 @@ func Run() error {
 	api.Get("/get/:database/:key", h.HandlerGet)
 	api.Delete("/del/:database/:key", h.HandleDelete)
 	api.Get("/all/:database", h.HandlerGetAllRecords)
+
+	v2store := store.NewV2KeyValuesStore()
+	h2 := handlers.NewV2Handlers(v2store)
+	api1 := app.Group("api/v2")
+	api1.Post("/set", h2.V2HandlerSet)
+	api1.Get("/get/:database/:key", h2.V2HandlerGet)
+	api1.Delete("/del/:database/:key", h2.V2HandleDelete)
+	api1.Get("/all/:database", h2.V2HandlerGetAllRecords)
 
 	return app.Listen(port)
 }
