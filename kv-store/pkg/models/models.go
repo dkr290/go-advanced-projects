@@ -20,3 +20,7 @@ type V2JsonRequest struct {
 	Key      string            `json:"key"`
 	Value    map[string]string `json:"value"` // Change to a map for key-value pairs
 }
+type KvJsonV2 struct {
+	Key   string            `json:"key"`
+	Value map[string]string `json:"value"`
+}

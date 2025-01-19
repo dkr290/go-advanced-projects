@@ -105,11 +105,11 @@ func (s *V2KeyValuesStore) Delete(key string, database string) error {
 	}
 	defer file.Close()
 
-	var entries []models.KvJson
+	var entries []models.KvJsonV2
 	db.Range(func(key, value any) bool {
-		entries = append(entries, models.KvJson{
+		entries = append(entries, models.KvJsonV2{
 			Key:   key.(string),
-			Value: value.([]string),
+			Value: value.(map[string]string),
 		})
 		return true // Continue iteration
 	})
