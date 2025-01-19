@@ -11,29 +11,33 @@ import (
 	"github.com/dkr290/go-advanced-projects/kv-store/pkg/models"
 )
 
-type Store interface {
-	Set(key string, value []string, req models.JsonRequest) error
-	Get(key string, database string) ([]string, bool)
+type V2Store interface {
+	Set(key string, value map[string]string, req models.V2JsonRequest) error
+	Get(key string, database string) (map[string]string, bool)
 	Delete(key string, database string) error
 	Load(filename string) error
 	LoadAll(filename string) (map[string]any, error)
 }
 
-type KeyValuesStore struct {
+type V2KeyValuesStore struct {
 	databases map[string]*sync.Map
 }
 
 func init() {
-	_ = NewKeyValuesStore()
+	_ = NewV2KeyValuesStore()
 }
 
-func NewKeyValuesStore() *KeyValuesStore {
-	return &KeyValuesStore{
+func NewV2KeyValuesStore() *V2KeyValuesStore {
+	return &V2KeyValuesStore{
 		databases: make(map[string]*sync.Map),
 	}
 }
 
-func (s *KeyValuesStore) Set(key string, value []string, req models.JsonRequest) error {
+func (s *V2KeyValuesStore) Set(
+	key string,
+	value map[string]string,
+	req models.V2JsonRequest,
+) error {
 	// Check if the database exists in memory
 	db, ok := s.databases[req.Database]
 	if !ok {
@@ -69,17 +73,17 @@ func (s *KeyValuesStore) Set(key string, value []string, req models.JsonRequest)
 	return nil
 }
 
-func (s *KeyValuesStore) Get(key string, database string) ([]string, bool) {
+func (s *V2KeyValuesStore) Get(key string, database string) (map[string]string, bool) {
 	_ = s.Load(database + ".jsonl")
 
 	db := s.databases[database]
 	if d, ok := db.Load(key); ok {
-		return d.([]string), ok
+		return d.(map[string]string), ok
 	}
 	return nil, false
 }
 
-func (s *KeyValuesStore) Delete(key string, database string) error {
+func (s *V2KeyValuesStore) Delete(key string, database string) error {
 	// Check if the database exists in memory
 	_, ok := s.databases[database]
 	if !ok {
@@ -101,11 +105,11 @@ func (s *KeyValuesStore) Delete(key string, database string) error {
 	}
 	defer file.Close()
 
-	var entries []models.KvJson
+	var entries []models.KvJsonV2
 	db.Range(func(key, value any) bool {
-		entries = append(entries, models.KvJson{
+		entries = append(entries, models.KvJsonV2{
 			Key:   key.(string),
-			Value: value.([]string),
+			Value: value.(map[string]string),
 		})
 		return true // Continue iteration
 	})
@@ -125,7 +129,7 @@ func (s *KeyValuesStore) Delete(key string, database string) error {
 	return nil
 }
 
-func (s *KeyValuesStore) Load(filename string) error {
+func (s *V2KeyValuesStore) Load(filename string) error {
 	file, err := os.Open(filename)
 	if err != nil {
 		return fmt.Errorf("failed to open file: %v", err)
@@ -144,13 +148,22 @@ func (s *KeyValuesStore) Load(filename string) error {
 		}
 		// Extract the key and value
 		key, keyExists := entry["key"].(string)
-		value, valueExists := entry["value"].(string)
+		value, valueExists := entry["value"].(map[string]any)
 		if !keyExists || !valueExists {
 			return fmt.Errorf("missing key or value in entry: %s", line)
 		}
+		// Convert value to map[string]string
+		valueMap := make(map[string]string)
+		for k, v := range value {
+			if str, ok := v.(string); ok {
+				valueMap[k] = str
+			} else {
+				return fmt.Errorf("unexpected type in value for key %s: %v", key, v)
+			}
+		}
 
 		// Store the key-value pair in the sync.Map
-		db.Store(key, []string{value})
+		db.Store(key, valueMap)
 	}
 	if err := scanner.Err(); err != nil {
 		return fmt.Errorf("error while reading file: %v", err)
@@ -160,7 +173,7 @@ func (s *KeyValuesStore) Load(filename string) error {
 	return nil
 }
 
-func (s *KeyValuesStore) LoadAll(filename string) (map[string]any, error) {
+func (s *V2KeyValuesStore) LoadAll(filename string) (map[string]any, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file %s: %v", filename, err)
@@ -184,24 +197,28 @@ func (s *KeyValuesStore) LoadAll(filename string) (map[string]any, error) {
 		if !keyExists {
 			return nil, fmt.Errorf("missing key or value in entry: %s", line)
 		}
-		var values []string
-		switch v := entry["value"].(type) {
-		case string:
-			values = []string{v}
-		case []any:
-			for _, item := range v {
-				if str, ok := item.(string); ok {
-					values = append(values, str)
+		var value map[string]string
+		if rawValue, valueExists := entry["value"]; valueExists {
+			switch v := rawValue.(type) {
+			case map[string]any:
+				value = make(map[string]string)
+				for k, val := range v {
+					if strVal, ok := val.(string); ok {
+						value[k] = strVal
+					} else {
+						return nil, fmt.Errorf("unexpected type for value key %s: %v", k, val)
+					}
 				}
+			default:
+				return nil, fmt.Errorf("unexpected value type for key: %v", entry["value"])
 			}
-		default:
-			return nil, fmt.Errorf("unexpected value type for key: %v", entry["value"])
+		} else {
+			return nil, fmt.Errorf("missing value for key: %s", key)
 		}
+		result[key] = value
+		db.Store(key, value)
 
-		result[key] = values
-		db.Store(key, values)
 	}
-
 	// Check for errors during file scanning
 	if err := scanner.Err(); err != nil {
 		return nil, fmt.Errorf("error while reading file %s: %v", filename, err)

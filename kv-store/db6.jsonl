@@ -1,0 +1,2 @@
+{"key":"sp_secret_uat","value":{"expirydate":"expiry02243434uat","keyvault":"https://kv02uat.azurekv.net","metadata":"test434343"}}
+{"key":"sp_secret_uat1","value":{"expirydate":"expiry02243434uat1","keyvault":"https://kv02uat1.azurekv.net","metadata":"test434343"}}
