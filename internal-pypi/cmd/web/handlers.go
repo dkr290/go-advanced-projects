@@ -21,15 +21,15 @@ func (app *Config) indexHandler(w http.ResponseWriter, r *http.Request) {
 	// the http.Error() function to send a generic 500 Internal Server Error
 	// response to the user.
 
-	//initialize slice containing two files. It's importnant
-	//the base template should be first one
+	// initialize slice containing two files. It's importnant
+	// the base template should be first one
 
 	files := []string{
 		"./templates/base.html",
 		"./templates/partials/nav.html",
 		"./templates/pages/home.html",
 	}
-	//template.ParseFiles() function to read the files and sto the templates in the templateset. variadic parameter as noted in the function
+	// template.ParseFiles() function to read the files and sto the templates in the templateset. variadic parameter as noted in the function
 	ts, err := template.ParseFiles(files...)
 	if err != nil {
 		app.serveError(w, err)
@@ -61,8 +61,8 @@ func (app *Config) indexHandler(w http.ResponseWriter, r *http.Request) {
 		app.serveError(w, err)
 		return
 	}
-
 }
+
 func (app *Config) aboutHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/about" {
 		http.NotFound(w, r)
@@ -73,15 +73,15 @@ func (app *Config) aboutHandler(w http.ResponseWriter, r *http.Request) {
 	// the http.Error() function to send a generic 500 Internal Server Error
 	// response to the user.
 
-	//initialize slice containing two files. It's importnant
-	//the base template should be first one
+	// initialize slice containing two files. It's importnant
+	// the base template should be first one
 
 	files := []string{
 		"./templates/base.html",
 		"./templates/partials/nav.html",
 		"./templates/pages/about.html",
 	}
-	//template.ParseFiles() function to read the files and sto the templates in the templateset. variadic parameter as noted in the function
+	// template.ParseFiles() function to read the files and sto the templates in the templateset. variadic parameter as noted in the function
 	ts, err := template.ParseFiles(files...)
 	if err != nil {
 		app.serveError(w, err)
@@ -93,8 +93,8 @@ func (app *Config) aboutHandler(w http.ResponseWriter, r *http.Request) {
 		app.serveError(w, err)
 		return
 	}
-
 }
+
 func (app *Config) contactHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/contact" {
 		http.NotFound(w, r)
@@ -105,15 +105,15 @@ func (app *Config) contactHandler(w http.ResponseWriter, r *http.Request) {
 	// the http.Error() function to send a generic 500 Internal Server Error
 	// response to the user.
 
-	//initialize slice containing two files. It's importnant
-	//the base template should be first one
+	// initialize slice containing two files. It's importnant
+	// the base template should be first one
 
 	files := []string{
 		"./templates/base.html",
 		"./templates/partials/nav.html",
 		"./templates/pages/contact.html",
 	}
-	//template.ParseFiles() function to read the files and sto the templates in the templateset. variadic parameter as noted in the function
+	// template.ParseFiles() function to read the files and sto the templates in the templateset. variadic parameter as noted in the function
 	ts, err := template.ParseFiles(files...)
 	if err != nil {
 		app.serveError(w, err)
@@ -125,7 +125,6 @@ func (app *Config) contactHandler(w http.ResponseWriter, r *http.Request) {
 		app.serveError(w, err)
 		return
 	}
-
 }
 
 func (app *Config) uploadHandler(w http.ResponseWriter, r *http.Request) {
@@ -188,11 +187,11 @@ func (app *Config) simpleHandler(w http.ResponseWriter, r *http.Request) {
 	packageName = strings.TrimSuffix(packageName, "/")
 	// Create both underscore and hyphen versions of the package name
 	underscorePackageName := strings.ReplaceAll(packageName, "-", "_")
-	//hyphenPackageName := strings.ReplaceAll(packageName, "_", "-")
+	// hyphenPackageName := strings.ReplaceAll(packageName, "_", "-")
 
 	// Search for packages using both versions
 	packagesUnderscore, _ := filepath.Glob(filepath.Join(packageDir, underscorePackageName+"*"))
-	//packagesHyphen, _ := filepath.Glob(filepath.Join(packageDir, hyphenPackageName+"*"))
+	// packagesHyphen, _ := filepath.Glob(filepath.Join(packageDir, hyphenPackageName+"*"))
 
 	// Combine the results
 	var packages []string
@@ -204,7 +203,12 @@ func (app *Config) simpleHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	fmt.Fprintf(w, "<!DOCTYPE html><html><head><title>Links for %s</title></head><body><h1>Links for %s</h1>", packageName, packageName)
+	fmt.Fprintf(
+		w,
+		"<!DOCTYPE html><html><head><title>Links for %s</title></head><body><h1>Links for %s</h1>",
+		packageName,
+		packageName,
+	)
 	for _, pkg := range packages {
 		fileName := filepath.Base(pkg)
 		fmt.Fprintf(w, "<a href=\"/packages/%s\">%s</a><br>", fileName, fileName)
@@ -218,26 +222,23 @@ func (app *Config) packageHandler(w http.ResponseWriter, r *http.Request) {
 	packagePath := filepath.Join(packageDir, packageName)
 
 	app.clientLog("Attemting to serve the package %s", packagePath)
-	file, err := os.Open(packagePath)
+
+	// Get file info to set Content-Length
+	Fileinfo, err := os.Stat(packagePath)
 	if err != nil {
-		log.Printf("Error opening package file: %v", err)
-		http.Error(w, err.Error(), http.StatusNotFound)
+		app.errorLog("Error accessing package file: %v", err)
+		http.Error(w, "File not found", http.StatusNotFound)
 		return
 	}
-	defer file.Close()
 
-	w.Header().Set("Content-Type", "application/octet-stream")
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", packageName))
-	written, err := io.Copy(w, file)
-	if err != nil {
-		app.errorLog("Error service package file: %v", err)
-	} else {
-		app.clientLog("Successfully served package %s with size %d", packageName, written)
-	}
+	// Serve the file using http.FileServer
+	http.ServeFile(w, r, packagePath)
+
+	app.clientLog("Successfully served package %s with size %d", packagePath, Fileinfo.Size())
 }
+
 func (app *Config) favIconHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "static/favicon.ico")
-
 }
 
 func (app *Config) testHandler(w http.ResponseWriter, r *http.Request) {
@@ -248,7 +249,10 @@ func (app *Config) testHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	s := "Liveness and Readiness"
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	fmt.Fprintf(w, "<!DOCTYPE html><html><head><title>Test</title></head><body><h1>Test for %s</h1>", s)
+	fmt.Fprintf(
+		w,
+		"<!DOCTYPE html><html><head><title>Test</title></head><body><h1>Test for %s</h1>",
+		s,
+	)
 	fmt.Fprintf(w, "</body></html>")
-
 }
