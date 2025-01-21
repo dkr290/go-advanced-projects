@@ -2,11 +2,8 @@ package db
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strconv"
-
-	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -21,10 +18,6 @@ type Config struct {
 var Envs = initConfig()
 
 func initConfig() Config {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading the env file")
-	}
 	return Config{
 		PublicHost: getEnv("HOST", "http://localhost"),
 		Port:       getEnv("PORT", "3000"),
@@ -39,23 +32,19 @@ func initConfig() Config {
 	}
 }
 
-func getEnv[T int | string](key string, fallback T) T {
-	if value, ok := os.LookupEnv(key); ok {
-		var result T
-		switch any(fallback).(type) {
-		case int:
-			if i, err := strconv.Atoi(value); err == nil {
-				result = any(i).(T)
-			} else {
-				result = fallback
-			}
-		case string:
-			result = any(value).(T)
-		default:
-			result = fallback
-		}
-		return result
+func getEnv[T int | string](key string, defaultValue T) T {
+	value := os.Getenv(key)
+	if value == "" {
+		return defaultValue
 	}
 
-	return fallback
+	switch any(defaultValue).(type) {
+	case int:
+		if intVal, err := strconv.Atoi(value); err != nil {
+			return any(intVal).(T)
+		}
+	case string:
+		return any(value).(T)
+	}
+	return defaultValue
 }

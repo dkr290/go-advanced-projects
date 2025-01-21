@@ -1,6 +1,7 @@
-FROM golang:1.23.0-alpine3.20 as builder
+FROM golang:1.23.0-alpine3.20 AS builder
 ENV CGO_ENABLED=0
 COPY . /build
+WORKDIR /build
 RUN go build -o backend -ldflags "-X main.build=main" ./
 
 
