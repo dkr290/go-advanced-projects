@@ -54,6 +54,6 @@ func getEnvs() {
 	}
 	portAddress = os.Getenv("HTTP_LISTEN_ADDR")
 	if len(portAddress) == 0 {
-		portAddress = "localhost:8090"
+		portAddress = ":8090"
 	}
 }

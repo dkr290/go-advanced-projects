@@ -12,3 +12,8 @@ DB_HOST="localhost"
 DB_PORT="3306"
 DB_NAME="todo"
 HTTP_LISTEN_ADDR="localhost:3000"
+
+docker build --progress=plain -t frontend .
+
+docker run --name frontend -p 8090:8090 -e BACKEND_SERVICE="10.42.0.142:3000" frontend
+docker run --name backend -d -p 3000:3000 -e DB_USER="root" -e DB_PASSWORD="Password123" -e DB_HOST="10.42.0.142" -e DB_PORT="3306" -e DB_NAME="todo" backend

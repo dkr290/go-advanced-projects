@@ -54,7 +54,7 @@ func Run(mdb db.MysqlDatabase) error {
 
 	port := os.Getenv("HTTP_LISTEN_ADDR")
 	if port == "" {
-		port = "localhost:3000"
+		port = ":3000"
 	}
 	slog.Info("application is running", "port", port)
 	return http.ListenAndServe(port, r)
