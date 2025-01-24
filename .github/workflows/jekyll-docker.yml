@@ -292,7 +292,7 @@ jobs:
           fi
   build-go-tasks-backend-service:
     uses:
-      https://github.com/dkr290/go-advanced-projects/.github/workflows/docker-build-template.yaml@main
+      dkr290/go-advanced-projects/.github/workflows/docker-build-template.yaml@main
 
       # The type of runner that the job will run on
     with:
