@@ -39,6 +39,8 @@ func Run() error {
 	// update the task
 	r.Put("/task/{id}", helpers.MakeHandler(h.HandleUpdateTask))
 	r.Post("/task/{id}", helpers.MakeHandler(h.HandleUpdateTask))
+	r.Get("/favicon.ico", h.FavIconHandler)
+	r.Get("/test", h.TestHandler)
 
 	// delete the task
 	r.Delete("/task/{id}", helpers.MakeHandler(h.HandleDeleteTask))

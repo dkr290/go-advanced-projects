@@ -51,6 +51,8 @@ func Run(mdb db.MysqlDatabase) error {
 	r.Delete("/task/{id}", h.HandleDeleteTask)
 
 	r.Get("/task/{id}", h.HandleGetTaskById)
+	r.Get("/favicon.ico", h.FavIconHandler)
+	r.Get("/test", h.TestHandler)
 
 	port := os.Getenv("HTTP_LISTEN_ADDR")
 	if port == "" {

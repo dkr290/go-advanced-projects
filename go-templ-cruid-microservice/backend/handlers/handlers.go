@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -96,4 +98,24 @@ func (h *Handlers) HandleGetTaskById(w http.ResponseWriter, r *http.Request) {
 	// Respond with the task as JSON
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(task)
+}
+
+func (h *Handlers) FavIconHandler(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "static/favicon.ico")
+}
+
+func (h *Handlers) TestHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		log.Println("Invalid request method", r.Method)
+		http.Error(w, "Invalid task ID", http.StatusMethodNotAllowed)
+		return
+	}
+	s := "Liveness and Readiness"
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	fmt.Fprintf(
+		w,
+		"<!DOCTYPE html><html><head><title>Test</title></head><body><h1>Test for %s</h1>",
+		s,
+	)
+	fmt.Fprintf(w, "</body></html>")
 }

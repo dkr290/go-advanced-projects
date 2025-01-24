@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -220,4 +221,24 @@ func (h *Handlers) HandleDeleteTask(w http.ResponseWriter, r *http.Request) erro
 	}
 	// return a fresh list of tasks again to the end user
 	return todo.TodoList(tasks).Render(r.Context(), w)
+}
+
+func (h *Handlers) FavIconHandler(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "static/favicon.ico")
+}
+
+func (h *Handlers) TestHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		log.Println("Invalid request method", r.Method)
+		http.Error(w, "Invalid task ID", http.StatusMethodNotAllowed)
+		return
+	}
+	s := "Liveness and Readiness"
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	fmt.Fprintf(
+		w,
+		"<!DOCTYPE html><html><head><title>Test</title></head><body><h1>Test for %s</h1>",
+		s,
+	)
+	fmt.Fprintf(w, "</body></html>")
 }
