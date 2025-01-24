@@ -288,4 +288,5 @@ jobs:
             docker push $DOCKER_IMAGE_GO_TASKS_FRONTEND_SERVICE:$GO_TASKS_FRONTEND_VERSION
           else 
             docker tag pypi-image-patched $DOCKER_IMAGE_GO_TASKS_FRONTEND_SERVICE:$GO_TASKS_FRONTEND_VERSION
-            docker push $DOCKER_IMAGE_GO_TASKS_FRONTEND_SERVICE:$GO_TASKS_FRONTEND_VERSION          fi
+            docker push $DOCKER_IMAGE_GO_TASKS_FRONTEND_SERVICE:$GO_TASKS_FRONTEND_VERSION          
+          fi
