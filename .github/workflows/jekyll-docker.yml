@@ -290,3 +290,13 @@ jobs:
             docker tag pypi-image-patched $DOCKER_IMAGE_GO_TASKS_FRONTEND_SERVICE:$GO_TASKS_FRONTEND_VERSION
             docker push $DOCKER_IMAGE_GO_TASKS_FRONTEND_SERVICE:$GO_TASKS_FRONTEND_VERSION          
           fi
+  build-go-tasks-backend-service:
+    uses:
+      https://github.com/dkr290/go-advanced-projects/.github/workflows/docker-build-template.yaml@main
+
+      # The type of runner that the job will run on
+    with:
+      docker_image_name: $DOCKER_IMAGE_GO_TASKS_BACKEND_SERVICE
+      go_tasks_frontend_version: $GO_TASKS_BACKEND_VERSION
+      folder: go-templ-cruid-microservice/frontend
+      name: Build and push go-tasks-backend-Service docker image
