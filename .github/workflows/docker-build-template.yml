@@ -20,7 +20,7 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    name: ${{ inputs.name } }
+    name: ${{ inputs.name }}
     steps:
       - uses: actions/checkout@v3
 
