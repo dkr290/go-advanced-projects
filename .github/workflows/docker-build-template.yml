@@ -16,6 +16,10 @@ on:
         required: false
         type: string
         default: ""
+      dockerfileName:
+        required: false
+        type: string
+        default: "Dockerfile"
 
 jobs:
   build-and-push:
@@ -29,7 +33,7 @@ jobs:
           cd ${{ inputs.folder }}
           ls -l
           docker -v
-          docker build --build-arg BUILD_REF=${{ inputs.version }} --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` . -f Dockerfile -t ${{ inputs.docker_image_name }}
+          docker build --build-arg BUILD_REF=${{ inputs.version }} --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` . -f ${{ inputs.dockerfileName }} -t ${{ inputs.docker_image_name }}
           docker images -a
 
       - if: github.event_name != 'pull_request'
