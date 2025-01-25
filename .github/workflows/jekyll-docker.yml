@@ -12,202 +12,30 @@ on:
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-env:
-  DOCKER_IMAGE_API_SERVICE: ghcr.io/${{ github.repository }}/api-service
-  DOCKER_IMAGE_PYPI_SERVICE: ghcr.io/${{ github.repository }}/internal-pypi
-  DOCKER_IMAGE_GO_TASKS_BACKEND_SERVICE: ghcr.io/${{ github.repository }}/go-tasks-backend
-  DOCKER_IMAGE_GO_TASKS_FRONTEND_SERVICE: ghcr.io/${{ github.repository }}/go-tasks-frontend
-  API_SERVICE_VERSION: "0.0.1"
-  PYPI_SERVICE_VERSION: "0.0.1"
-  GO_TASKS_BACKEND_VERSION: "0.0.1"
-  GO_TASKS_FRONTEND_VERSION: "0.0.1"
 jobs:
   # This workflow contains a single job called "build"
   build-api-service:
-    name: Build and push API-Service docker image
-    # The type of runner that the job will run on
-
-    runs-on: ubuntu-latest
-    outputs:
-      commit: ${{ steps.push-image.outputs.commit }}
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
-    steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
-
-      - name: docker version and build api_service
-        run: |
-          cd api-service
-          docker -v
-          docker build --build-arg BUILD_REF=$API_SERVICE_VERSION --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"`  . -f zarf/docker/Dockerfile.service -t $DOCKER_IMAGE_API_SERVICE
-          docker images -a
-          ls -l
-
-      - if: github.event_name != 'pull_request'
-        name: docker login and push
-        id: push-image
-        run: |
-          echo "${{ github.token }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker tag $DOCKER_IMAGE_API_SERVICE $DOCKER_IMAGE_API_SERVICE:$API_SERVICE_VERSION
-          docker push $DOCKER_IMAGE_API_SERVICE:$API_SERVICE_VERSION
-
-      - name: Scan api_service image with Trivy
-        uses: aquasecurity/trivy-action@0.24.0
-        with:
-          image-ref: ${{ env.DOCKER_IMAGE_API_SERVICE }}:${{ env.API_SERVICE_VERSION }}
-          format: "json"
-          output: "trivy-report.json"
-          exit-code: "0"
-          ignore-unfixed: true
-          vuln-type: "os,library"
-          severity: "CRITICAL,HIGH"
-
-      - name: Check for vulnerabilities
-        id: check_vulnerabilities
-        run: |
-          if [ ! -s trivy-report.json ]; then
-            echo "No vulnerabilities found (report is empty)."
-            echo "skip_copa=true" >> $GITHUB_ENV
-          else
-            VULNERABILITIES_COUNT=$(jq '.Results[].Vulnerabilities | length' trivy-report.json | awk '{s+=$1} END {print s}')
-            if [ "$VULNERABILITIES_COUNT" -eq 0 ]; then
-              echo "No vulnerabilities found."
-              echo "skip_copa=true" >> $GITHUB_ENV
-            else
-              echo "Vulnerabilities found: $VULNERABILITIES_COUNT"
-              echo "skip_copa=false" >> $GITHUB_ENV
-            fi
-          fi
-
-      - name: Patch images with copacetic
-        if: env.skip_copa == 'false'
-        uses: project-copacetic/copa-action@main
-        with:
-          image: ${{ env.DOCKER_IMAGE_API_SERVICE }}:${{ env.API_SERVICE_VERSION }}
-          image-report: "trivy-report.json"
-          patched-tag: "api-image-patched"
-          copa-version: "0.7.0"
-          buildkit-version: "latest"
-        id: patch_image
-        continue-on-error: true
-
-      - name: Handle patching results
-        run: |
-          if [ "${{ steps.patch_image.outcome }}" == "success" ]; then
-            echo "Patching was successful."
-            echo "push_docker_patch=true" >> $GITHUB_ENV
-          else
-            echo "Patching encountered issues or no patchable vulnerabilities were found."
-            echo "push_docker_patch=false" >> $GITHUB_ENV
-          fi
-
-      - name: docker login and push
-        id: push-patched-image
-        run: |
-          echo "${{ github.token }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          if [ "${{ env.push_docker_patch }}" == "false" ]; then
-            docker tag $DOCKER_IMAGE_API_SERVICE $DOCKER_IMAGE_API_SERVICE:$API_SERVICE_VERSION
-            docker push $DOCKER_IMAGE_API_SERVICE:$API_SERVICE_VERSION
-          else 
-            docker tag api-image-patched $DOCKER_IMAGE_API_SERVICE:$API_SERVICE_VERSION
-            docker push $DOCKER_IMAGE_API_SERVICE:$API_SERVICE_VERSION
-          fi
+    uses: dkr290/go-advanced-projects/.github/workflows/docker-build-template.yml@main
+    with:
+      name: Build and push API-Service docker image
+      docker_image_name: ghcr.io/${{ github.repository }}/api-service
+      version: "0.0.1"
+      folder: api-service
 
   build-pypi-service:
-    name:
-      Build and push PYPI-Service docker image
-      # The type of runner that the job will run on
+    uses: dkr290/go-advanced-projects/.github/workflows/docker-build-template.yml@main
+    with:
+      name: Build and push PYPI-Service docker image
+      docker_image_name: ghcr.io/${{ github.repository }}/internal-pypi
+      version: "0.0.1"
+      folder: internal-pypi
 
-    runs-on: ubuntu-latest
-    outputs:
-      commit: ${{ steps.push-image.outputs.commit }}
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: docker version and build pypi_service
-        run: |
-          cd internal-pypi
-          docker -v
-          docker build --build-arg BUILD_REF=$PYPI_SERVICE_VERSION --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"`  . -f Dockerfile -t $DOCKER_IMAGE_PYPI_SERVICE
-          docker images -a
-
-      - if: github.event_name != 'pull_request'
-        name: docker login and push
-        id: push-image
-        run: |
-          echo "${{ github.token }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker tag $DOCKER_IMAGE_PYPI_SERVICE $DOCKER_IMAGE_PYPI_SERVICE:$PYPI_SERVICE_VERSION
-          docker push $DOCKER_IMAGE_PYPI_SERVICE:$PYPI_SERVICE_VERSION
-
-      - name: Scan api_service image with Trivy
-        uses: aquasecurity/trivy-action@0.24.0
-        with:
-          image-ref: ${{ env.DOCKER_IMAGE_PYPI_SERVICE }}:${{ env.PYPI_SERVICE_VERSION }}
-          format: "json"
-          output: "trivy-report.json"
-          exit-code: "0"
-          ignore-unfixed: true
-          vuln-type: "os,library"
-          severity: "CRITICAL,HIGH"
-
-      - name: Check for vulnerabilities
-        id: check_vulnerabilities
-        run: |
-          if [ ! -s trivy-report.json ]; then
-            echo "No vulnerabilities found (report is empty)."
-            echo "skip_copa=true" >> $GITHUB_ENV
-          else
-            VULNERABILITIES_COUNT=$(jq '.Results[].Vulnerabilities | length' trivy-report.json | awk '{s+=$1} END {print s}')
-            if [ "$VULNERABILITIES_COUNT" -eq 0 ]; then
-              echo "No vulnerabilities found."
-              echo "skip_copa=true" >> $GITHUB_ENV
-            else
-              echo "Vulnerabilities found: $VULNERABILITIES_COUNT"
-              echo "skip_copa=false" >> $GITHUB_ENV
-            fi
-          fi
-
-      - name: Patch images with copacetic
-        if: env.skip_copa == 'false'
-        uses: project-copacetic/copa-action@main
-        with:
-          image: ${{ env.DOCKER_IMAGE_PYPI_SERVICE }}:${{ env.PYPI_SERVICE_VERSION }}
-          image-report: "trivy-report.json"
-          patched-tag: "pypi-image-patched"
-          copa-version: "0.7.0"
-          buildkit-version: "latest"
-        id: patch_image
-        continue-on-error: true
-
-      - name: Handle patching results
-        run: |
-          if [ "${{ steps.patch_image.outcome }}" == "success" ]; then
-            echo "Patching was successful."
-            echo "push_docker_patch=true" >> $GITHUB_ENV
-          else
-            echo "Patching encountered issues or no patchable vulnerabilities were found."
-            echo "push_docker_patch=false" >> $GITHUB_ENV
-          fi
-
-      - name: docker login and push
-        id: push-patched-image
-        run: |
-          echo "${{ github.token }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          if [ "${{ env.push_docker_patch }}" == "false" ]; then
-            docker tag $DOCKER_IMAGE_PYPI_SERVICE $DOCKER_IMAGE_PYPI_SERVICE:$PYPI_SERVICE_VERSION
-            docker push $DOCKER_IMAGE_PYPI_SERVICE:$PYPI_SERVICE_VERSION
-          else 
-            docker tag pypi-image-patched $DOCKER_IMAGE_PYPI_SERVICE:$PYPI_SERVICE_VERSION
-            docker push $DOCKER_IMAGE_PYPI_SERVICE:$PYPI_SERVICE_VERSION
-          fi
   build-go-tasks-frontend-service:
     uses: dkr290/go-advanced-projects/.github/workflows/docker-build-template.yml@main
     with:
       name: Build and push go-tasks-frontend-Service docker image
       docker_image_name: ghcr.io/${{ github.repository }}/go-tasks-frontend
-      version: ${{ GO_TASKS_FRONTEND_VERSION }}
+      version: "0.0.1"
       folder: go-templ-cruid-microservice/frontend
 
   build-go-tasks-backend-service:
