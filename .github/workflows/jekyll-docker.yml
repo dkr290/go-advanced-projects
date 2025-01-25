@@ -20,8 +20,8 @@ jobs:
       name: Build and push API-Service docker image
       docker_image_name: ghcr.io/${{ github.repository }}/api-service
       version: "0.0.1"
-      folder: api-service/zarf/docker
-      dockerfileName: Dockerfile.service
+      folder: api-service
+      dockerfileName: zarf/docker/Dockerfile.service
 
   build-pypi-service:
     uses: dkr290/go-advanced-projects/.github/workflows/docker-build-template.yml@main
