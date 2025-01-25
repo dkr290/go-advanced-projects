@@ -207,7 +207,7 @@ jobs:
     with:
       name: Build and push go-tasks-frontend-Service docker image
       docker_image_name: ghcr.io/${{ github.repository }}/go-tasks-frontend
-      version: "0.0.1"
+      version: ${{ GO_TASKS_FRONTEND_VERSION }}
       folder: go-templ-cruid-microservice/frontend
 
   build-go-tasks-backend-service:
