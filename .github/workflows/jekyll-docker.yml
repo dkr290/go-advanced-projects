@@ -296,7 +296,7 @@ jobs:
 
       # The type of runner that the job will run on
     with:
-      docker_image_name: $DOCKER_IMAGE_GO_TASKS_BACKEND_SERVICE
-      version: $GO_TASKS_BACKEND_VERSION
+      docker_image_name: ${{ env.DOCKER_IMAGE_GO_TASKS_BACKEND_SERVICE }}
+      version: ${{ env.GO_TASKS_BACKEND_VERSION }}
       folder: go-templ-cruid-microservice/frontend
-      name: "buikld backend"
+      name: "Build and push go-tasks-backend-Service docker image"
