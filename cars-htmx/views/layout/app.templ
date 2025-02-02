@@ -1,0 +1,62 @@
+package layout
+
+templ Navigation(nav bool) {
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Show Cars</title>
+	<link rel="stylesheet" href="/views/css/bulma.min.css" />
+	<script src="https://unpkg.com/htmx.org@2.0.4"
+		integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+"
+		crossorigin="anonymous"></script>
+	<style>
+		html,
+		body {
+			height: 100%;
+		}
+
+		.wrapper {
+			display: flex;
+			flex-direction: column;
+			min-height: 100vh;
+		}
+
+		.main-content {
+			flex-grow: 1;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="wrapper">
+		if nav {
+		<nav class="navbar is-dark" role="navigation" aria-label="main navigation">
+			<div class="navbar-menu">
+				<div class="navbar-start">
+					<a href="/" class="navbar-item is-size-4">Home</a>
+					<a href="/cars" class="navbar-item is-size-4">Cars</a>
+				</div>
+			</div>
+		</nav>
+		}
+		<!-- Main Content -->
+		<div class="main-content">
+			{ children... }
+		</div>
+		if nav {
+		<footer class="footer has-text-centered p-4 is-size-12">
+			<div class="content has-text-centered">
+				<p>
+					<strong>Cars go fiber bulma and htmx app</strong>
+				</p>
+			</div>
+		</footer>
+		}
+	</div>
+</body>
+
+</html>
+}
