@@ -21,7 +21,7 @@ install:
 #	@go mod vendor
 	@go mod tidy
 	@go mod download
-	@npm install -D tailwindcss
+	@npm install -D tailwindcss@3
 	@npm install -D daisyui@latest
 
 tailwind:

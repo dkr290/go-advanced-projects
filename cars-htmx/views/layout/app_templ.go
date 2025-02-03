@@ -34,7 +34,7 @@ func Navigation(nav bool) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if nav {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<nav class=\"bg-gray-900 text-white p-4\"><div class=\"flex space-x-4\"><a href=\"/\" class=\"text-lg hover:text-gray-300\">Home</a> <a href=\"/cars\" class=\"text-lg hover:text-gray-300\">Cars</a></div></nav>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<nav class=\"bg-neutral  text-white p-4\"><div class=\"flex space-x-4\"><a href=\"/\" class=\"text-lg hover:text-gray-300\">Home</a> <a href=\"/cars\" class=\"text-lg hover:text-gray-300\">Cars</a></div></nav>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -52,7 +52,7 @@ func Navigation(nav bool) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if nav {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<footer class=\"bg-gray-900 text-white text-center p-4 text-sm\"><p><strong>Cars go fiber bulma and htmx app</strong></p></footer>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<footer class=\"footer bg-neutral text-neutral-content p-10 mt-auto\"><nav><h6 class=\"footer-title\">Services</h6><a class=\"link link-hover\">Selling</a> <a class=\"link link-hover\">Design</a></nav><nav><h6 class=\"footer-title\">Company</h6><a class=\"link link-hover\">About us</a> <a class=\"link link-hover\">Contact</a></nav><nav><h6 class=\"footer-title\">Legal</h6><a class=\"link link-hover\">Terms of use</a> <a class=\"link link-hover\">Privacy policy</a></nav></footer>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
