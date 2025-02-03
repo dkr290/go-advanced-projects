@@ -5,3 +5,4 @@ bin
 *_templ.go*
 tmp
 .vscode
+node_modules

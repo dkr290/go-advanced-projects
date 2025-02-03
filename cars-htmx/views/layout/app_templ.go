@@ -29,17 +29,17 @@ func Navigation(nav bool) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!doctype html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>Show Cars</title><link rel=\"stylesheet\" href=\"/views/css/bulma.min.css\"><script src=\"https://unpkg.com/htmx.org@2.0.4\" integrity=\"sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+\" crossorigin=\"anonymous\"></script><style>\n\t\thtml,\n\t\tbody {\n\t\t\theight: 100%;\n\t\t}\n\n\t\t.wrapper {\n\t\t\tdisplay: flex;\n\t\t\tflex-direction: column;\n\t\t\tmin-height: 100vh;\n\t\t}\n\n\t\t.main-content {\n\t\t\tflex-grow: 1;\n\t\t}\n\t</style></head><body><div class=\"wrapper\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!doctype html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>Show Cars</title><link rel=\"stylesheet\" href=\"/public/styles.css\"><script src=\"https://unpkg.com/htmx.org@2.0.4\" integrity=\"sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+\" crossorigin=\"anonymous\"></script></head><body class=\"h-full\"><div class=\"flex flex-col min-h-screen\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if nav {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<nav class=\"navbar is-dark\" role=\"navigation\" aria-label=\"main navigation\"><div class=\"navbar-menu\"><div class=\"navbar-start\"><a href=\"/\" class=\"navbar-item is-size-4\">Home</a> <a href=\"/cars\" class=\"navbar-item is-size-4\">Cars</a></div></div></nav>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<nav class=\"bg-gray-900 text-white p-4\"><div class=\"flex space-x-4\"><a href=\"/\" class=\"text-lg hover:text-gray-300\">Home</a> <a href=\"/cars\" class=\"text-lg hover:text-gray-300\">Cars</a></div></nav>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<!-- Main Content --><div class=\"main-content\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<!-- Main Content --><div class=\"flex-row p-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -52,7 +52,7 @@ func Navigation(nav bool) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if nav {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<footer class=\"footer has-text-centered p-4 is-size-12\"><div class=\"content has-text-centered\"><p><strong>Cars go fiber bulma and htmx app</strong></p></div></footer>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<footer class=\"bg-gray-900 text-white text-center p-4 text-sm\"><p><strong>Cars go fiber bulma and htmx app</strong></p></footer>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
