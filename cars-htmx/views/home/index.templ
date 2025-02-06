@@ -3,14 +3,14 @@ package home
 import "github.com/dkr290/go-advanced-projects/cars-htmx/views/layout"
 
 templ Home() {
-@layout.Navigation(true) {
-<h1 class="text-center text-3xl font-bold my-4 text-amber-500">
-	Car Show Example App
-</h1>
-<div class="flex justify-center my-6">
-	<button class="btn btn-primary btn-lg shadow-lg">
-		Show Available Cars
-	</button>
-</div>
-}
+	@layout.Navigation(true) {
+		<h1 class="text-center text-3xl font-bold my-4 text-amber-500">
+			Car Show Example App
+		</h1>
+		<div class="flex justify-center my-6">
+			<button hx-get="/cars" hx-push-url="true" hx-target="body" class="btn btn-primary btn-lg shadow-lg">
+				Show Available Cars
+			</button>
+		</div>
+	}
 }

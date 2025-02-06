@@ -22,6 +22,8 @@ func main() {
 	app := fiber.New()
 	app.Static("/public/", "./public/")
 	app.Get("/", h.HandleHome)
+	app.Get("/cars", h.HandleListCars)
+	app.Post("/cars", h.HandleAddCar)
 	log.Println("Database type:", database.Db.Name())
 	log.Fatal(app.Listen(":3000"))
 }

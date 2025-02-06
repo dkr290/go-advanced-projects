@@ -3,29 +3,35 @@ package cars
 import (
 	"fmt"
 	"github.com/dkr290/go-advanced-projects/cars-htmx/internal/models"
+	"github.com/dkr290/go-advanced-projects/cars-htmx/views/layout"
 )
 
-templ Cars(cars []models.Car) {
-}
-
 templ CarList(cars []models.Car) {
-	<ul id="car-list" class="flex my-4 flex-wrap m-auto w-2/3">
-		for _,car := range cars {
-			<li
-				id={ fmt.Sprintf("car-%d", car.ID) }
-				class="flex flex-col w-1/4 bg-gray-200 rounded-md shadow-md p-4 m-4  border-gray-300 content-center justify-between text-center"
-			>
-				<span class="text-sm text-gray-900 mb-4">{ car.Brand }: { car.CarModel } { car.Make } from { car.Year }</span>
-				<img src={ car.ImagePath } alt={ car.ImagePath } class="w-full h-32 object-cover rounded-md mb-4"/>
-				<button
-					hx-delete={ fmt.Sprintf("/cars/%d", car.ID) }
-					hx-swap="delete"
-					hx-target={ fmt.Sprintf("#car-%d", car.ID) }
-					class="text-red-500 px-2"
-				>
-					Delete
+	@layout.Navigation(true) {
+		<ul id="car-list" class="flex my-4 flex-wrap m-auto w-2/3">
+			<p>Avaiable Cars</p>
+			<div class="flex justify-center my-6">
+				<button hx-post="/cars" hx-push-url="true" hx-target="body" class="btn btn-primary btn-lg shadow-lg">
+					Add Cars
 				</button>
-			</li>
-		}
-	</ul>
+			</div>
+			for _,car := range cars {
+				<li
+					id={ fmt.Sprintf("car-%d", car.ID) }
+					class="flex flex-col w-1/4 bg-gray-200 rounded-md shadow-md p-4 m-4  border-gray-300 content-center justify-between text-center"
+				>
+					<span class="text-sm text-gray-900 mb-4">{ car.Brand }: { car.CarModel } { car.Make } from { car.Year }</span>
+					<img src={ car.ImagePath } alt={ car.ImagePath } class="w-full h-32 object-cover rounded-md mb-4"/>
+					<button
+						hx-delete={ fmt.Sprintf("/cars/%d", car.ID) }
+						hx-swap="delete"
+						hx-target={ fmt.Sprintf("#car-%d", car.ID) }
+						class="text-red-500 px-2"
+					>
+						Delete
+					</button>
+				</li>
+			}
+		</ul>
+	}
 }

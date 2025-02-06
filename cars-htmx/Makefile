@@ -3,10 +3,9 @@
 default: run
 
 build:
-	export DB="sqllite" 
 	@npx tailwindcss -i views/css/styles.css -o public/styles.css
 	@templ generate view
-	@go build -tags dev -o bin/gocarshtmx main.go 
+	@go build -o bin/gocarshtmx main.go 
 
 test:
 	@go test -v ./...
