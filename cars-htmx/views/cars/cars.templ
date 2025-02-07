@@ -11,7 +11,7 @@ templ CarList(cars []models.Car) {
 		<ul id="car-list" class="flex my-4 flex-wrap m-auto w-2/3">
 			<p>Avaiable Cars</p>
 			<div class="flex justify-center my-6">
-				<button hx-post="/cars" hx-push-url="true" hx-target="body" class="btn btn-primary btn-lg shadow-lg">
+				<button hx-get="/cars/form" hx-swap="outerHTML" hx-target="body" class="btn btn-primary btn-lg shadow-lg">
 					Add Cars
 				</button>
 			</div>

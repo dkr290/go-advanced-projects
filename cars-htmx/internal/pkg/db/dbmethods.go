@@ -6,7 +6,7 @@ import (
 )
 
 type Database interface {
-	InsertCar(c *models.Car) error
+	InsertCar(c *models.CarPostRequest) error
 	GetAllCars() ([]models.Car, error)
 	DeleteCar(id string) error
 	FindCarsByNameMakeOrBrand(search string) ([]models.Car, error)
@@ -17,11 +17,11 @@ type Storage struct {
 }
 
 // dbmethods
-func (s *Storage) InsertCar(c *models.Car) error {
+func (s *Storage) InsertCar(c *models.CarPostRequest) error {
 	tx := s.Db.Create(&models.Car{
 		Brand:     c.Brand,
 		Make:      c.Make,
-		CarModel:  c.CarModel,
+		CarModel:  c.Model,
 		Year:      c.Year,
 		ImagePath: c.ImagePath,
 	})

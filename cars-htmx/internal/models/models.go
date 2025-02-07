@@ -10,3 +10,11 @@ type Car struct {
 	Year      string `json:"year"`
 	ImagePath string `json:"imagePath"`
 }
+
+type CarPostRequest struct {
+	Brand     string `json:"brand"`
+	Model     string `json:"model"`
+	Make      string `json:"make"`
+	Year      string `json:"year"`
+	ImagePath string `json:"imagepath"`
+}

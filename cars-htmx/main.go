@@ -24,6 +24,7 @@ func main() {
 	app.Get("/", h.HandleHome)
 	app.Get("/cars", h.HandleListCars)
 	app.Post("/cars", h.HandleAddCar)
+	app.Get("/cars/form", h.ShowCarForm)
 	log.Println("Database type:", database.Db.Name())
 	log.Fatal(app.Listen(":3000"))
 }
