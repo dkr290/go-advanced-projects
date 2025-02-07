@@ -33,7 +33,7 @@ func (h *Handler) HandleAddCar(c *fiber.Ctx) error {
 		Model:     c.FormValue("model"),
 		Brand:     c.FormValue("brand"),
 		Make:      c.FormValue("make"),
-		Year:      c.FormValue("Year"),
+		Year:      c.FormValue("year"),
 		ImagePath: c.FormValue("imagepath"),
 	}
 	err := h.store.InsertCar(&params)

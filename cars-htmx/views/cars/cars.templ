@@ -8,30 +8,50 @@ import (
 
 templ CarList(cars []models.Car) {
 	@layout.Navigation(true) {
-		<ul id="car-list" class="flex my-4 flex-wrap m-auto w-2/3">
-			<p>Avaiable Cars</p>
-			<div class="flex justify-center my-6">
-				<button hx-get="/cars/form" hx-swap="outerHTML" hx-target="body" class="btn btn-primary btn-lg shadow-lg">
-					Add Cars
+		<div class="max-w-7xl mx-auto p-6">
+			<!-- Heading -->
+			<h2 class="text-2xl font-semibold text-amber-800 text-center mb-6">
+				Available Cars
+			</h2>
+			<!-- Add Car Button -->
+			<div class="flex justify-center mb-8">
+				<button
+					hx-get="/cars/form"
+					hx-swap="outerHTML"
+					hx-target="body"
+					class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-md shadow-lg transition-all"
+				>
+					+ Add Car
 				</button>
 			</div>
-			for _,car := range cars {
-				<li
-					id={ fmt.Sprintf("car-%d", car.ID) }
-					class="flex flex-col w-1/4 bg-gray-200 rounded-md shadow-md p-4 m-4  border-gray-300 content-center justify-between text-center"
-				>
-					<span class="text-sm text-gray-900 mb-4">{ car.Brand }: { car.CarModel } { car.Make } from { car.Year }</span>
-					<img src={ car.ImagePath } alt={ car.ImagePath } class="w-full h-32 object-cover rounded-md mb-4"/>
-					<button
-						hx-delete={ fmt.Sprintf("/cars/%d", car.ID) }
-						hx-swap="delete"
-						hx-target={ fmt.Sprintf("#car-%d", car.ID) }
-						class="text-red-500 px-2"
+			<!-- Car Grid -->
+			<ul id="car-list" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+				for _, car := range cars {
+					<li
+						id={ fmt.Sprintf("car-%d", car.ID) }
+						class="bg-gray-100 rounded-lg shadow-lg p-4 flex flex-col items-center text-center transition-transform transform hover:scale-105"
 					>
-						Delete
-					</button>
-				</li>
-			}
-		</ul>
+						<!-- Car Info -->
+						<div class="text-gray-900 text-left w-full mb-3">
+							<p><span class="font-semibold">Model:</span> { car.CarModel }</p>
+							<p><span class="font-semibold">Brand:</span> { car.Brand }</p>
+							<p><span class="font-semibold">Make:</span> { car.Make }</p>
+							<p><span class="font-semibold">Year:</span> { car.Year }</p>
+						</div>
+						<!-- Car Image -->
+						<img src={ car.ImagePath } alt={ car.Brand } class="w-full h-40 object-cover rounded-md mb-4 shadow-md"/>
+						<!-- Delete Button -->
+						<button
+							hx-delete={ fmt.Sprintf("/cars/%d", car.ID) }
+							hx-swap="delete"
+							hx-target={ fmt.Sprintf("#car-%d", car.ID) }
+							class="text-red-600 font-semibold px-3 py-1 rounded-md hover:text-red-800 transition-all"
+						>
+							Delete
+						</button>
+					</li>
+				}
+			</ul>
+		</div>
 	}
 }
