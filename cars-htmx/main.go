@@ -25,6 +25,7 @@ func main() {
 	app.Get("/cars", h.HandleListCars)
 	app.Post("/cars", h.HandleAddCar)
 	app.Get("/cars/form", h.ShowCarForm)
+	app.Delete("/cars/:id", h.HandleDeleteCar)
 	log.Println("Database type:", database.Db.Name())
 	log.Fatal(app.Listen(":3000"))
 }

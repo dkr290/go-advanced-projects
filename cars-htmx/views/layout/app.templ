@@ -1,54 +1,50 @@
 package layout
 
 templ Navigation(nav bool) {
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-	<meta charset="UTF-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<title>Show Cars</title>
-	<link rel="stylesheet" href="/public/styles.css" />
-	<script src="https://unpkg.com/htmx.org@2.0.4"
-		integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+"
-		crossorigin="anonymous"></script>
-</head>
-
-<body class="h-full">
-	<div class="flex flex-col min-h-screen">
-		if nav {
-		<nav class="bg-neutral  text-white p-4">
-			<div class="flex space-x-4">
-				<a href="/" class="text-lg hover:text-gray-300">Home</a>
-				<a href="/cars" class="text-lg hover:text-gray-300">Cars</a>
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<title>Show Cars</title>
+			<link rel="stylesheet" href="/public/styles.css"/>
+			<script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+			<meta name="htmx-config" content='{"refreshOnHistoryMiss": false}'/>
+		</head>
+		<body class="h-full">
+			<div class="flex flex-col min-h-screen">
+				if nav {
+					<nav class="bg-neutral  text-white p-4">
+						<div class="flex space-x-4">
+							<a href="/" class="text-lg hover:text-gray-300">Home</a>
+							<a href="/cars" class="text-lg hover:text-gray-300">Cars</a>
+						</div>
+					</nav>
+				}
+				<!-- Main Content -->
+				<div class="flex-row p-4">
+					{ children... }
+				</div>
+				if nav {
+					<footer class="footer bg-neutral text-neutral-content p-10 mt-auto">
+						<nav>
+							<h6 class="footer-title">Services</h6>
+							<a class="link link-hover">Selling</a>
+							<a class="link link-hover">Design</a>
+						</nav>
+						<nav>
+							<h6 class="footer-title">Company</h6>
+							<a class="link link-hover">About us</a>
+							<a class="link link-hover">Contact</a>
+						</nav>
+						<nav>
+							<h6 class="footer-title">Legal</h6>
+							<a class="link link-hover">Terms of use</a>
+							<a class="link link-hover">Privacy policy</a>
+						</nav>
+					</footer>
+				}
 			</div>
-		</nav>
-		}
-		<!-- Main Content -->
-		<div class="flex-row p-4">
-			{ children... }
-		</div>
-		if nav {
-		<footer class="footer bg-neutral text-neutral-content p-10 mt-auto">
-			<nav>
-				<h6 class="footer-title">Services</h6>
-				<a class="link link-hover">Selling</a>
-				<a class="link link-hover">Design</a>
-			</nav>
-			<nav>
-				<h6 class="footer-title">Company</h6>
-				<a class="link link-hover">About us</a>
-				<a class="link link-hover">Contact</a>
-			</nav>
-			<nav>
-				<h6 class="footer-title">Legal</h6>
-				<a class="link link-hover">Terms of use</a>
-				<a class="link link-hover">Privacy policy</a>
-			</nav>
-		</footer>
-		}
-	</div>
-</body>
-
-</html>
+		</body>
+	</html>
 }

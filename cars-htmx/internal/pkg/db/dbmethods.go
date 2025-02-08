@@ -35,8 +35,8 @@ func (p *Storage) GetAllCars() ([]models.Car, error) {
 	return c, tx.Error
 }
 
-func (p *Storage) DeleteCar(id string) error {
-	tx := p.Db.Delete(&id)
+func (p *Storage) DeleteCar(id int) error {
+	tx := p.Db.Delete(&models.Car{}, id)
 	return tx.Error
 }
 

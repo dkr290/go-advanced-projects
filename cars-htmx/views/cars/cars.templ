@@ -8,50 +8,77 @@ import (
 
 templ CarList(cars []models.Car) {
 	@layout.Navigation(true) {
-		<div class="max-w-7xl mx-auto p-6">
-			<!-- Heading -->
-			<h2 class="text-2xl font-semibold text-amber-800 text-center mb-6">
-				Available Cars
-			</h2>
-			<!-- Add Car Button -->
-			<div class="flex justify-center mb-8">
-				<button
-					hx-get="/cars/form"
-					hx-swap="outerHTML"
-					hx-target="body"
-					class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-md shadow-lg transition-all"
-				>
-					+ Add Car
-				</button>
-			</div>
-			<!-- Car Grid -->
-			<ul id="car-list" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-				for _, car := range cars {
-					<li
-						id={ fmt.Sprintf("car-%d", car.ID) }
-						class="bg-gray-100 rounded-lg shadow-lg p-4 flex flex-col items-center text-center transition-transform transform hover:scale-105"
-					>
-						<!-- Car Info -->
-						<div class="text-gray-900 text-left w-full mb-3">
-							<p><span class="font-semibold">Model:</span> { car.CarModel }</p>
-							<p><span class="font-semibold">Brand:</span> { car.Brand }</p>
-							<p><span class="font-semibold">Make:</span> { car.Make }</p>
-							<p><span class="font-semibold">Year:</span> { car.Year }</p>
-						</div>
-						<!-- Car Image -->
-						<img src={ car.ImagePath } alt={ car.Brand } class="w-full h-40 object-cover rounded-md mb-4 shadow-md"/>
-						<!-- Delete Button -->
-						<button
-							hx-delete={ fmt.Sprintf("/cars/%d", car.ID) }
-							hx-swap="delete"
-							hx-target={ fmt.Sprintf("#car-%d", car.ID) }
-							class="text-red-600 font-semibold px-3 py-1 rounded-md hover:text-red-800 transition-all"
-						>
-							Delete
-						</button>
-					</li>
-				}
-			</ul>
-		</div>
+		@ListAllCars(cars)
 	}
+}
+
+templ ListAllCars(cars []models.Car) {
+	<!-- Car List -->
+	<script>
+	// Reset scroll position to the top of the page
+	window.scrollTo(0, 0);
+</script>
+	<div id="car-list-container" class="max-w-7xl mx-auto p-6">
+		<!-- Heading -->
+		<h2 class="text-2xl font-semibold text-amber-800 text-center mb-6">
+			Available Cars
+		</h2>
+		<!-- Add Car Button -->
+		<div class="flex justify-center mb-8">
+			<button
+				hx-get="/cars/form"
+				hx-swap="outerHTML"
+				hx-target="body"
+				class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-md shadow-lg transition-all"
+			>
+				+ Add Car
+			</button>
+		</div>
+		<!-- Car Grid -->
+		<ul id="car-list" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+			for _, car := range cars {
+				<li
+					id={ fmt.Sprintf("car-%d", car.ID) }
+					class="bg-gray-100 rounded-lg shadow-lg p-4 flex flex-col items-center text-center transition-transform transform hover:scale-105"
+				>
+					<!-- Car Info -->
+					<div class="text-gray-900 text-left w-full mb-3">
+						<p><span class="font-semibold">Model:</span> { car.CarModel }</p>
+						<p><span class="font-semibold">Brand:</span> { car.Brand }</p>
+						<p><span class="font-semibold">Make:</span> { car.Make }</p>
+						<p><span class="font-semibold">Year:</span> { car.Year }</p>
+					</div>
+					<!-- Car Image -->
+					<img src={ car.ImagePath } alt={ car.Brand } class="w-full h-40 object-cover rounded-md mb-4 shadow-md"/>
+					<!-- Delete Button -->
+					<button
+						hx-delete={ fmt.Sprintf("/cars/%d", car.ID) }
+						hx-swap="outerHTML"
+						hx-target="#car-list-container"
+						hx-trigger="click"
+						class="text-red-600 font-semibold px-3 py-1 rounded-md hover:text-red-800 transition-all"
+					>
+						Delete
+					</button>
+				</li>
+			}
+		</ul>
+	</div>
+}
+
+templ CarListWithToast(cars []models.Car, toastMessage string) {
+	<!-- Toast Notification -->
+	<div id="toast" class="fixed bottom-6 right-4 bg-red-500 text-white px-4 py-2 rounded-md shadow-lg">
+		{ toastMessage }
+	</div>
+	<!-- Car List -->
+	<div id="car-list-container">
+		@ListAllCars(cars)
+	</div>
+	<!-- Hide the toast after 3 seconds -->
+	<script>
+	setTimeout(() => {
+		document.getElementById('toast').classList.add('hidden');
+	}, 3000);
+</script>
 }
