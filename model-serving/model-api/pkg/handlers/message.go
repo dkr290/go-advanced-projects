@@ -1,9 +1,12 @@
 package handlers
 
-type Request struct {
-	Prompt string `json:"prompt"`
+// Model handling structures
+type PullRequest struct {
+	Name string `json:"name"`
+	URL  string `json:"url"`
 }
 
-type Response struct {
-	Answer string `json:"Answer"`
+type GenerateRequest struct {
+	Model  string `json:"model"`
+	Prompt string `json:"prompt"`
 }
