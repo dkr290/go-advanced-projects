@@ -1,21 +1,29 @@
 package handlers
 
 import (
+	"bytes"
+	"context"
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 type Handlers struct {
-	ModelsDir string
+	ModelsDir    string
+	Sem          chan struct{}
+	LlamaCppPath string
 }
 
-func NewHandlers(modelsDir string) *Handlers {
+func NewHandlers(modelsDir string, sem chan struct{}, llamacpppath string) *Handlers {
 	return &Handlers{
-		ModelsDir: modelsDir,
+		ModelsDir:    modelsDir,
+		Sem:          sem,
+		LlamaCppPath: llamacpppath,
 	}
 }
 
@@ -50,6 +58,83 @@ func (h *Handlers) PullModel(c *fiber.Ctx) error {
 	defer outFile.Close()
 
 	if _, err := io.Copy(outFile, resp.Body); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"status": "success"})
+}
+
+func (h *Handlers) GenerateRequest(c *fiber.Ctx) error {
+	select {
+	case h.Sem <- struct{}{}:
+		defer func() { <-h.Sem }()
+	default:
+		return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
+			"error": "server busy, try again later",
+		})
+	}
+
+	var req GenerateRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	modelPath := filepath.Join(h.ModelsDir, req.Model)
+	if _, err := os.Stat(modelPath); os.IsNotExist(err) {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "model not found"})
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, h.LlamaCppPath, "-m", modelPath, "-p", req.Prompt)
+
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":  err.Error(),
+			"stderr": stderr.String(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"response": stdout.String(),
+	})
+}
+
+func (h *Handlers) ListModels(c *fiber.Ctx) error {
+	files, err := os.ReadDir(h.ModelsDir)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	models := make([]fiber.Map, 0)
+	for _, file := range files {
+		info, err := file.Info()
+		if err != nil {
+			continue
+		}
+		models = append(models, fiber.Map{
+			"name": file.Name(),
+			"size": info.Size(),
+		})
+	}
+
+	return c.JSON(models)
+}
+
+func (h *Handlers) DeleteModel(c *fiber.Ctx) error {
+	modelName := c.Params("name")
+	modelPath := filepath.Join(h.ModelsDir, modelName)
+
+	if _, err := os.Stat(modelPath); os.IsNotExist(err) {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "model not found"})
+	}
+
+	if err := os.Remove(modelPath); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
