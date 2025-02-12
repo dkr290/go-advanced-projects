@@ -3,13 +3,16 @@ package handlers
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sync"
 	"time"
 
+	"github.com/dkr290/go-advanced-projects/model-serving/model-api/pkg/helpers"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -28,7 +31,7 @@ func NewHandlers(modelsDir string, sem chan struct{}, llamacpppath string) *Hand
 }
 
 // Handlers
-func (h *Handlers) PullModel(c *fiber.Ctx) error {
+func (h *Handlers) PullModelgguf(c *fiber.Ctx) error {
 	var req PullRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
@@ -39,7 +42,7 @@ func (h *Handlers) PullModel(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "model already exists"})
 	}
 
-	resp, err := http.Get(req.URL)
+	resp, err := http.Get(req.SURL)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -61,6 +64,90 @@ func (h *Handlers) PullModel(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
+	return c.JSON(fiber.Map{"status": "success"})
+}
+
+func (h *Handlers) PullSafeTensors(c *fiber.Ctx) error {
+	var req PullRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	modelDir := filepath.Join(h.ModelsDir, req.Name)
+	tempDir := filepath.Join(h.ModelsDir, "temp_"+req.Name)
+
+	// Create directories
+	if err := os.MkdirAll(modelDir, 0755); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	if err := os.MkdirAll(tempDir, 0755); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	// Download all parts concurrently
+	errChan := make(chan error, len(req.URLs))
+	var wg sync.WaitGroup
+
+	for i, url := range req.URLs {
+		wg.Add(1)
+		go func(idx int, downloadURL string) {
+			defer wg.Done()
+
+			resp, err := http.Get(downloadURL)
+			if err != nil {
+				errChan <- fmt.Errorf("part %d download failed: %w", idx, err)
+				return
+			}
+			defer resp.Body.Close()
+
+			if resp.StatusCode != http.StatusOK {
+				errChan <- fmt.Errorf("part %d bad status: %s", idx, resp.Status)
+				return
+			}
+			partName := fmt.Sprintf("part-%04d.safetensors", idx)
+			outPath := filepath.Join(tempDir, partName)
+
+			outFile, err := os.Create(outPath)
+			if err != nil {
+				errChan <- fmt.Errorf("part %d create failed: %w", idx, err)
+				return
+			}
+			defer outFile.Close()
+
+			if _, err := io.Copy(outFile, resp.Body); err != nil {
+				errChan <- fmt.Errorf("part %d write failed: %w", idx, err)
+				return
+			}
+		}(i, url)
+	}
+
+	wg.Wait()
+	close(errChan)
+	// Check for errors
+	var errors []string
+	for err := range errChan {
+		errors = append(errors, err.Error())
+	}
+	if len(errors) > 0 {
+		os.RemoveAll(tempDir)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":   "partial download",
+			"details": errors,
+		})
+	}
+
+	// Conversion logic for multi-file safetensors
+	if req.Format == "safetensors-multi" {
+		if err := helpers.ConvertMultiSafetensors(tempDir, modelDir); err != nil {
+			os.RemoveAll(tempDir)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": fmt.Sprintf("conversion failed: %v", err),
+			})
+		}
+	}
+
+	// Cleanup
+	os.RemoveAll(tempDir)
 	return c.JSON(fiber.Map{"status": "success"})
 }
 

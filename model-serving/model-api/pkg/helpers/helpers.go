@@ -2,43 +2,46 @@ package helpers
 
 import (
 	"bytes"
-	"encoding/json"
-	"io"
-	"net/http"
-
-	torch "github.com/wangkuiyi/gotorch"
+	"context"
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"sort"
+	"time"
 )
 
-// loadModel loads a PyTorch model from a .pth file
-func LoadModel(modelPath string) torch.Tensor {
-	// Define the model architecture (must match the saved model)
-	m := torch.Load(modelPath)
+func ConvertMultiSafetensors(tempDir, outputDir string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
+	defer cancel()
 
-	return m
-}
+	// Get sorted list of parts
+	files, err := os.ReadDir(tempDir)
+	if err != nil {
+		return err
+	}
 
-// Tokenization Function (Calls Python Tokenizer Service)
-// the url is something like "http://localhost:5001/tokenize"
-func TokenizeText(text string, tokenUrl string) ([]int64, error) {
-	payload := map[string]string{"text": text}
-	body, _ := json.Marshal(payload)
+	// Sort files numerically
+	sort.Slice(files, func(i, j int) bool {
+		return files[i].Name() < files[j].Name()
+	})
 
-	resp, err := http.Post(
-		tokenUrl,
-		"application/json",
-		bytes.NewBuffer(body),
+	// Build input pattern (assumes sequential numbering)
+	pattern := filepath.Join(tempDir, "part-*.safetensors")
+
+	cmd := exec.CommandContext(ctx,
+		"llama.cpp/build/bin/llama-gguf",
+		"--input", pattern, // Use wildcard pattern
+		"--output", filepath.Join(outputDir, "model.gguf"),
+		"--ctx", "4096",
 	)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
 
-	responseData, _ := io.ReadAll(resp.Body)
-	var response map[string][]int64
-	err = json.Unmarshal(responseData, &response)
-	if err != nil {
-		return nil, err
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("%w (stderr: %s)", err, stderr.String())
 	}
 
-	return response["tokens"], nil
+	return nil
 }

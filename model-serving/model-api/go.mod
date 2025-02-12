@@ -1,10 +1,9 @@
-module github.com/dkr290/go-advanced-projects/model-api
+module github.com/dkr290/go-advanced-projects/model-serving/model-api
 
 go 1.23.0
 
 require (
 	github.com/gofiber/fiber/v2 v2.52.6
-	github.com/wangkuiyi/gotorch v0.0.0-20201028015551-9afed2f3ad7b
 )
 
 require (

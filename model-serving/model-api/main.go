@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/dkr290/go-advanced-projects/model-api/pkg/handlers"
+	"github.com/dkr290/go-advanced-projects/model-serving/model-api/pkg/handlers"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -22,7 +22,8 @@ func main() {
 		panic(err)
 	}
 	h := handlers.NewHandlers(modelsDir, sem, llamaCPPPath)
-	app.Post("api/pull", h.PullModel)
+	app.Post("api/pull/gguf", h.PullModelgguf)
+	app.Post("/api/pull/tensors", h.PullSafeTensors)
 	app.Post("api/chat", h.GenerateRequest)
 	app.Get("api/models", h.ListModels)
 	app.Delete("api/models/:name", h.DeleteModel)
