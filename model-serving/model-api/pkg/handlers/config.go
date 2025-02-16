@@ -10,3 +10,13 @@ type GenerateRequest struct {
 	Model  string `json:"model"`
 	Prompt string `json:"prompt"`
 }
+
+// Lllam config
+type LlamaConfig struct {
+	ContextSize int
+	GPULayers   int
+	NUMA        bool
+	Threads     int
+	BatchSize   int
+	Verbose     bool
+}
