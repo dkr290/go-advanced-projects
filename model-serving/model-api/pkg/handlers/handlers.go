@@ -36,6 +36,8 @@ func (h *Handlers) PullModelgguf(c *fiber.Ctx) error {
 	}
 
 	modelPath := filepath.Join(h.ModelsDir, req.Name)
+
+	// check if the models is already downloaded
 	if _, err := os.Stat(modelPath); err == nil {
 		return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "model already exists"})
 	}
