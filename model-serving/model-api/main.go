@@ -6,24 +6,41 @@ import (
 	"log"
 	"os"
 
+	"github.com/dkr290/go-advanced-projects/model-serving/model-api/pkg/config"
 	"github.com/dkr290/go-advanced-projects/model-serving/model-api/pkg/handlers"
 	"github.com/gofiber/fiber/v2"
 )
 
-const (
-	modelsDir      = "models"
-	llamaCPPPath   = "llama.cpp/build/bin/llama-cli" // Update this path
-	maxConcurrency = 4
+var (
+	modelsDir      = flag.String("mpath", "models", "Path to the models directory")
+	maxConcurrency = flag.Int("maxc", 4, "Maximum number of concurrent processes")
+	contextSize    = flag.Int("context-size", 2048, "Model context size")
+	gpuLayers      = flag.Int("gpu-layers", 0, "Number of layers to offload to GPU")
+	numa           = flag.Bool("numa", false, "Enable NUMA optimization")
+	threads        = flag.Int("threads", 4, "Number of threads to use")
+	batchSize      = flag.Int("batch-size", 512, "Processing batch size")
+	verbose        = flag.Bool("verbose", false, "Enable verbose logging")
 )
 
-var sem = make(chan struct{}, maxConcurrency)
+var sem = make(chan struct{}, *maxConcurrency)
 
 func main() {
+	CmdLineparams()
 	app := fiber.New()
-	if err := os.MkdirAll(modelsDir, 0755); err != nil {
+	if err := os.MkdirAll(*modelsDir, 0755); err != nil {
 		panic(err)
 	}
-	h := handlers.NewHandlers(modelsDir, sem, llamaCPPPath)
+	// Create configuration struct for llama parameters
+	llamaConfig := &config.LlamaConfig{
+		ContextSize: *contextSize,
+		GPULayers:   *gpuLayers,
+		NUMA:        *numa,
+		Threads:     *threads,
+		BatchSize:   *batchSize,
+		Verbose:     *verbose,
+	}
+
+	h := handlers.NewHandlers(*modelsDir, sem, llamaConfig)
 	app.Post("api/pull", h.PullModelgguf)
 	app.Post("api/chat", h.GenerateRequest)
 	app.Get("api/models", h.ListModels)
@@ -34,15 +51,8 @@ func main() {
 	}
 }
 
-func CmdLineparams() (modelsDir *string, llamaCPPPath *string, maxConcurrency *int) {
+func CmdLineparams() {
 	// Define command-line flags with default values
-	modelsDir = flag.String("mpath", "models", "Path to the models directory")
-	llamaCPPPath = flag.String(
-		"llmbin",
-		"llama.cpp/build/bin/llama-cli",
-		"Path to the LlamaCPP binary",
-	)
-	maxConcurrency = flag.Int("maxc", 4, "Maximum number of concurrent processes")
 	help := flag.Bool("help", false, "Show usage information")
 	// Parse command-line flags
 	flag.Parse()
@@ -52,17 +62,30 @@ func CmdLineparams() (modelsDir *string, llamaCPPPath *string, maxConcurrency *i
 	}
 
 	// Ensure required parameters are provided
-	if *modelsDir == "" {
+	if *modelsDir == "models" {
 		fmt.Printf("-mpath not supplied using defaults %s.\n", *modelsDir)
-		showUsage()
 	}
-	if *llamaCPPPath == "" {
-		fmt.Printf("-llmbin not supplied using defaults %s.\n", *llamaCPPPath)
-		showUsage()
-	}
-	if *maxConcurrency == 0 {
+
+	if *maxConcurrency == 4 {
 		fmt.Printf("-maxc not supplied using defaults %d.\n", *maxConcurrency)
-		showUsage()
+	}
+	if *contextSize == 2048 {
+		fmt.Printf("-context-size not supplied using defaults %s.\n", *contextSize)
+	}
+	if *gpuLayers == 0 {
+		fmt.Printf("-gpu-layers using defaults or custom  %s.\n", *contextSize)
+	}
+	if *numa == false {
+		fmt.Printf("-numa not true using defaults %s.\n", *numa)
+	}
+	if *threads == 4 {
+		fmt.Printf("-threads not supplied using defaults %s.\n", *threads)
+	}
+	if *batchSize == 512 {
+		fmt.Printf("-batch-size not supplied using defaults %s.\n", *batchSize)
+	}
+	if *verbose == false {
+		fmt.Printf("-verbose using defaults %s.\n", *verbose)
 	}
 	return
 }

@@ -1,29 +1,28 @@
 package handlers
 
 import (
-	"bytes"
-	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
-	"time"
 
-	"github.com/dkr290/go-advanced-projects/model-serving/model-api/pkg/helpers"
+	"github.com/dkr290/go-advanced-projects/model-serving/model-api/pkg/config"
+	llama "github.com/go-skynet/go-llama.cpp"
 	"github.com/gofiber/fiber/v2"
 )
 
 type Handlers struct {
-	ModelsDir    string
-	Sem          chan struct{}
-	LlamaCppPath string
+	ModelsDir   string
+	Sem         chan struct{}
+	LlamaConfig *config.LlamaConfig
 }
 
-func NewHandlers(modelsDir string, sem chan struct{}, llamacpppath string) *Handlers {
+func NewHandlers(modelsDir string, sem chan struct{}, llamaConfig *config.LlamaConfig) *Handlers {
 	return &Handlers{
-		ModelsDir:    modelsDir,
-		Sem:          sem,
-		LlamaCppPath: llamacpppath,
+		ModelsDir:   modelsDir,
+		Sem:         sem,
+		LlamaConfig: llamaConfig,
 	}
 }
 
@@ -87,24 +86,38 @@ func (h *Handlers) GenerateRequest(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "model not found"})
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-	defer cancel()
-
-	var stdout, stderr bytes.Buffer
-
-	cmd, err := helpers.LlamaCommandPrompt(ctx, modelPath, req.Prompt, h.LlamaCppPath)
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
+	l, err := llama.New(
+		modelPath,
+		llama.SetContext(h.LlamaConfig.ContextSize),
+		llama.SetGPULayers(h.LlamaConfig.GPULayers),
+		llama.EnableF16Memory,
+		llama.EnableEmbeddings)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error":  err.Error(),
-			"stderr": stderr.String(),
+			"error": fmt.Sprintf("failed to initialize model: %s", err.Error()),
+		})
+	}
+	defer l.Free()
+
+	// Set inference parameters from request
+	opts := []llama.PredictOption{
+		llama.SetTemperature(req.Temperature),
+		llama.SetTopP(req.TopP),
+		llama.SetTopK(req.TopK),
+		llama.SetTokens(req.MaxTokens),
+		llama.SetThreads(h.LlamaConfig.Threads),
+		llama.SetSeed(req.Seed),
+	}
+	// Run prediction with context
+	result, err := l.Predict(req.Prompt, opts...)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": fmt.Sprintf("prediction failed: %s", err.Error()),
 		})
 	}
 
 	return c.JSON(fiber.Map{
-		"response": stdout.String(),
+		"response": result,
 	})
 }
 
