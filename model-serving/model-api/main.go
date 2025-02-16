@@ -22,8 +22,7 @@ func main() {
 		panic(err)
 	}
 	h := handlers.NewHandlers(modelsDir, sem, llamaCPPPath)
-	app.Post("api/pull/gguf", h.PullModelgguf)
-	app.Post("/api/pull/tensors", h.PullSafeTensors)
+	app.Post("api/pull", h.PullModelgguf)
 	app.Post("api/chat", h.GenerateRequest)
 	app.Get("api/models", h.ListModels)
 	app.Delete("api/models/:name", h.DeleteModel)
