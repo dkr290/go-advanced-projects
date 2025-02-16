@@ -1,6 +1,8 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"log"
 	"os"
 
@@ -30,4 +32,49 @@ func main() {
 	if err := app.Listen(":3000"); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func CmdLineparams() (modelsDir *string, llamaCPPPath *string, maxConcurrency *int) {
+	// Define command-line flags with default values
+	modelsDir = flag.String("mpath", "models", "Path to the models directory")
+	llamaCPPPath = flag.String(
+		"llmbin",
+		"llama.cpp/build/bin/llama-cli",
+		"Path to the LlamaCPP binary",
+	)
+	maxConcurrency = flag.Int("maxc", 4, "Maximum number of concurrent processes")
+	help := flag.Bool("help", false, "Show usage information")
+	// Parse command-line flags
+	flag.Parse()
+	// Display help if the flag is set
+	if *help {
+		showUsage()
+	}
+
+	// Ensure required parameters are provided
+	if *modelsDir == "" {
+		fmt.Printf("-mpath not supplied using defaults %s.\n", *modelsDir)
+		showUsage()
+	}
+	if *llamaCPPPath == "" {
+		fmt.Printf("-llmbin not supplied using defaults %s.\n", *llamaCPPPath)
+		showUsage()
+	}
+	if *maxConcurrency == 0 {
+		fmt.Printf("-maxc not supplied using defaults %d.\n", *maxConcurrency)
+		showUsage()
+	}
+	return
+}
+
+// showUsage prints usage information and exits
+func showUsage() {
+	fmt.Println("Usage:")
+	fmt.Println("  -modelspath string        Path to the models directory (default \"models\")")
+	fmt.Println(
+		"  -llamabinary string     Path to the LlamaCPP binary (default \"llama.cpp/build/bin/llama-cli\")",
+	)
+	fmt.Println("  -maxconcurrency int      Maximum number of concurrent processes (default 4)")
+	fmt.Println("  -help                    Show this help message")
+	os.Exit(0)
 }

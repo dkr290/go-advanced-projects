@@ -6,10 +6,10 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"time"
 
+	"github.com/dkr290/go-advanced-projects/model-serving/model-api/pkg/helpers"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -90,13 +90,13 @@ func (h *Handlers) GenerateRequest(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, h.LlamaCppPath, "-m", modelPath, "-p", req.Prompt)
-
 	var stdout, stderr bytes.Buffer
+
+	cmd, err := helpers.LlamaCommandPrompt(ctx, modelPath, req.Prompt, h.LlamaCppPath)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-	if err := cmd.Run(); err != nil {
+	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":  err.Error(),
 			"stderr": stderr.String(),
