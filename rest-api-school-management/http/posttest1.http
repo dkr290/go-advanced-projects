@@ -1,0 +1,11 @@
+### 
+
+POST http://localhost:8080/teachers HTTP/1.1
+Content-Type: application/json
+Accept: application/json
+
+{
+  "age": "41",
+  "city": "some city",
+  "name": "John"
+}
