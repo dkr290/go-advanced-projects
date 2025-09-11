@@ -47,10 +47,10 @@ func main() {
 	app.Use(cors.New())
 
 	// initialize Huma API for openapi
-	humaApi := humafiber.New(app, huma.DefaultConfig("Docker Builder API", "1.0.0"))
+	humaAPI := humafiber.New(app, huma.DefaultConfig("Docker Builder API", "1.0.0"))
 
 	// Register Huma-documented routes
-	api.RegisterHumaRoutes(humaApi, dockerService)
+	api.RegisterHumaRoutes(humaAPI, dockerService)
 
 	// Health check
 	app.Get("/health", func(c *fiber.Ctx) error {

@@ -126,7 +126,6 @@ func (d *DockerService) performBuild(
 		Tags:       []string{imageName},
 		Dockerfile: "Dockerfile",
 		Remove:     true,
-		BuildArgs:  req.BuildArgs,
 	}
 
 	resp, err := d.client.ImageBuild(ctx, buildContext, buildOptions)

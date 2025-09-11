@@ -28,15 +28,6 @@ func GeneratePythonFlaskDockerfile(req *models.BuildRequest) string {
 	dockerfile.WriteString("# Copy application code\n")
 	dockerfile.WriteString("COPY . .\n\n")
 
-	// Add environment variables
-	if len(req.Environment) > 0 {
-		dockerfile.WriteString("# Environment variables\n")
-		for key, value := range req.Environment {
-			dockerfile.WriteString(fmt.Sprintf("ENV %s=%s\n", key, value))
-		}
-		dockerfile.WriteString("\n")
-	}
-
 	dockerfile.WriteString("# Add labels\n")
 	dockerfile.WriteString(fmt.Sprintf("LABEL version=\"%s\"\n", req.Version))
 	dockerfile.WriteString(fmt.Sprintf("LABEL description=\"%s\"\n", req.Description))
@@ -78,15 +69,6 @@ func GeneratePythonFastAPIDockerfile(req *models.BuildRequest) string {
 	dockerfile.WriteString("# Copy application code\n")
 	dockerfile.WriteString("COPY . .\n\n")
 
-	// Add environment variables
-	if len(req.Environment) > 0 {
-		dockerfile.WriteString("# Environment variables\n")
-		for key, value := range req.Environment {
-			dockerfile.WriteString(fmt.Sprintf("ENV %s=%s\n", key, value))
-		}
-		dockerfile.WriteString("\n")
-	}
-
 	dockerfile.WriteString("# Add labels\n")
 	dockerfile.WriteString(fmt.Sprintf("LABEL version=\"%s\"\n", req.Version))
 	dockerfile.WriteString(fmt.Sprintf("LABEL description=\"%s\"\n", req.Description))
@@ -127,15 +109,6 @@ func GenerateNodeJSDockerfile(req *models.BuildRequest) string {
 	dockerfile.WriteString("# Copy application code\n")
 	dockerfile.WriteString("COPY . .\n\n")
 
-	// Add environment variables
-	if len(req.Environment) > 0 {
-		dockerfile.WriteString("# Environment variables\n")
-		for key, value := range req.Environment {
-			dockerfile.WriteString(fmt.Sprintf("ENV %s=%s\n", key, value))
-		}
-		dockerfile.WriteString("\n")
-	}
-
 	dockerfile.WriteString("# Add labels\n")
 	dockerfile.WriteString(fmt.Sprintf("LABEL version=\"%s\"\n", req.Version))
 	dockerfile.WriteString(fmt.Sprintf("LABEL description=\"%s\"\n", req.Description))
@@ -161,4 +134,3 @@ func GenerateNodeJSDockerfile(req *models.BuildRequest) string {
 
 	return dockerfile.String()
 }
-

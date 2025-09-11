@@ -7,13 +7,11 @@ import (
 
 // BuildRequest represents the request to build a Docker image
 type BuildRequest struct {
-	ModelVersion string             `json:"model_version"         validate:"required"`
-	Version      string             `json:"version"               validate:"required"`
-	Name         string             `json:"name"                  validate:"required"`
-	Tag          string             `json:"tag"                   validate:"required"`
-	Description  string             `json:"description"`
-	Environment  map[string]string  `json:"environment,omitempty"`
-	BuildArgs    map[string]*string `json:"build_args,omitempty"`
+	ModelVersion string `json:"model_version" example:"python-flask"             enum:"python-flask,python-fastapi,nodejs" description:"Base template to use"`
+	Version      string `json:"version"       example:"1.0.0"                                                              description:"Application version label"`
+	Name         string `json:"name"          example:"myapp"                                                              description:"Image name"`
+	Tag          string `json:"tag"           example:"latest"                                                             description:"Image tag"`
+	Description  string `json:"description"   example:"Initial build for my app"`
 }
 
 // BuildResponse represents the response after initiating a build
