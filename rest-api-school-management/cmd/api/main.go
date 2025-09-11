@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/gofiber/fiber/v2"
@@ -15,6 +14,90 @@ type User struct {
 	City string `json:"city"`
 }
 
+func getTeachers(c *fiber.Ctx) error {
+	return c.SendString("Hello, teachers route!")
+}
+
+func postTeachers(c *fiber.Ctx) error {
+	return c.SendString("Hello Post  Method on Teachers struct ")
+}
+
+func deleteTeachers(c *fiber.Ctx) error {
+	return c.SendString("Hello Delete  Method on Teachers struct")
+}
+
+func patchTeachers(c *fiber.Ctx) error {
+	return c.SendString("Hello Patch Method on Teachers struct")
+}
+
+func putTeachers(c *fiber.Ctx) error {
+	return c.SendString("Hello Put  Method on Teachers struct")
+}
+
+func getStudents(c *fiber.Ctx) error {
+	return c.SendString("Hello, students route!")
+}
+
+func patchStudents(c *fiber.Ctx) error {
+	return c.SendString("Hello Patch Method on students struct")
+}
+
+func postStudents(c *fiber.Ctx) error {
+	return c.SendString("Hello Post  Method on students struct ")
+}
+
+func deleteStudents(c *fiber.Ctx) error {
+	return c.SendString("Hello Delete  Method on students struct")
+}
+
+func putStudents(c *fiber.Ctx) error {
+	return c.SendString("Hello Put  Method on students struct")
+}
+
+func getExecs(c *fiber.Ctx) error {
+	return c.SendString("Hello, execs route!")
+}
+
+func patchExecs(c *fiber.Ctx) error {
+	return c.SendString("Hello Patch Method on execs struct")
+}
+
+func postExecs(c *fiber.Ctx) error {
+	return c.SendString("Hello Post  Method on execs struct ")
+}
+
+func deleteExecs(c *fiber.Ctx) error {
+	return c.SendString("Hello Delete  Method on execs struct")
+}
+
+func putExecs(c *fiber.Ctx) error {
+	return c.SendString("Hello Put  Method on execs struct")
+}
+
+func teacherHandler(r fiber.Router) {
+	r.Get("/", getTeachers)
+	r.Post("/", postTeachers)
+	r.Delete("/", deleteTeachers)
+	r.Put("/", putTeachers)
+	r.Patch("/", patchTeachers)
+}
+
+func studentHandler(r fiber.Router) {
+	r.Get("/", getStudents)
+	r.Post("/", postStudents)
+	r.Delete("/", deleteStudents)
+	r.Put("/", putStudents)
+	r.Patch("/", patchStudents)
+}
+
+func execHandler(r fiber.Router) {
+	r.Get("/", getExecs)
+	r.Post("/", postExecs)
+	r.Delete("/", deleteExecs)
+	r.Put("/", putExecs)
+	r.Patch("/", patchExecs)
+}
+
 func main() {
 	// Initialize a new Fiber app
 	app := fiber.New()
@@ -23,78 +106,14 @@ func main() {
 		return c.SendString("Hello, Root route!")
 	})
 
-	teachers := app.Group("/teachers", func(c *fiber.Ctx) error {
-		return c.Next()
-	})
+	teachers := app.Group("/teachers")
+	teacherHandler(teachers)
 
-	teachers.Get("/", func(c *fiber.Ctx) error {
-		fmt.Println(c.Method())
-		return c.SendString("Hello, teachers route!")
-	})
-	teachers.Patch("/", func(c *fiber.Ctx) error {
-		fmt.Println(c.Method())
-		return c.SendString("Hello Patch Method on Teachers struct")
-	})
-	teachers.Post("/", func(c *fiber.Ctx) error {
-		return c.SendString("Hello Post  Method on Teachers struct ")
-	})
-	teachers.Delete("/", func(c *fiber.Ctx) error {
-		fmt.Println(c.Method())
-		return c.SendString("Hello Delete  Method on Teachers struct")
-	})
+	students := app.Group("/students")
+	studentHandler(students)
 
-	teachers.Put("/", func(c *fiber.Ctx) error {
-		fmt.Println(c.Method())
-		return c.SendString("Hello Put  Method on Teachers struct")
-	})
-
-	students := app.Group("/students", func(c *fiber.Ctx) error {
-		return c.Next()
-	})
-	students.Get("/", func(c *fiber.Ctx) error {
-		fmt.Println(c.Method())
-		return c.SendString("Hello, students route!")
-	})
-	students.Patch("/", func(c *fiber.Ctx) error {
-		fmt.Println(c.Method())
-		return c.SendString("Hello Patch Method on students struct")
-	})
-	students.Post("/", func(c *fiber.Ctx) error {
-		return c.SendString("Hello Post  Method on students struct ")
-	})
-	students.Delete("/", func(c *fiber.Ctx) error {
-		fmt.Println(c.Method())
-		return c.SendString("Hello Delete  Method on students struct")
-	})
-
-	students.Put("/", func(c *fiber.Ctx) error {
-		fmt.Println(c.Method())
-		return c.SendString("Hello Put  Method on students struct")
-	})
-	execs := app.Group("/execs", func(c *fiber.Ctx) error {
-		return c.Next()
-	})
-	execs.Get("/", func(c *fiber.Ctx) error {
-		fmt.Println(c.Method())
-		return c.SendString("Hello, execs route!")
-	})
-	execs.Patch("/", func(c *fiber.Ctx) error {
-		fmt.Println(c.Method())
-		return c.SendString("Hello Patch Method on execs struct")
-	})
-	execs.Post("/", func(c *fiber.Ctx) error {
-		return c.SendString("Hello Post  Method on execs struct ")
-	})
-	execs.Delete("/", func(c *fiber.Ctx) error {
-		fmt.Println(c.Method())
-		return c.SendString("Hello Delete  Method on execs struct")
-	})
-
-	execs.Put("/", func(c *fiber.Ctx) error {
-		fmt.Println(c.Method())
-		return c.SendString("Hello Put  Method on execs struct")
-	})
-
-	// Start the server on port 3000
+	execs := app.Group("/execs")
+	execHandler(execs)
+	// Start the server on port
 	log.Fatal(app.Listen(port))
 }
