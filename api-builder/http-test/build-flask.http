@@ -1,0 +1,15 @@
+### 
+
+POST http://localhost:8080/api/v1/build HTTP/1.1
+Accept: "Content-Type: application/json"
+
+{
+  "description": "My Flask application",
+  "environment": {
+    "FLASK_ENV": "production"
+  },
+  "model_version": "python-flask",
+  "name": "my-flask-app",
+  "tag": "latest",
+  "version": "1.0.0"
+}
