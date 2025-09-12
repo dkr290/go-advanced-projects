@@ -5,8 +5,8 @@ import (
 	"time"
 )
 
-// BuildRequest represents the request to build a Docker image
-type BuildRequest struct {
+// BuildImageRequest represents the request to build a Docker image
+type BuildImageRequest struct {
 	ModelVersion string `json:"model_version" example:"python-flask"             enum:"python-flask,python-fastapi,nodejs" description:"Base template to use"`
 	Version      string `json:"version"       example:"1.0.0"                                                              description:"Application version label"`
 	Name         string `json:"name"          example:"myapp"                                                              description:"Image name"`
@@ -14,8 +14,8 @@ type BuildRequest struct {
 	Description  string `json:"description"   example:"Initial build for my app"`
 }
 
-// BuildResponse represents the response after initiating a build
-type BuildResponse struct {
+// BuildImageResponse represents the response after initiating a build
+type BuildImageResponse struct {
 	BuildID   string    `json:"build_id"`
 	Status    string    `json:"status"`
 	Message   string    `json:"message"`

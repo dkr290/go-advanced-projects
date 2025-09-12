@@ -1,9 +1,10 @@
 # Build stage
-FROM golang:1.21-alpine AS builder
+FROM golang:1.25 AS builder
 
-# Install git and ca-certificates
-RUN apk add --no-cache git ca-certificates
-
+COPY zscaler-root-ca.crt /usr/local/share/ca-certificates/zscaler-root-ca.crt
+RUN apt-get update && \
+  apt-get install -y ca-certificates && \
+  update-ca-certificates
 # Set working directory
 WORKDIR /app
 
@@ -20,13 +21,11 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
 
 # Final stage
-FROM alpine:latest
+FROM docker:28.4.0-dind
 
-# Install ca-certificates and docker client
-RUN apk --no-cache add ca-certificates curl docker
 
 # Create app directory
-WORKDIR /root/
+WORKDIR /app
 
 # Copy the binary from builder stage
 COPY --from=builder /app/main .
@@ -34,9 +33,6 @@ COPY --from=builder /app/main .
 # Expose port
 EXPOSE 8080
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8080/health || exit 1
 
 # Run the application
 CMD ["./main"]

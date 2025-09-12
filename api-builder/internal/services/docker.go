@@ -7,16 +7,18 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net"
+	"os/exec"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/dkr290/go-advanced-projects/api-builder/internal/logging"
 	"github.com/dkr290/go-advanced-projects/api-builder/internal/models"
 	"github.com/dkr290/go-advanced-projects/api-builder/utils"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 )
 
 type DockerService struct {
@@ -25,10 +27,48 @@ type DockerService struct {
 	buildMutex sync.RWMutex
 }
 
+var clog = logging.Init(false)
+
 func NewDockerService() (*DockerService, error) {
-	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-	if err != nil {
-		return nil, fmt.Errorf("failed to create Docker client: %w", err)
+	var cli *client.Client
+	var err error
+	if err := ensureDockerDaemon(); err != nil {
+		return nil, err
+	}
+
+	dockerHosts := []string{
+		"unix:///var/run/docker.sock", // Sidecar approach
+		"tcp://localhost:2375",        // DinD on same pod
+		"tcp://docker:2375",           // If docker service exists
+	}
+
+	for _, host := range dockerHosts {
+		clog.Infof("Trying Docker host: %s", host)
+		opts := []client.Opt{
+			client.WithHost(host),
+			client.WithAPIVersionNegotiation(),
+		}
+		if strings.HasPrefix(host, "tcp://") {
+			opts = append(opts, client.WithTimeout(10*time.Second))
+		}
+		cli, err = client.NewClientWithOpts(opts...)
+		if err != nil {
+			clog.Warnf("Failed to create client for %s: %v", host, err)
+			continue
+
+		}
+		// Test connection with timeout
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		_, err = cli.Ping(ctx)
+		cancel()
+		if err != nil {
+			clog.Warnf("Failed to ping Docker at %s: %v", host, err)
+			cli.Close()
+			continue
+		} else {
+			clog.Infof("Successfully connected to Docker at %s", host)
+			break
+		}
 	}
 
 	return &DockerService{
@@ -37,14 +77,43 @@ func NewDockerService() (*DockerService, error) {
 	}, nil
 }
 
+func ensureDockerDaemon() error {
+	// We're in Docker, check if daemon is running
+	if _, err := net.Dial("unix", "/var/run/docker.sock"); err != nil {
+		clog.Info("Docker daemon not running, starting it...")
+
+		// Start dockerd
+		cmd := exec.Command("dockerd",
+			"--host=unix:///var/run/docker.sock",
+			"--host=tcp://0.0.0.0:2375",
+			"--tls=false",
+			"--storage-driver=vfs")
+
+		if err := cmd.Start(); err != nil {
+			return fmt.Errorf("failed to start dockerd: %v", err)
+		}
+
+		// Wait for daemon to be ready
+		for range 10 {
+			if _, err := net.Dial("unix", "/var/run/docker.sock"); err == nil {
+				clog.Info("✅ Docker daemon started successfully")
+				return nil
+			}
+			time.Sleep(1 * time.Second)
+		}
+		return fmt.Errorf("docker daemon failed to start within 10 seconds")
+	}
+	return nil
+}
+
 func (d *DockerService) Close() error {
 	return d.client.Close()
 }
 
 func (d *DockerService) BuildImage(
 	ctx context.Context,
-	req *models.BuildRequest,
-) (*models.BuildResponse, error) {
+	req *models.BuildImageRequest,
+) (*models.BuildImageResponse, error) {
 	buildID := uuid.New().String()
 	imageName := fmt.Sprintf("%s:%s", req.Name, req.Tag)
 
@@ -65,7 +134,7 @@ func (d *DockerService) BuildImage(
 	// Start build in goroutine
 	go d.performBuild(ctx, buildID, req, imageName)
 
-	return &models.BuildResponse{
+	return &models.BuildImageResponse{
 		BuildID:   buildID,
 		Status:    "pending",
 		Message:   "Build started",
@@ -86,22 +155,10 @@ func (d *DockerService) GetBuildStatus(buildID string) (*models.BuildStatus, err
 	return status, nil
 }
 
-func (d *DockerService) ListBuilds() []*models.BuildStatus {
-	d.buildMutex.RLock()
-	defer d.buildMutex.RUnlock()
-
-	builds := make([]*models.BuildStatus, 0, len(d.builds))
-	for _, build := range d.builds {
-		builds = append(builds, build)
-	}
-
-	return builds
-}
-
 func (d *DockerService) performBuild(
 	ctx context.Context,
 	buildID string,
-	req *models.BuildRequest,
+	req *models.BuildImageRequest,
 	imageName string,
 ) {
 	d.updateBuildStatus(buildID, "building", "Creating Dockerfile and building image", nil)
@@ -143,7 +200,7 @@ func (d *DockerService) performBuild(
 		if n > 0 {
 			logLine := string(buf[:n])
 			logs = append(logs, logLine)
-			logrus.Infof("Build %s: %s", buildID, strings.TrimSpace(logLine))
+			clog.Infof("Build %s: %s", buildID, strings.TrimSpace(logLine))
 		}
 		if err == io.EOF {
 			break
@@ -170,7 +227,7 @@ func (d *DockerService) performBuild(
 	}
 	d.buildMutex.Unlock()
 
-	logrus.Infof("Build %s completed successfully for image %s", buildID, imageName)
+	clog.Infof("Build %s completed successfully for image %s", buildID, imageName)
 }
 
 func (d *DockerService) updateBuildStatus(buildID, status, message string, logs []string) {
@@ -190,7 +247,7 @@ func (d *DockerService) updateBuildStatus(buildID, status, message string, logs 
 	}
 }
 
-func (d *DockerService) generateDockerfile(req *models.BuildRequest) string {
+func (d *DockerService) generateDockerfile(req *models.BuildImageRequest) string {
 	// Generate different Dockerfiles based on model version
 	switch strings.ToLower(req.ModelVersion) {
 	case "python-flask":

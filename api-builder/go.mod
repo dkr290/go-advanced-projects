@@ -7,6 +7,7 @@ require (
 	github.com/docker/docker v25.0.3+incompatible
 	github.com/gofiber/fiber/v2 v2.52.9
 	github.com/google/uuid v1.6.0
+	github.com/rs/zerolog v1.34.0
 	github.com/sirupsen/logrus v1.9.3
 )
 

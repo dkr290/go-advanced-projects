@@ -5,6 +5,7 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/dkr290/go-advanced-projects/api-builder/internal/services"
+	"github.com/sirupsen/logrus"
 )
 
 type RootInfo struct {
@@ -15,15 +16,14 @@ type RootInfo struct {
 	Supported   []string          `json:"supported_model_versions"`
 }
 
-func RegisterHumaRoutes(api huma.API, dockerService *services.DockerService) {
+func RegisterHumaRoutes(api huma.API, dockerService *services.DockerService, clog *logrus.Logger) {
 	// API v1 routes
-	handlers := NewHandlers(dockerService)
+	handlers := NewHandlers(dockerService, clog)
 
 	huma.Post(api, "/api/v1/build", handlers.BuildImage)
 
 	// Build status and list
 	huma.Get(api, "/api/v1/build/{buildId}/status", handlers.GetBuildStatus)
-	huma.Get(api, "/api/v1/builds", handlers.ListBuilds)
 	// Documentation route
 	// convert the root info route to Huma as well
 	huma.Get(api, "/api/v1", func(ctx context.Context, _ *struct{}) (*RootInfo, error) {

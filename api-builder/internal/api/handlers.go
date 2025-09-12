@@ -11,35 +11,27 @@ import (
 
 type Handlers struct {
 	dockerService *services.DockerService
+	clog          *logrus.Logger
 }
 
 type GetBuildStatus struct {
 	BuildID string `path:"buildId" doc:"The Build ID to query"`
 }
-type ListBuildResponse struct {
-	Builds []*models.BuildStatus `json:"builds" doc:"All known Builds"`
-	Total  int                   `json:"total"  doc:"Total number of Builds"`
-}
 type BuildImageOutput struct {
-	Body models.BuildResponse `json:"body"`
+	Body models.BuildImageResponse `json:"body"`
 }
 type GetBuildStatusOutput struct {
 	Body models.BuildStatus `json:"body"`
 }
-type BuildImageRequest struct {
-	ModelVersion string `json:"model_version" example:"python-flask"             enum:"python-flask,python-fastapi,nodejs" description:"Base template to use"`
-	Version      string `json:"version"       example:"1.0.0"                                                              description:"Application version label"`
-	Name         string `json:"name"          example:"myapp"                                                              description:"Image name"`
-	Tag          string `json:"tag"           example:"latest"                                                             description:"Image tag"`
-	Description  string `json:"description"   example:"Initial build for my app"`
-}
+
 type BuildImageInput struct {
-	Body BuildImageRequest
+	Body models.BuildImageRequest
 }
 
-func NewHandlers(dockerService *services.DockerService) *Handlers {
+func NewHandlers(dockerService *services.DockerService, clog *logrus.Logger) *Handlers {
 	return &Handlers{
 		dockerService: dockerService,
+		clog:          clog,
 	}
 }
 
@@ -52,14 +44,14 @@ func (h *Handlers) BuildImage(
 	if req.ModelVersion == "" || req.Version == "" || req.Name == "" || req.Tag == "" {
 		return nil, huma.Error400BadRequest("model_version, version, name, and tag are required")
 	}
-	logrus.Infof(
+	h.clog.Infof(
 		"Building image: %s:%s with model version: %s",
 		req.Name,
 		req.Tag,
 		req.ModelVersion,
 	)
 
-	resp, err := h.dockerService.BuildImage(ctx, &models.BuildRequest{
+	resp, err := h.dockerService.BuildImage(ctx, &models.BuildImageRequest{
 		ModelVersion: req.ModelVersion,
 		Version:      req.Version,
 		Name:         req.Name,
@@ -67,7 +59,7 @@ func (h *Handlers) BuildImage(
 		Description:  req.Description,
 	})
 	if err != nil {
-		logrus.Errorf("Failed to build image: %v", err)
+		h.clog.Errorf("Failed to build image: %v", err)
 		return nil, huma.Error500InternalServerError("Failed to initiate build", err)
 
 	}
@@ -89,13 +81,4 @@ func (h *Handlers) GetBuildStatus(
 	}
 
 	return &GetBuildStatusOutput{Body: *status}, nil
-}
-
-// ListBuilds handles GET /api/v1/builds
-func (h *Handlers) ListBuilds(ctx context.Context, _ *struct{}) (*ListBuildResponse, error) {
-	builds := h.dockerService.ListBuilds()
-	return &ListBuildResponse{
-		Builds: builds,
-		Total:  len(builds),
-	}, nil
 }

@@ -9,7 +9,7 @@ import (
 )
 
 // GeneratePythonFlaskDockerfile generates a Dockerfile for Python Flask applications
-func GeneratePythonFlaskDockerfile(req *models.BuildRequest) string {
+func GeneratePythonFlaskDockerfile(req *models.BuildImageRequest) string {
 	var dockerfile strings.Builder
 
 	dockerfile.WriteString("FROM python:3.11-slim\n\n")
@@ -50,7 +50,7 @@ func GeneratePythonFlaskDockerfile(req *models.BuildRequest) string {
 }
 
 // GeneratePythonFastAPIDockerfile generates a Dockerfile for Python FastAPI applications
-func GeneratePythonFastAPIDockerfile(req *models.BuildRequest) string {
+func GeneratePythonFastAPIDockerfile(req *models.BuildImageRequest) string {
 	var dockerfile strings.Builder
 
 	dockerfile.WriteString("FROM python:3.11-slim\n\n")
@@ -93,7 +93,7 @@ func GeneratePythonFastAPIDockerfile(req *models.BuildRequest) string {
 }
 
 // GenerateNodeJSDockerfile generates a Dockerfile for Node.js applications
-func GenerateNodeJSDockerfile(req *models.BuildRequest) string {
+func GenerateNodeJSDockerfile(req *models.BuildImageRequest) string {
 	var dockerfile strings.Builder
 
 	dockerfile.WriteString("FROM node:18-alpine\n\n")
