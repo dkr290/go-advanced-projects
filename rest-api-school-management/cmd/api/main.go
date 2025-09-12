@@ -1,119 +1,141 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"log"
+	"net/http"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/danielgtaylor/huma/v2"
+	"github.com/danielgtaylor/huma/v2/adapters/humago"
+	"github.com/dkr290/go-advanced-projects/rest-api-school-management/internal/middleware"
 )
 
 var port = ":8080"
 
-type User struct {
-	Name string `json:"name"`
-	Age  string `json:"age"`
-	City string `json:"city"`
+type GreetingOutput struct {
+	Body struct {
+		Message string `json:"message" example:"Hello, world!" doc:"Greeting message"`
+	}
 }
 
-func getTeachers(c *fiber.Ctx) error {
-	return c.SendString("Hello, teachers route!")
+type TeachersInput struct {
+	Body struct {
+		Name string `json:"name" maxLength:"30" example:"Teacher name"       doc:"Name of the teacher"`
+		Age  string `json:"age"                 example:"Age of the teacher" doc:"Age"`
+		City string `json:"city" maxLength:"20" example:"City like Sofia"    doc:"City name"`
+	}
+}
+type TeachersOutput struct {
+	Body struct {
+		Name string `json:"name" maxLength:"30" example:"Teacher name"       doc:"Name of the teacher"`
+		Age  string `json:"age"                 example:"Age of the teacher" doc:"Age"`
+		City string `json:"city" maxLength:"20" example:"City like Sofia"    doc:"City name"`
+	}
 }
 
-func postTeachers(c *fiber.Ctx) error {
-	return c.SendString("Hello Post  Method on Teachers struct ")
+func rootHandler(ctx context.Context, _ *struct{}) (*GreetingOutput, error) {
+	resp := &GreetingOutput{}
+	resp.Body.Message = "Hello from root Handler"
+	return resp, nil
 }
 
-func deleteTeachers(c *fiber.Ctx) error {
-	return c.SendString("Hello Delete  Method on Teachers struct")
+func teachersGet(ctx context.Context, _ *struct{}) (*GreetingOutput, error) {
+	resp := &GreetingOutput{}
+	resp.Body.Message = "Hello GET Method on Teachers struct"
+	return resp, nil
 }
 
-func patchTeachers(c *fiber.Ctx) error {
-	return c.SendString("Hello Patch Method on Teachers struct")
+func teachersPost(ctx context.Context, input *TeachersInput) (*TeachersOutput, error) {
+	resp := &TeachersOutput{}
+
+	resp.Body.Name = input.Body.Name
+	resp.Body.Age = input.Body.Age
+	resp.Body.City = input.Body.City
+
+	return resp, nil
 }
 
-func putTeachers(c *fiber.Ctx) error {
-	return c.SendString("Hello Put  Method on Teachers struct")
-}
-
-func getStudents(c *fiber.Ctx) error {
-	return c.SendString("Hello, students route!")
-}
-
-func patchStudents(c *fiber.Ctx) error {
-	return c.SendString("Hello Patch Method on students struct")
-}
-
-func postStudents(c *fiber.Ctx) error {
-	return c.SendString("Hello Post  Method on students struct ")
-}
-
-func deleteStudents(c *fiber.Ctx) error {
-	return c.SendString("Hello Delete  Method on students struct")
-}
-
-func putStudents(c *fiber.Ctx) error {
-	return c.SendString("Hello Put  Method on students struct")
-}
-
-func getExecs(c *fiber.Ctx) error {
-	return c.SendString("Hello, execs route!")
-}
-
-func patchExecs(c *fiber.Ctx) error {
-	return c.SendString("Hello Patch Method on execs struct")
-}
-
-func postExecs(c *fiber.Ctx) error {
-	return c.SendString("Hello Post  Method on execs struct ")
-}
-
-func deleteExecs(c *fiber.Ctx) error {
-	return c.SendString("Hello Delete  Method on execs struct")
-}
-
-func putExecs(c *fiber.Ctx) error {
-	return c.SendString("Hello Put  Method on execs struct")
-}
-
-func teacherHandler(r fiber.Router) {
-	r.Get("/", getTeachers)
-	r.Post("/", postTeachers)
-	r.Delete("/", deleteTeachers)
-	r.Put("/", putTeachers)
-	r.Patch("/", patchTeachers)
-}
-
-func studentHandler(r fiber.Router) {
-	r.Get("/", getStudents)
-	r.Post("/", postStudents)
-	r.Delete("/", deleteStudents)
-	r.Put("/", putStudents)
-	r.Patch("/", patchStudents)
-}
-
-func execHandler(r fiber.Router) {
-	r.Get("/", getExecs)
-	r.Post("/", postExecs)
-	r.Delete("/", deleteExecs)
-	r.Put("/", putExecs)
-	r.Patch("/", patchExecs)
-}
+// func teachersHandler(w http.ResponseWriter, r *http.Request) {
+// 	switch r.Method {
+//
+// 	case http.MethodGet:
+// 		w.Write([]byte("Hello GET Method on Teachers struct"))
+// 		fmt.Println("Hello GET Method on Teachers struct")
+// 	case http.MethodPost:
+// 		w.Write([]byte("Hello Post  Method on Teachers struct"))
+// 		fmt.Println("Hello Post  Method on Teachers struct")
+// 	case http.MethodPatch:
+// 		w.Write([]byte("Hello Patch Method on Teachers struct"))
+// 		fmt.Println("Hello Patch Method on Teachers struct")
+// 	case http.MethodDelete:
+// 		w.Write([]byte("Hello Delete  Method on Teachers struct"))
+// 		fmt.Println("Hello Delete  Method on Teachers struct")
+// 	case http.MethodPut:
+// 		w.Write([]byte("Hello Put Method on Teachers struct"))
+// 		fmt.Println("Hello Put  Method on Teachers struct")
+//
+// 	}
+// }
+//
+// func studentsHandler(w http.ResponseWriter, r *http.Request) {
+// 	switch r.Method {
+//
+// 	case http.MethodGet:
+// 		w.Write([]byte("Hello GET Method on Students struct"))
+// 		fmt.Println("Hello GET Method on Students struct")
+// 	case http.MethodPost:
+// 		w.Write([]byte("Hello Post  Method on Students struct"))
+// 		fmt.Println("Hello Post  Method on Students struct")
+// 	case http.MethodPatch:
+// 		w.Write([]byte("Hello Patch Method on Students struct"))
+// 		fmt.Println("Hello Patch Method on Students struct")
+// 	case http.MethodDelete:
+// 		w.Write([]byte("Hello Delete  Method on Students struct"))
+// 		fmt.Println("Hello Delete  Method on Students struct")
+// 	case http.MethodPut:
+// 		w.Write([]byte("Hello Put Method on Students struct"))
+// 		fmt.Println("Hello Put  Method on Students struct")
+//
+// 	}
+// }
+//
+// func execsHandler(w http.ResponseWriter, r *http.Request) {
+// 	switch r.Method {
+//
+// 	case http.MethodGet:
+// 		w.Write([]byte("Hello GET Method on Execs struct"))
+// 		fmt.Println("Hello GET Method on Execs struct")
+// 	case http.MethodPost:
+// 		w.Write([]byte("Hello Post  Method on Execs struct"))
+// 		fmt.Println("Hello Post  Method on Execs struct")
+// 	case http.MethodPatch:
+// 		w.Write([]byte("Hello Patch Method on Execs struct"))
+// 		fmt.Println("Hello Patch Method on Execs struct")
+// 	case http.MethodDelete:
+// 		w.Write([]byte("Hello Delete  Method on Execs struct"))
+// 		fmt.Println("Hello Delete  Method on Execs struct")
+// 	case http.MethodPut:
+// 		w.Write([]byte("Hello Put Method on Execs struct"))
+// 		fmt.Println("Hello Put  Method on Execs struct")
+//
+// 	}
+// }
 
 func main() {
-	// Initialize a new Fiber app
-	app := fiber.New()
+	router := http.NewServeMux()
+	api := humago.New(router, huma.DefaultConfig("My API", "1.0.0"))
+	huma.Get(api, "/", rootHandler)
+	huma.Get(api, "/teachers", teachersGet)
+	huma.Post(api, "/teachers", teachersPost)
 
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("Hello, Root route!")
-	})
+	server := &http.Server{
+		Addr:    port,
+		Handler: middleware.SecurityHeaders(router),
+	}
 
-	teachers := app.Group("/teachers")
-	teacherHandler(teachers)
-
-	students := app.Group("/students")
-	studentHandler(students)
-
-	execs := app.Group("/execs")
-	execHandler(execs)
-	// Start the server on port
-	log.Fatal(app.Listen(port))
+	fmt.Println("The server is starting on port", port)
+	if err := server.ListenAndServe(); err != nil {
+		log.Fatalln("Error Starting the server", err)
+	}
 }
