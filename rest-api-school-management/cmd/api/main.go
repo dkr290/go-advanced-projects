@@ -130,8 +130,10 @@ func main() {
 	huma.Post(api, "/teachers", teachersPost)
 
 	server := &http.Server{
-		Addr:    port,
-		Handler: middleware.SecurityHeaders(router),
+		Addr: port,
+		Handler: middleware.ResponseTimeMiddleware(
+			middleware.SecurityHeaders(middleware.Cors(router)),
+		),
 	}
 
 	fmt.Println("The server is starting on port", port)
