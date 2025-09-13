@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humago"
@@ -129,10 +130,11 @@ func main() {
 	huma.Get(api, "/teachers", teachersGet)
 	huma.Post(api, "/teachers", teachersPost)
 
+	rl := middleware.NewRateLimit(5, time.Minute)
 	server := &http.Server{
 		Addr: port,
-		Handler: middleware.ResponseTimeMiddleware(
-			middleware.SecurityHeaders(middleware.Cors(router)),
+		Handler: rl.Middleware(middleware.ResponseTimeMiddleware(
+			middleware.SecurityHeaders(middleware.Cors(router))),
 		),
 	}
 
