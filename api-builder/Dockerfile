@@ -1,7 +1,7 @@
 # Build stage
 FROM golang:1.25 AS builder
 
-COPY zscaler-root-ca.crt /usr/local/share/ca-certificates/zscaler-root-ca.crt
+# COPY zscaler-root-ca.crt /usr/local/share/ca-certificates/zscaler-root-ca.crt
 RUN apt-get update && \
   apt-get install -y ca-certificates && \
   update-ca-certificates
