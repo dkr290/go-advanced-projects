@@ -7,13 +7,17 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/dkr290/go-advanced-projects/api-docker-builder/internal/models"
-	"github.com/dkr290/go-advanced-projects/api-docker-builder/utils"
 	"github.com/docker/docker/api/types"
 	"github.com/google/uuid"
+
+	git "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
 func (d *DockerService) Close() error {
@@ -68,12 +72,41 @@ func (d *DockerService) performBuild(
 	imageName string,
 ) {
 	d.updateBuildStatus(buildID, "building", "Creating Dockerfile and building image", nil)
+	targetDir := "./data"
+	// clone repo to some temp dir
+	err := d.cloneRepository(
+		req.RepoURL,
+		targetDir,
+		strings.TrimSpace(req.RepoUsername),
+		strings.TrimSpace(req.RepoPassword),
+		req.UserAuth,
+	)
+	if err != nil {
+		d.updateBuildStatus(
+			buildID,
+			"failed",
+			fmt.Sprintf("failed to clone repository: %v", err),
+			nil,
+		)
+	}
+	defer func() {
+		_ = os.RemoveAll(targetDir)
+	}()
+	// Find Dockerfile path (relative to repoDir)
+	dockerfilePath, err := findDockerfilePathFromDir(targetDir)
+	if err != nil {
+		d.updateBuildStatus(buildID, "failed", fmt.Sprintf("no Dockerfile found: %v", err), nil)
+		return
+	}
 
-	// Generate Dockerfile based on model version
-	dockerfile := d.generateDockerfile(req)
-
+	// Build image and the Dockerfile should be in the archive
+	buildOptions := types.ImageBuildOptions{
+		Tags:       []string{imageName},
+		Dockerfile: dockerfilePath,
+		Remove:     true,
+	}
 	// Create build context
-	buildContext, err := d.createBuildContext(dockerfile)
+	buildContext, err := d.createBuildContext(dockerfilePath)
 	if err != nil {
 		d.updateBuildStatus(
 			buildID,
@@ -83,14 +116,6 @@ func (d *DockerService) performBuild(
 		)
 		return
 	}
-
-	// Build image
-	buildOptions := types.ImageBuildOptions{
-		Tags:       []string{imageName},
-		Dockerfile: "Dockerfile",
-		Remove:     true,
-	}
-
 	resp, err := d.client.ImageBuild(ctx, buildContext, buildOptions)
 	if err != nil {
 		d.updateBuildStatus(buildID, "failed", fmt.Sprintf("Failed to build image: %v", err), nil)
@@ -99,27 +124,15 @@ func (d *DockerService) performBuild(
 	defer resp.Body.Close()
 
 	// Read build logs
-	logs := []string{}
-	buf := make([]byte, 1024)
-	for {
-		n, err := resp.Body.Read(buf)
-		if n > 0 {
-			logLine := string(buf[:n])
-			logs = append(logs, logLine)
-			d.clog.Infof("Build %s: %s", buildID, strings.TrimSpace(logLine))
-		}
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			d.updateBuildStatus(
-				buildID,
-				"failed",
-				fmt.Sprintf("Error reading build logs: %v", err),
-				logs,
-			)
-			return
-		}
+	logs, err := d.readBuildLogs(buildID, resp.Body)
+	if err != nil {
+		d.updateBuildStatus(
+			buildID,
+			"failed",
+			fmt.Sprintf("error reading build logs: %v", err),
+			logs,
+		)
+		return
 	}
 
 	// Update final status
@@ -148,89 +161,113 @@ func (d *DockerService) updateBuildStatus(buildID, status, message string, logs 
 	}
 }
 
-func (d *DockerService) generateDockerfile(req *models.BuildImageRequest) string {
-	// Generate different Dockerfiles based on model version
-	switch strings.ToLower(req.ModelVersion) {
-	case "python-flask":
-		return utils.GeneratePythonFlaskDockerfile(req)
-	case "python-fastapi":
-		return utils.GeneratePythonFastAPIDockerfile(req)
-	case "nodejs":
-		return utils.GenerateNodeJSDockerfile(req)
-	default:
-		// Default to Python Flask
-		return utils.GeneratePythonFlaskDockerfile(req)
+func (d *DockerService) cloneRepository(
+	repoURL, targetDir, user, pass string, useAuth bool,
+) error {
+	// Prepare clone options
+	cloneOptions := &git.CloneOptions{
+		URL: repoURL,
 	}
+	// Add authentication if flag is true
+	if useAuth {
+		cloneOptions.Auth = &http.BasicAuth{
+			Username: user,
+			Password: pass,
+		}
+	}
+	d.clog.Infof("Cloning the repository into  %s", targetDir)
+	_, err := git.PlainClone(targetDir, false, cloneOptions)
+	if err != nil {
+		d.clog.Errorf("Error cloning repository: %v\n", err)
+		os.Exit(1)
+	}
+	d.clog.Infof("The repository %s cloned sucessfully", repoURL)
+
+	return nil
 }
 
-func (d *DockerService) createBuildContext(dockerfile string) (io.Reader, error) {
+func findDockerfilePathFromDir(targetDir string) (dockerFilePath string, err error) {
+	// Check if directory exists
+	if _, err := os.Stat(targetDir); os.IsNotExist(err) {
+		return "", fmt.Errorf("directory %s does not exist", targetDir)
+	}
+
+	// Walk through the directory recursively
+	err = filepath.Walk(targetDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Skip hidden directories (like .git)
+		if info.IsDir() && strings.HasPrefix(info.Name(), ".") && info.Name() != "." {
+			return filepath.SkipDir
+		}
+
+		// Check for Dockerfile (case-insensitive)
+		if !info.IsDir() {
+			filename := strings.ToLower(info.Name())
+			if filename == "dockerfile" || strings.HasPrefix(filename, "dockerfile.") {
+				dockerFilePath = path
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return "", fmt.Errorf("error walking directory: %v", err)
+	}
+
+	return dockerFilePath, err
+}
+
+func (d *DockerService) createBuildContext(
+	dockerfilePath string,
+) (io.Reader, error) {
 	buf := new(bytes.Buffer)
 	tw := tar.NewWriter(buf)
+	defer tw.Close()
 
+	dockerFileReader, err := os.Open(dockerfilePath)
+	if err != nil {
+		return nil, err
+	}
+	readDockerFile, err := io.ReadAll(dockerFileReader)
+	if err != nil {
+		return nil, err
+	}
 	// Add Dockerfile
 	header := &tar.Header{
-		Name: "Dockerfile",
+		Name: filepath.Base(dockerfilePath),
 		Mode: 0o644,
-		Size: int64(len(dockerfile)),
+		Size: int64(len(readDockerFile)),
 	}
 	if err := tw.WriteHeader(header); err != nil {
 		return nil, err
 	}
-	if _, err := tw.Write([]byte(dockerfile)); err != nil {
-		return nil, err
-	}
-
-	// Add sample application files based on the dockerfile type
-	if strings.Contains(dockerfile, "python") {
-		// Add sample Python app
-		appContent := `from flask import Flask, jsonify
-
-app = Flask(__name__)
-
-@app.route('/')
-def hello():
-    return jsonify({
-        "message": "Hello from Docker built image!",
-        "status": "success"
-    })
-
-@app.route('/health')
-def health():
-    return jsonify({"status": "healthy"})
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
-`
-		appHeader := &tar.Header{
-			Name: "app.py",
-			Mode: 0o644,
-			Size: int64(len(appContent)),
-		}
-		if err := tw.WriteHeader(appHeader); err != nil {
-			return nil, err
-		}
-		if _, err := tw.Write([]byte(appContent)); err != nil {
-			return nil, err
-		}
-
-		// Add requirements.txt
-		reqContent := "Flask==2.3.3\n"
-		reqHeader := &tar.Header{
-			Name: "requirements.txt",
-			Mode: 0o644,
-			Size: int64(len(reqContent)),
-		}
-		if err := tw.WriteHeader(reqHeader); err != nil {
-			return nil, err
-		}
-		if _, err := tw.Write([]byte(reqContent)); err != nil {
-			return nil, err
-		}
-	}
-
-	if err := tw.Close(); err != nil {
+	if _, err := tw.Write([]byte(filepath.Base(dockerfilePath))); err != nil {
 		return nil, err
 	}
 
 	return bytes.NewReader(buf.Bytes()), nil
+}
+
+func (d *DockerService) readBuildLogs(buildID string, r io.Reader) ([]string, error) {
+	logs := []string{}
+	buf := make([]byte, 4096)
+
+	for {
+		n, err := r.Read(buf)
+		if n > 0 {
+			logLine := string(buf[:n])
+			logs = append(logs, logLine)
+			d.clog.Infof("Build %s: %s", buildID, strings.TrimSpace(logLine))
+		}
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return logs, err
+		}
+	}
+	return logs, nil
 }

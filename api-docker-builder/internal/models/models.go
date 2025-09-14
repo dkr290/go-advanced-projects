@@ -11,6 +11,10 @@ type BuildImageRequest struct {
 	Version      string `json:"version"       example:"1.0.0"                                                              description:"Application version label"`
 	Name         string `json:"name"          example:"myapp"                                                              description:"Image name"`
 	Tag          string `json:"tag"           example:"latest"                                                             description:"Image tag"`
+	RepoURL      string `json:"repourl"`
+	RepoUsername string `json:"repousername"`
+	RepoPassword string `json:"repopassword"`
+	UserAuth     bool   `json:"userauth"`
 	Description  string `json:"description"   example:"Initial build for my app"`
 }
 

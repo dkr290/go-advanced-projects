@@ -35,5 +35,9 @@ type BuildImageInput struct {
 		Name         string `json:"name"          example:"myapp"                                                              description:"Image name"`
 		Tag          string `json:"tag"           example:"latest"                                                             description:"Image tag"`
 		Description  string `json:"description"   example:"Initial build for my app"`
+		RepoURL      string `json:"repourl" example:"https://github.com/repouser1/goproject1" doc:"The Repository URL to clone from"`
+		RepoUsername string `json:"repousername"  example:"user2" doc:"The username"`
+		RepoPassword string `json:"repopassword"  example:"password123" doc:"Password for the user"`
+		UserAuth     bool   `json:"userauth" example:"true" doc:"true or false depends if the github needs authentication"`
 	}
 }
