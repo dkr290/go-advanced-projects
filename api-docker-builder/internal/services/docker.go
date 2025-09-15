@@ -43,7 +43,6 @@ func (d *DockerService) BuildImage(
 
 	d.builds[buildID] = status
 
-	// Start build in goroutine
 	d.clog.Infof("Starting the build with buildID: %s for image: %s", buildID, imageName)
 	go d.performBuild(context.Background(), buildID, req, imageName)
 
@@ -172,7 +171,6 @@ func (d *DockerService) performBuild(
 	}
 	defer resp.Body.Close()
 
-	// Read build logs
 	logs, err := d.readBuildLogs(buildID, resp.Body)
 	if err != nil {
 		d.updateBuildStatus(
@@ -184,7 +182,6 @@ func (d *DockerService) performBuild(
 		return
 	}
 
-	// Update final status
 	completedAt := time.Now()
 	if build, exists := d.builds[buildID]; exists {
 		build.Status = "success"
@@ -215,11 +212,9 @@ func (d *DockerService) updateBuildStatus(buildID, status, message string, logs 
 func (d *DockerService) cloneRepository(
 	repoURL, targetDir, user, pass string, useAuth bool,
 ) error {
-	// Prepare clone options
 	cloneOptions := &git.CloneOptions{
 		URL: repoURL,
 	}
-	// Add authentication if flag is true
 	if useAuth {
 		cloneOptions.Auth = &http.BasicAuth{
 			Username: user,
@@ -244,18 +239,18 @@ func findDockerfilePathFromDir(targetDir string) (dockerFilePath string, err err
 		return "", fmt.Errorf("directory %s does not exist", targetDir)
 	}
 
-	// Walk through the directory recursively
+	// Walk through the directory recursively, in this case is the target DIR
 	err = filepath.Walk(targetDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
-		// Skip hidden directories (like .git)
+		// Skip hidden directories (like .git or some other )
 		if info.IsDir() && strings.HasPrefix(info.Name(), ".") && info.Name() != "." {
 			return filepath.SkipDir
 		}
 
-		// Check for Dockerfile (case-insensitive)
+		// check dockerfile // to see i Dockerfile etc
 		if !info.IsDir() {
 			filename := strings.ToLower(info.Name())
 			if filename == "dockerfile" || strings.HasPrefix(filename, "dockerfile.") {
@@ -279,42 +274,35 @@ func (d *DockerService) createBuildContext(
 	tw := tar.NewWriter(buf)
 	defer tw.Close()
 
-	// Walk through the entire context directory
 	err := filepath.Walk(contextDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
-		// Skip directories and hidden files/directories (like .git)
 		if info.IsDir() {
 			return nil
 		}
 
-		// Skip hidden files
 		if strings.HasPrefix(info.Name(), ".") {
 			return nil
 		}
 
-		// Get relative path from context directory
 		relPath, err := filepath.Rel(contextDir, path)
 		if err != nil {
 			return err
 		}
 
-		// Read file content
 		fileContent, err := os.ReadFile(path)
 		if err != nil {
 			return fmt.Errorf("failed to read file %s: %w", path, err)
 		}
 
-		// Create tar header
 		header := &tar.Header{
-			Name: filepath.ToSlash(relPath), // Use forward slashes for tar
+			Name: filepath.ToSlash(relPath),
 			Mode: 0o644,
 			Size: int64(len(fileContent)),
 		}
 
-		// Write header and content to tar
 		if err := tw.WriteHeader(header); err != nil {
 			return fmt.Errorf("failed to write tar header for %s: %w", relPath, err)
 		}
