@@ -45,7 +45,7 @@ func (d *DockerService) BuildImage(
 
 	// Start build in goroutine
 	d.clog.Infof("Starting the build with buildID: %s for image: %s", buildID, imageName)
-	d.performBuild(ctx, buildID, req, imageName)
+	go d.performBuild(context.Background(), buildID, req, imageName)
 
 	return &models.BuildImageResponse{
 		BuildID:   buildID,
@@ -57,12 +57,24 @@ func (d *DockerService) BuildImage(
 }
 
 func (d *DockerService) GetBuildStatus(buildID string) (*models.BuildStatus, error) {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
 	status, exists := d.builds[buildID]
 	if !exists {
 		return nil, fmt.Errorf("build not found")
 	}
+	// Return a copy to avoid race conditions
+	statusCopy := *status
+	if status.CompletedAt != nil {
+		completedAt := *status.CompletedAt
+		statusCopy.CompletedAt = &completedAt
+	}
+	if status.Logs != nil {
+		statusCopy.Logs = make([]string, len(status.Logs))
+		copy(statusCopy.Logs, status.Logs)
+	}
 
-	return status, nil
+	return &statusCopy, nil
 }
 
 func (d *DockerService) performBuild(
@@ -71,8 +83,26 @@ func (d *DockerService) performBuild(
 	req *models.BuildImageRequest,
 	imageName string,
 ) {
+	// Add timeout context for the build
+	buildCtx, cancel := context.WithTimeout(ctx, 30*time.Minute) // 30 min timeout
+	defer cancel()
+
 	d.updateBuildStatus(buildID, "building", "Creating Dockerfile and building image", nil)
-	targetDir := "./data"
+	// buildID to create unique directory - this prevents conflicts
+	targetDir := fmt.Sprintf("./data/build-%s", buildID)
+	if err := os.RemoveAll(targetDir); err != nil {
+		d.clog.Warnf("Failed to clean directory %s: %v", targetDir, err)
+	}
+	if err := os.MkdirAll(filepath.Dir(targetDir), 0o755); err != nil {
+		d.updateBuildStatus(
+			buildID,
+			"failed",
+			fmt.Sprintf("failed to create build directory: %v", err),
+			nil,
+		)
+		return
+	}
+
 	// clone repo to some temp dir
 	err := d.cloneRepository(
 		req.RepoURL,
@@ -88,25 +118,39 @@ func (d *DockerService) performBuild(
 			fmt.Sprintf("failed to clone repository: %v", err),
 			nil,
 		)
+		return
 	}
 	defer func() {
-		_ = os.RemoveAll(targetDir)
+		err := os.RemoveAll(targetDir)
+		d.clog.Warnf("Failed to cleanup directory %s: %v", targetDir, err)
 	}()
 	// Find Dockerfile path (relative to repoDir)
 	dockerfilePath, err := findDockerfilePathFromDir(targetDir)
+	fmt.Println(dockerfilePath)
 	if err != nil {
 		d.updateBuildStatus(buildID, "failed", fmt.Sprintf("no Dockerfile found: %v", err), nil)
+		return
+	}
+	relativeDockerfilePath, err := filepath.Rel(targetDir, dockerfilePath)
+	if err != nil {
+		d.updateBuildStatus(
+			buildID,
+			"failed",
+			fmt.Sprintf("failed to get relative path: %v", err),
+			nil,
+		)
 		return
 	}
 
 	// Build image and the Dockerfile should be in the archive
 	buildOptions := types.ImageBuildOptions{
 		Tags:       []string{imageName},
-		Dockerfile: dockerfilePath,
+		Dockerfile: relativeDockerfilePath,
 		Remove:     true,
+		NoCache:    true,
 	}
 	// Create build context
-	buildContext, err := d.createBuildContext(dockerfilePath)
+	buildContext, err := d.createBuildContext(targetDir)
 	if err != nil {
 		d.updateBuildStatus(
 			buildID,
@@ -116,9 +160,14 @@ func (d *DockerService) performBuild(
 		)
 		return
 	}
-	resp, err := d.client.ImageBuild(ctx, buildContext, buildOptions)
+	resp, err := d.client.ImageBuild(buildCtx, buildContext, buildOptions)
 	if err != nil {
-		d.updateBuildStatus(buildID, "failed", fmt.Sprintf("Failed to build image: %v", err), nil)
+		if buildCtx.Err() == context.DeadlineExceeded {
+			d.updateBuildStatus(buildID, "failed", "Build timeout exceeded", nil)
+		} else {
+			d.updateBuildStatus(buildID, "failed", fmt.Sprintf("Failed to build image: %v", err), nil)
+		}
+		d.clog.Errorf("Error building the image %v", err)
 		return
 	}
 	defer resp.Body.Close()
@@ -148,6 +197,8 @@ func (d *DockerService) performBuild(
 }
 
 func (d *DockerService) updateBuildStatus(buildID, status, message string, logs []string) {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
 	if build, exists := d.builds[buildID]; exists {
 		build.Status = status
 		build.Message = message
@@ -175,11 +226,12 @@ func (d *DockerService) cloneRepository(
 			Password: pass,
 		}
 	}
+	fmt.Println(repoURL)
 	d.clog.Infof("Cloning the repository into  %s", targetDir)
 	_, err := git.PlainClone(targetDir, false, cloneOptions)
 	if err != nil {
 		d.clog.Errorf("Error cloning repository: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("failed to clone repository: %w", err)
 	}
 	d.clog.Infof("The repository %s cloned sucessfully", repoURL)
 
@@ -221,31 +273,60 @@ func findDockerfilePathFromDir(targetDir string) (dockerFilePath string, err err
 }
 
 func (d *DockerService) createBuildContext(
-	dockerfilePath string,
+	contextDir string,
 ) (io.Reader, error) {
 	buf := new(bytes.Buffer)
 	tw := tar.NewWriter(buf)
 	defer tw.Close()
 
-	dockerFileReader, err := os.Open(dockerfilePath)
+	// Walk through the entire context directory
+	err := filepath.Walk(contextDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Skip directories and hidden files/directories (like .git)
+		if info.IsDir() {
+			return nil
+		}
+
+		// Skip hidden files
+		if strings.HasPrefix(info.Name(), ".") {
+			return nil
+		}
+
+		// Get relative path from context directory
+		relPath, err := filepath.Rel(contextDir, path)
+		if err != nil {
+			return err
+		}
+
+		// Read file content
+		fileContent, err := os.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("failed to read file %s: %w", path, err)
+		}
+
+		// Create tar header
+		header := &tar.Header{
+			Name: filepath.ToSlash(relPath), // Use forward slashes for tar
+			Mode: 0o644,
+			Size: int64(len(fileContent)),
+		}
+
+		// Write header and content to tar
+		if err := tw.WriteHeader(header); err != nil {
+			return fmt.Errorf("failed to write tar header for %s: %w", relPath, err)
+		}
+
+		if _, err := tw.Write(fileContent); err != nil {
+			return fmt.Errorf("failed to write file content for %s: %w", relPath, err)
+		}
+
+		return nil
+	})
 	if err != nil {
-		return nil, err
-	}
-	readDockerFile, err := io.ReadAll(dockerFileReader)
-	if err != nil {
-		return nil, err
-	}
-	// Add Dockerfile
-	header := &tar.Header{
-		Name: filepath.Base(dockerfilePath),
-		Mode: 0o644,
-		Size: int64(len(readDockerFile)),
-	}
-	if err := tw.WriteHeader(header); err != nil {
-		return nil, err
-	}
-	if _, err := tw.Write([]byte(filepath.Base(dockerfilePath))); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create build context: %w", err)
 	}
 
 	return bytes.NewReader(buf.Bytes()), nil

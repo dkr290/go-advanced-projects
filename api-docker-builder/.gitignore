@@ -51,3 +51,4 @@ build/
 
 # Docker volumes
 docker-data/
+*.crt

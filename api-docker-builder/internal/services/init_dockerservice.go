@@ -6,6 +6,7 @@ import (
 	"net"
 	"os/exec"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/dkr290/go-advanced-projects/api-docker-builder/internal/models"
@@ -17,6 +18,7 @@ type DockerService struct {
 	client *client.Client
 	builds map[string]*models.BuildStatus
 	clog   *logrus.Logger
+	mutex  sync.RWMutex
 }
 
 func NewDockerService(clog *logrus.Logger) (*DockerService, error) {

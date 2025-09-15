@@ -28,20 +28,20 @@ func (h *Handlers) BuildImage(
 	input *BuildImageInput,
 ) (*BuildImageOutput, error) {
 	req := input.Body
-	if req.ModelVersion == "" || req.Version == "" || req.Name == "" || req.Tag == "" {
+	if req.Name == "" || req.Tag == "" {
 		return nil, huma.Error400BadRequest("model_version, version, name, and tag are required")
 	}
 	h.clog.Infof(
 		"Building image: %s:%s with model version: %s",
 		req.Name,
 		req.Tag,
-		req.ModelVersion,
 	)
 	resp, err := h.dockerService.BuildImage(ctx, &models.BuildImageRequest{
-		ModelVersion: req.ModelVersion,
-		Version:      req.Version,
 		Name:         req.Name,
 		Tag:          req.Tag,
+		RepoURL:      req.RepoURL,
+		RepoUsername: req.RepoUsername,
+		RepoPassword: req.RepoPassword,
 		Description:  req.Description,
 	})
 	if err != nil {
