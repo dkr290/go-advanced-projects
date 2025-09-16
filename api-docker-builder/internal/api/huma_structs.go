@@ -30,7 +30,7 @@ type GetBuildStatusOutput struct {
 
 type BuildImageInput struct {
 	Body struct {
-		Name         string `json:"name"          example:"myapp"                                                              doc:"Image name"`
+		ImageName    string `json:"image_name"          example:"myapp"                                                              doc:"Image name"`
 		Tag          string `json:"tag"           example:"latest"                                                             doc:"Image tag"`
 		Description  string `json:"description"   example:"description" doc:"description"`
 		RepoURL      string `json:"repourl" example:"https://github.com/repouser1/goproject1" doc:"The Repository URL to clone from"`

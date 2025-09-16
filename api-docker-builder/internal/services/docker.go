@@ -2,8 +2,6 @@
 package services
 
 import (
-	"archive/tar"
-	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -16,6 +14,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/google/uuid"
 
+	"github.com/docker/docker/pkg/archive"
 	git "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 )
@@ -89,8 +88,13 @@ func (d *DockerService) performBuild(
 	d.updateBuildStatus(buildID, "building", "Creating Dockerfile and building image", nil)
 	// buildID to create unique directory - this prevents conflicts
 	targetDir := fmt.Sprintf("./data/build-%s", buildID)
-	if err := os.RemoveAll(targetDir); err != nil {
-		d.clog.Warnf("Failed to clean directory %s: %v", targetDir, err)
+	entries, err := os.ReadDir(targetDir)
+	if err != nil && len(entries) != 0 {
+		if err := os.RemoveAll(targetDir); err != nil {
+			d.clog.Warnf("Failed to clean directory  %s: %v", targetDir, err)
+		} else {
+			d.clog.Warnf("Failed to clean or read the  directory  %s: %v", targetDir, err)
+		}
 	}
 	if err := os.MkdirAll(filepath.Dir(targetDir), 0o755); err != nil {
 		d.updateBuildStatus(
@@ -103,7 +107,7 @@ func (d *DockerService) performBuild(
 	}
 
 	// clone repo to some temp dir
-	err := d.cloneRepository(
+	err = d.cloneRepository(
 		req.RepoURL,
 		targetDir,
 		strings.TrimSpace(req.RepoUsername),
@@ -140,7 +144,8 @@ func (d *DockerService) performBuild(
 		)
 		return
 	}
-
+	fmt.Println(imageName)
+	fmt.Println(req.Name + ":" + req.Tag)
 	// Build image and the Dockerfile should be in the archive
 	buildOptions := types.ImageBuildOptions{
 		Tags:       []string{imageName},
@@ -148,8 +153,8 @@ func (d *DockerService) performBuild(
 		Remove:     true,
 		NoCache:    true,
 	}
-	// Create build context
-	buildContext, err := d.createBuildContext(targetDir)
+
+	tarContext, err := archive.TarWithOptions(targetDir, &archive.TarOptions{})
 	if err != nil {
 		d.updateBuildStatus(
 			buildID,
@@ -159,7 +164,7 @@ func (d *DockerService) performBuild(
 		)
 		return
 	}
-	resp, err := d.client.ImageBuild(buildCtx, buildContext, buildOptions)
+	resp, err := d.client.ImageBuild(buildCtx, tarContext, buildOptions)
 	if err != nil {
 		if buildCtx.Err() == context.DeadlineExceeded {
 			d.updateBuildStatus(buildID, "failed", "Build timeout exceeded", nil)
@@ -265,59 +270,6 @@ func findDockerfilePathFromDir(targetDir string) (dockerFilePath string, err err
 	}
 
 	return dockerFilePath, err
-}
-
-func (d *DockerService) createBuildContext(
-	contextDir string,
-) (io.Reader, error) {
-	buf := new(bytes.Buffer)
-	tw := tar.NewWriter(buf)
-	defer tw.Close()
-
-	err := filepath.Walk(contextDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if info.IsDir() {
-			return nil
-		}
-
-		if strings.HasPrefix(info.Name(), ".") {
-			return nil
-		}
-
-		relPath, err := filepath.Rel(contextDir, path)
-		if err != nil {
-			return err
-		}
-
-		fileContent, err := os.ReadFile(path)
-		if err != nil {
-			return fmt.Errorf("failed to read file %s: %w", path, err)
-		}
-
-		header := &tar.Header{
-			Name: filepath.ToSlash(relPath),
-			Mode: 0o644,
-			Size: int64(len(fileContent)),
-		}
-
-		if err := tw.WriteHeader(header); err != nil {
-			return fmt.Errorf("failed to write tar header for %s: %w", relPath, err)
-		}
-
-		if _, err := tw.Write(fileContent); err != nil {
-			return fmt.Errorf("failed to write file content for %s: %w", relPath, err)
-		}
-
-		return nil
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create build context: %w", err)
-	}
-
-	return bytes.NewReader(buf.Bytes()), nil
 }
 
 func (d *DockerService) readBuildLogs(buildID string, r io.Reader) ([]string, error) {
