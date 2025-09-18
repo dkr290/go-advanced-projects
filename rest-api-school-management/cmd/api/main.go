@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -18,7 +17,6 @@ var port = ":8080"
 
 var (
 	teachers = make(map[int]models.Teacher)
-	mutex    = &sync.Mutex{}
 	nextID   = 1
 )
 
@@ -57,6 +55,7 @@ func main() {
 	huma.Get(api, "/", teacherHandler.RootHandler)
 	huma.Get(api, "/teachers", teacherHandler.TeachersGet)
 	huma.Get(api, "/teacher/{id}", teacherHandler.TeacherGet)
+	huma.Post(api, "/teachers", teacherHandler.TeachersAdd)
 	rl := middleware.NewRateLimit(200, time.Minute)
 	server := &http.Server{
 		Addr: port,

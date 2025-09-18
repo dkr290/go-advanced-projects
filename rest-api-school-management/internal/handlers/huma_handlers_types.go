@@ -10,13 +10,16 @@ type GreetingOutput struct {
 
 type TeachersInput struct {
 	Body struct {
-		ID        int
-		FirstName string `json:"first_name" maxLength:"30" example:"Tom" doc:"First name of the teacher"`
-		LastName  string `json:"last_name" maxLength:"30" example:"Last" doc:"Last name of the techer"`
-		Class     string `json:"class" example:"10B" doc:"The class of the teacher"`
-		Subject   string `json:"subject" example:"History" doc:"Subject to teach"`
+		Teachers []TeacherBody `json:"teachers" doc:"Teachers"`
 	}
 }
+type TeacherBody struct {
+	FirstName string `json:"first_name" maxLength:"30" example:"Tom"     doc:"First name of the teacher"`
+	LastName  string `json:"last_name"  maxLength:"30" example:"Last"    doc:"Last name of the techer"`
+	Class     string `json:"class"                     example:"10B"     doc:"The class of the teacher"`
+	Subject   string `json:"subject"                   example:"History" doc:"Subject to teach"`
+}
+
 type TeachersQueryInput struct {
 	FirstName string `query:"first_name"`
 	LastName  string `query:"last_name"`

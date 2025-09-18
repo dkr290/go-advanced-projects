@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"sync"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/dkr290/go-advanced-projects/rest-api-school-management/internal/models"
@@ -9,6 +10,7 @@ import (
 
 type TeacherHandlers struct {
 	TeachersMap map[int]models.Teacher
+	mutex       sync.Mutex
 }
 
 func NewTeachersHandler(teachers map[int]models.Teacher) *TeacherHandlers {
@@ -53,4 +55,39 @@ func (h *TeacherHandlers) TeacherGet(ctx context.Context, input *struct {
 	}
 	resp.Body.Data = teacher
 	return &resp, nil
+}
+
+func (h *TeacherHandlers) TeachersAdd(
+	ctx context.Context,
+	input *TeachersInput,
+) (*TeachersOutput, error) {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+
+	addedTeachers := make([]models.Teacher, 0, len(input.Body.Teachers))
+
+	maxID := 0
+	for id := range h.TeachersMap {
+		if id > maxID {
+			maxID = id
+		}
+	}
+
+	for _, newTeacher := range input.Body.Teachers {
+		maxID++
+		teacher := models.Teacher{
+			ID:        maxID,
+			FirstName: newTeacher.FirstName,
+			LastName:  newTeacher.LastName,
+			Class:     newTeacher.Class,
+			Subject:   newTeacher.Subject,
+		}
+		h.TeachersMap[teacher.ID] = teacher
+		addedTeachers = append(addedTeachers, teacher)
+	}
+	resp := &TeachersOutput{}
+	resp.Body.Status = "Success"
+	resp.Body.Count = len(addedTeachers)
+	resp.Body.Data = addedTeachers
+	return resp, nil
 }
