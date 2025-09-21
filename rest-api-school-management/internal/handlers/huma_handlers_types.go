@@ -14,10 +14,11 @@ type TeachersInput struct {
 	}
 }
 type TeacherBody struct {
-	FirstName string `json:"first_name" maxLength:"30" example:"Tom"     doc:"First name of the teacher"`
-	LastName  string `json:"last_name"  maxLength:"30" example:"Last"    doc:"Last name of the techer"`
-	Class     string `json:"class"                     example:"10B"     doc:"The class of the teacher"`
-	Subject   string `json:"subject"                   example:"History" doc:"Subject to teach"`
+	FirstName string `json:"first_name" maxLength:"255" example:"Tom"     doc:"First name of the teacher"`
+	LastName  string `json:"last_name"  maxLength:"255" example:"Last"    doc:"Last name of the techer"`
+	Class     string `json:"class"                      example:"10B"     doc:"The class of the teacher"`
+	Subject   string `json:"subject"    maxLength:"255" example:"History" doc:"Subject to teach"`
+	Email     string `json:"email"      maxLength:"50"  example:"Email"   doc:"Email"`
 }
 
 type TeachersQueryInput struct {

@@ -6,4 +6,5 @@ type Teacher struct {
 	LastName  string
 	Class     string
 	Subject   string
+	Email     string
 }

@@ -8,6 +8,7 @@ import (
 var allowedOrigins = []string{
 	"https://myorigin.example.com",
 	"http://localhost:8080",
+	"http://localhost:8082",
 	"https://k8s-dev.domain.com",
 	"https://github.com",
 }

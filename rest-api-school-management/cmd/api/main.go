@@ -17,12 +17,12 @@ var port = ":8082"
 func main() {
 	conf := config.LoadConfig()
 
-	_, err := sqlconnect.ConnectDB(conf)
+	db, err := sqlconnect.ConnectDB(conf)
 	if err != nil {
 		fmt.Println("Error ", err)
 		return
 	}
-	router := router.Router()
+	router := router.Router(db)
 
 	rl := middleware.NewRateLimit(200, time.Minute)
 	server := &http.Server{
