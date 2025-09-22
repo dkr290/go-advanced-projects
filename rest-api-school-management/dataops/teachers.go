@@ -68,7 +68,7 @@ func (t *Teachers) GetTeacherByID(id int) (models.Teacher, error) {
 }
 
 func (t *Teachers) GetAllTeachers(firstName string, lastName string) (*sql.Rows, error) {
-	query := `SELECT id, fisrt_name,last_name,email,class,subject FROM teachers WHERE 1=1`
+	query := "SELECT id, first_name,last_name,email,class,subject FROM teachers WHERE 1=1"
 	var args []any
 
 	if firstName != "" {
@@ -85,6 +85,5 @@ func (t *Teachers) GetAllTeachers(firstName string, lastName string) (*sql.Rows,
 	if err != nil {
 		return nil, fmt.Errorf("database query error %v", err)
 	}
-	defer rows.Close()
 	return rows, nil
 }

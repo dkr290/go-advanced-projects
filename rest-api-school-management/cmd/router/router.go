@@ -18,9 +18,9 @@ func Router(db *sql.DB) *http.ServeMux {
 	api := humago.New(router, huma.DefaultConfig("My API", "1.0.0"))
 
 	huma.Get(api, "/", teacherHandler.RootHandler)
-	// huma.Get(api, "/teachers", teacherHandler.TeachersGet)
 	huma.Get(api, "/teacher/{id}", teacherHandler.TeacherGet)
 	huma.Post(api, "/teachers", teacherHandler.TeachersAdd)
+	huma.Get(api, "/teachers", teacherHandler.TeachersGet)
 
 	return router
 }

@@ -50,12 +50,24 @@ func (h *TeacherHandlers) TeachersGet(
 
 	for rows.Next() {
 		var teacher models.Teacher
-		rows.Scan(&teacher.ID, &teacher.FirstName, &teacher.LastName)
+		rows.Scan(
+			&teacher.ID,
+			&teacher.FirstName,
+			&teacher.LastName,
+			&teacher.Email,
+			&teacher.Class,
+			&teacher.Subject,
+		)
+		if err != nil {
+			return nil, huma.Error500InternalServerError("Error scanning database results", err)
+		}
+		teachersList = append(teachersList, teacher)
 	}
+	defer rows.Close()
 
 	response.Body.Status = "Sucess"
-	response.Body.Count = len(teacherList)
-	response.Body.Data = teacherList
+	response.Body.Count = len(teachersList)
+	response.Body.Data = teachersList
 	return &response, nil
 }
 
