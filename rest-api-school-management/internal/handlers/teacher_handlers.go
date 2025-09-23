@@ -41,7 +41,17 @@ func (h *TeacherHandlers) TeachersGet(
 ) (*TeachersOutput, error) {
 	response := TeachersOutput{}
 
-	rows, err := h.teachersDB.GetAllTeachers(input.FirstName, input.LastName)
+	params := map[string]string{
+		"first_name": input.FirstName,
+		"last_name":  input.LastName,
+		"email":      input.Email,
+		"class":      input.Class,
+		"subject":    input.Subject,
+	}
+
+	sortBy := input.SortBy
+	// filtering by params basically with query parameters anf filtering
+	rows, err := h.teachersDB.GetAllTeachers(params, sortBy)
 	if err != nil {
 		return nil, huma.Error500InternalServerError("Error quering database", err)
 	}
@@ -50,7 +60,7 @@ func (h *TeacherHandlers) TeachersGet(
 
 	for rows.Next() {
 		var teacher models.Teacher
-		rows.Scan(
+		err = rows.Scan(
 			&teacher.ID,
 			&teacher.FirstName,
 			&teacher.LastName,

@@ -1,3 +1,5 @@
+// Package handlers - part of handlers but only for huma query paramaters
+
 package handlers
 
 import "github.com/dkr290/go-advanced-projects/rest-api-school-management/internal/models"
@@ -22,8 +24,12 @@ type TeacherBody struct {
 }
 
 type TeachersQueryInput struct {
-	FirstName string `query:"first_name"`
-	LastName  string `query:"last_name"`
+	FirstName string   `query:"first_name"`
+	LastName  string   `query:"last_name"`
+	Class     string   `query:"class"`
+	Subject   string   `query:"subject"`
+	Email     string   `query:"email"`
+	SortBy    []string `query:"sort_by"    example:"first_name:asc" doc:"Order by asc or desc of the records"`
 }
 
 type TeachersOutput struct {

@@ -3,6 +3,7 @@ package dataops
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/dkr290/go-advanced-projects/rest-api-school-management/internal/models"
 )
@@ -10,7 +11,7 @@ import (
 type DatabaseInf interface {
 	InsertTeachers(*models.Teacher) (int64, error)
 	GetTeacherByID(int) (models.Teacher, error)
-	GetAllTeachers(string, string) (*sql.Rows, error)
+	GetAllTeachers(map[string]string, []string) (*sql.Rows, error)
 }
 
 type Teachers struct {
@@ -67,19 +68,44 @@ func (t *Teachers) GetTeacherByID(id int) (models.Teacher, error) {
 	return teacher, nil
 }
 
-func (t *Teachers) GetAllTeachers(firstName string, lastName string) (*sql.Rows, error) {
+func (t *Teachers) GetAllTeachers(params map[string]string, sortBy []string) (*sql.Rows, error) {
 	query := "SELECT id, first_name,last_name,email,class,subject FROM teachers WHERE 1=1"
 	var args []any
+	var orderByParts []string
 
-	if firstName != "" {
-		query += " AND first_name = ?"
-		args = append(args, firstName)
+	// Define a whitelist of allowed sortable columns
+	allowedColumns := map[string]bool{
+		"first_name": true,
+		"last_name":  true,
+		"email":      true,
+		"class":      true,
+		"subject":    true,
+	}
+	fmt.Println(sortBy)
+	// filtering by map of params
+	for param, dbField := range params {
+		if dbField != "" {
+			query += " AND " + param + " = ?"
+			args = append(args, dbField)
+		}
 	}
 
-	if lastName != "" {
-		query += " AND last_name = ?"
-		args = append(args, lastName)
+	for _, criteria := range sortBy {
+		parts := strings.Split(criteria, ":")
+		if len(parts) == 2 {
+			sortColumn := parts[0]
+			sortOrder := strings.ToUpper(parts[1])
+
+			if allowedColumns[sortColumn] && (sortOrder == "ASC" || sortOrder == "DESC") {
+				orderByParts = append(orderByParts, fmt.Sprintf("%s %s", sortColumn, sortOrder))
+			}
+		}
 	}
+
+	if len(orderByParts) > 0 {
+		query += " ORDER BY " + strings.Join(orderByParts, ", ")
+	}
+	fmt.Println(query)
 
 	rows, err := t.db.Query(query, args...)
 	if err != nil {
