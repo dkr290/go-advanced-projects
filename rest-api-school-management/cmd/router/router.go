@@ -21,6 +21,7 @@ func Router(db *sql.DB) *http.ServeMux {
 	huma.Get(api, "/teacher/{id}", teacherHandler.TeacherGet)
 	huma.Post(api, "/teachers", teacherHandler.TeachersAdd)
 	huma.Get(api, "/teachers", teacherHandler.TeachersGet)
+	huma.Put(api, "/teachers/{id}", teacherHandler.UpdateTeacherHandler)
 
 	return router
 }

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"net/http"
 	"sync"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -115,4 +116,29 @@ func (h *TeacherHandlers) TeachersAdd(
 	resp.Body.Count = len(addedTeachers)
 	resp.Body.Data = addedTeachers
 	return resp, nil
+}
+
+func (h *TeacherHandlers) UpdateTeacherHandler(
+	ctx context.Context,
+	input *TeachersUpdateInput,
+) (*struct{}, error) {
+	id := input.Body.Teacher.ID
+	if id <= 0 {
+		return nil, huma.NewError(http.StatusBadRequest, "invalid teacher id", nil)
+	}
+
+	teacher := models.Teacher{
+		ID:        input.Body.Teacher.ID,
+		FirstName: input.Body.Teacher.FirstName,
+		LastName:  input.Body.Teacher.LastName,
+		Email:     input.Body.Teacher.Email,
+		Class:     input.Body.Teacher.Class,
+		Subject:   input.Body.Teacher.Subject,
+	}
+
+	err := h.teachersDB.UpdateTeacher(input.Body.Teacher.ID, teacher)
+	if err != nil {
+		return nil, err
+	}
+	return nil, nil
 }

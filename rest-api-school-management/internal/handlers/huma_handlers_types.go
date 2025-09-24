@@ -45,3 +45,17 @@ type TeacherIDResponse struct {
 		Data models.Teacher `json:"data"`
 	}
 }
+
+type TeachersUpdateInput struct {
+	Body struct {
+		Teacher TeacherUpdateBody `json:"teacher" doc:"Teacher"`
+	}
+}
+type TeacherUpdateBody struct {
+	ID        int    `json:"id"`
+	FirstName string `json:"first_name,omitempty" doc:"First name of the teacher"`
+	LastName  string `json:"last_name,omitempty"  doc:"Last name of the techer"`
+	Class     string `json:"class,omitempty"      doc:"The class of the teacher"`
+	Subject   string `json:"subject,omitempty"    doc:"Subject to teach"`
+	Email     string `json:"email,omitempty"      doc:"Email"`
+}

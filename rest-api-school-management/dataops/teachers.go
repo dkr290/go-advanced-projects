@@ -3,8 +3,10 @@ package dataops
 import (
 	"database/sql"
 	"fmt"
+	"net/http"
 	"strings"
 
+	"github.com/danielgtaylor/huma/v2"
 	"github.com/dkr290/go-advanced-projects/rest-api-school-management/internal/models"
 )
 
@@ -12,6 +14,7 @@ type DatabaseInf interface {
 	InsertTeachers(*models.Teacher) (int64, error)
 	GetTeacherByID(int) (models.Teacher, error)
 	GetAllTeachers(map[string]string, []string) (*sql.Rows, error)
+	UpdateTeacher(int, models.Teacher) error
 }
 
 type Teachers struct {
@@ -81,7 +84,6 @@ func (t *Teachers) GetAllTeachers(params map[string]string, sortBy []string) (*s
 		"class":      true,
 		"subject":    true,
 	}
-	fmt.Println(sortBy)
 	// filtering by map of params
 	for param, dbField := range params {
 		if dbField != "" {
@@ -112,4 +114,46 @@ func (t *Teachers) GetAllTeachers(params map[string]string, sortBy []string) (*s
 		return nil, fmt.Errorf("database query error %v", err)
 	}
 	return rows, nil
+}
+
+func (t *Teachers) UpdateTeacher(id int, updatedTeacher models.Teacher) error {
+	var existingTeacher models.Teacher
+
+	row := t.db.QueryRow(
+		"SELECT id ,first_name,last_name,email,class,subject from teachers WHERE id = ?",
+		id,
+	)
+	err := row.Scan(
+		&existingTeacher.ID,
+		&existingTeacher.FirstName,
+		&existingTeacher.LastName,
+		&existingTeacher.Email,
+		&existingTeacher.Class,
+		&existingTeacher.Subject,
+	)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			return huma.Error500InternalServerError("Teacher not found", err)
+		} else {
+			return huma.NewError(http.StatusNotFound, "unable to retreive data", err)
+		}
+	}
+
+	updatedTeacher.ID = existingTeacher.ID
+	switch {
+	}
+
+	_, err = t.db.Exec(
+		"UPDATE teachers SET first_name = ?, last_name = ? ,email = ? , class = ?,subject = ? WHERE id = ?  ",
+		&updatedTeacher.FirstName,
+		&updatedTeacher.LastName,
+		&updatedTeacher.Email,
+		&updatedTeacher.Class,
+		&updatedTeacher.Subject,
+		&updatedTeacher.ID,
+	)
+	if err != nil {
+		return huma.Error500InternalServerError("Error updating teacher", err)
+	}
+	return nil
 }
