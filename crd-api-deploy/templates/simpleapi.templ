@@ -1,0 +1,58 @@
+apiVersion: apps.api.test/v1alpha1
+kind: {{.Kind}}
+metadata:
+  labels:
+{{- range .Labels}}
+    {{.Key}}: {{.Value}}
+{{- end}}
+  name: {{.Name}}
+  namespace: {{.Namespace}}
+spec:
+  image: "{{.Image}}"
+  version: "{{.Version}}"
+  port: {{.Port}}
+  replicas: {{.Replicas}}
+  ingressType: {{.IngressType}}
+  ingressHostName: "{{.IngressHostName}}"
+  imagePullSecret: {{.ImagePullSecret}}
+  serviceAccount: {{.ServiceAccount}}
+  resources:
+    limits:
+      cpu: {{.Resources.Limits.CPU}}
+      memory: {{.Resources.Limits.Memory}}
+{{- if .Resources.Limits.EphemeralStorage}}
+      ephemeral-storage: {{.Resources.Limits.EphemeralStorage}}
+{{- end}}
+    requests:
+      cpu: {{.Resources.Requests.CPU}}
+      memory: {{.Resources.Requests.Memory}}
+  startupProbe:
+    httpGet:
+      path: "{{.StartupProbe.HTTPGet.Path}}"
+      port: {{.StartupProbe.HTTPGet.Port}}
+    failureThreshold: {{.StartupProbe.FailureThreshold}}
+    periodSeconds: {{.StartupProbe.PeriodSeconds}}
+  podSecurityContext:
+    runAsNonRoot: {{.PodSecurityContext.RunAsNonRoot}}
+    runAsUser: {{.PodSecurityContext.RunAsUser}}
+    runAsGroup: {{.PodSecurityContext.RunAsGroup}}
+    fsGroup: {{.PodSecurityContext.FSGroup}}
+{{- if .Affinity}}
+  affinity:
+{{- range $key, $value := .Affinity}}
+    {{$key}}: {{$value}}
+{{- end}}
+{{- else}}
+  affinity: {}
+{{- end}}
+{{- if .Tolerations}}
+  tolerations:
+{{- range .Tolerations}}
+  - 
+{{- range $key, $value := .}}
+    {{$key}}: {{$value}}
+{{- end}}
+{{- end}}
+{{- else}}
+  tolerations: []
+{{- end}}

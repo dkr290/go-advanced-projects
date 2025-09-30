@@ -1,0 +1,52 @@
+{
+  "kind": "Simpleapi",
+  "name": "example-simpleapi",
+  "namespace": "default",
+  "labels": [
+    {
+      "key": "app.kubernetes.io/name",
+      "value": "example-api"
+    },
+    {
+      "key": "app.kubernetes.io/managed-by", 
+      "value": "crd-api-deployer"
+    },
+    {
+      "key": "environment",
+      "value": "production"
+    }
+  ],
+  "image": "nginx",
+  "version": "latest",
+  "port": 8000,
+  "replicas": 2,
+  "ingressType": "ingress",
+  "ingressHostName": "example-api.mycompany.com",
+  "imagePullSecret": "regcred",
+  "serviceAccount": "example-api-sa",
+  "resources": {
+    "limits": {
+      "cpu": "2000m",
+      "memory": "4Gi",
+      "ephemeral-storage": "10Gi"
+    },
+    "requests": {
+      "cpu": "1000m",
+      "memory": "512Mi"
+    }
+  },
+  "startupProbe": {
+    "httpGet": {
+      "path": "/health",
+      "port": 8000
+    },
+    "failureThreshold": 30,
+    "periodSeconds": 15
+  },
+  "podSecurityContext": {
+    "runAsNonRoot": true,
+    "runAsUser": 1001,
+    "runAsGroup": 3001,
+    "fsGroup": 2001
+  }
+}

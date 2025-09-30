@@ -1,0 +1,7 @@
+{
+  "kind": "Simpleapi",
+  "name": "minimal-api",
+  "namespace": "default",
+  "image": "nginx",
+  "version": "latest"
+}
