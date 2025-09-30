@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: docker-builder-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: docker-builder
+  template:
+    metadata:
+      labels:
+        app: docker-builder
+    spec:
+      containers:
+        - name: app
+          image: aareplicatedregistry.azurecr.io/api-docker-builder
+          ports:
+            - containerPort: 8080
+          securityContext:
+            privileged: true # Required for DinD
+          env:
+            - name: DOCKER_TLS_CERTDIR
+              value: ""
+          volumeMounts:
+            - name: docker-storage
+              mountPath: /var/lib/docker
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "4Gi"
+              cpu: "2000m"
+      volumes:
+        - name: docker-storage
+          persistentVolumeClaim:
+            claimName: build-pvc
+      securityContext:
+        fsGroup: 0
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: docker-builder-service
+spec:
+  selector:
+    app: docker-builder
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: build-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: zrs-managed-csi-premium
+  resources:
+    requests:
+      storage: 100Gi
+
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: builder-htproute
+spec:
+  parentRefs:
+    - name: default-envoy-gw
+      namespace: envoy-gateway-system
+  hostnames:
+    - "api-docker-build.k8s-dev.bankingcircle.net"
+  rules:
+    - backendRefs:
+        - group: ""
+          kind: Service
+          name: docker-builder-service
+          port: 8080
+          weight: 1
+      matches:
+        - path:
+            type: PathPrefix
+            value: /

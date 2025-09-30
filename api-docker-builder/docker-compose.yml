@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  api-builder:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - docker-dind
+    networks:
+      - builder-network
+
+  docker-dind:
+    image: docker:24-dind
+    privileged: true
+    environment:
+      - DOCKER_TLS_CERTDIR=
+    ports:
+      - "2376:2376"
+    networks:
+      - builder-network
+    volumes:
+      - docker-data:/var/lib/docker
+
+volumes:
+  docker-data:
+
+networks:
+  builder-network:
+    driver: bridge
