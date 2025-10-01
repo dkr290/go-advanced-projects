@@ -6,6 +6,7 @@ import (
 	"crd-api-deploy/internal/handlers"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/danielgtaylor/huma/v2/adapters/humago"
 )
 
 // // SimpleAPIHandler handles SimpleAPI operations
@@ -72,13 +73,15 @@ import (
 // }
 
 // RegisterRoutes registers all the routes for the SimpleAPI handler
-func RegisterRoutes(api huma.API) error {
+func RegisterRoutes() *http.ServeMux {
+	router := http.NewServeMux()
 	handler := handlers.NewHandler()
-
+	api := humago.New(router, huma.DefaultConfig("My API", "1.0.0"))
+	huma.Get(api, "/", handler.RootHandler)
 	huma.Register(api, huma.Operation{
 		OperationID:   "create-simpleapi",
 		Method:        http.MethodPost,
-		Path:          "/api/v1/simpleapis",
+		Path:          "/crd",
 		Summary:       "Create a new SimpleAPI CRD",
 		Description:   "Creates a new SimpleAPI Custom Resource Definition in the Kubernetes cluster",
 		Tags:          []string{"SimpleAPI"},
@@ -88,7 +91,7 @@ func RegisterRoutes(api huma.API) error {
 	huma.Register(api, huma.Operation{
 		OperationID: "get-simpleapi",
 		Method:      http.MethodGet,
-		Path:        "/api/v1/simpleapis/{name}",
+		Path:        "/crd/{name}",
 		Summary:     "Get a SimpleAPI resource",
 		Description: "Retrieves a SimpleAPI resource by name and namespace",
 		Tags:        []string{"SimpleAPI"},
@@ -97,11 +100,11 @@ func RegisterRoutes(api huma.API) error {
 	huma.Register(api, huma.Operation{
 		OperationID: "list-simpleapis",
 		Method:      http.MethodGet,
-		Path:        "/api/v1/simpleapis",
+		Path:        "/crd",
 		Summary:     "List SimpleAPI resources",
 		Description: "Lists all SimpleAPI resources in the specified namespace",
 		Tags:        []string{"SimpleAPI"},
 	}, handler.ListHandler)
 
-	return nil
+	return router
 }

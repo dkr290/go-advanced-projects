@@ -17,6 +17,27 @@ func NewHandler() *Handlers {
 	return &Handlers{}
 }
 
+func (h *Handlers) RootHandler(ctx context.Context, _ *struct{}) (*struct {
+	Body struct {
+		Message string `json:"message"`
+	}
+}, error,
+) {
+	output := &struct {
+		Body struct {
+			Message string `json:"message"`
+		}
+	}{
+		Body: struct {
+			Message string `json:"message"`
+		}{
+			Message: "Root path Healthy",
+		},
+	}
+
+	return output, nil
+}
+
 func (h *Handlers) CreateAPIHandler(
 	ctx context.Context, input *CreateAPIInput,
 ) (*CreateAPIOutput, error) {
