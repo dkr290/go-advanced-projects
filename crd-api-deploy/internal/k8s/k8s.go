@@ -7,8 +7,7 @@ import (
 
 	"github.com/dkr290/go-advanced-projects/crd-api-deploy/internal/models"
 
-	"gopkg.in/yaml.v2"
-	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -17,6 +16,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
+	"sigs.k8s.io/yaml"
 )
 
 // Client wraps Kubernetes clients
@@ -51,6 +51,7 @@ func NewClient() (*Client, error) {
 // getKubernetesConfig gets the Kubernetes configuration
 func getKubernetesConfig() (*rest.Config, error) {
 	// Try in-cluster config first
+	// before that the service account with exact cluster toles and bindings is needed
 	config, err := rest.InClusterConfig()
 	if err == nil {
 		return config, nil
@@ -71,28 +72,28 @@ func getKubernetesConfig() (*rest.Config, error) {
 }
 
 // ApplyCRD applies a CRD YAML to the cluster
-func (c *Client) ApplyCRD(ctx context.Context, crdYAML string, namespace string) error {
-	var obj unstructured.Unstructured
-	err := yaml.Unmarshal([]byte(crdYAML), &obj.Object)
+// it checks if it exists and get existing copy bahaving like kubectl apply
+func (c *Client) ApplyCRD(
+	ctx context.Context,
+	crdYAML string,
+	namespace, resource, group, version string,
+) error {
+	var objMap map[string]any
+	err := yaml.Unmarshal([]byte(crdYAML), &objMap)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal YAML: %w", err)
 	}
+
+	obj := unstructured.Unstructured{Object: objMap}
 
 	if namespace != "" {
 		obj.SetNamespace(namespace)
 	}
 
 	gvr := schema.GroupVersionResource{
-		Group:    "apps.api.test",
-		Version:  "v1alpha1",
-		Resource: "simpleapis",
-	}
-
-	if namespace != "" && namespace != "default" {
-		err = c.ensureNamespace(ctx, namespace)
-		if err != nil {
-			return fmt.Errorf("failed to ensure namespace exists: %w", err)
-		}
+		Group:    group,
+		Version:  version,
+		Resource: resource,
 	}
 
 	if obj.GetNamespace() != "" {
@@ -100,11 +101,23 @@ func (c *Client) ApplyCRD(ctx context.Context, crdYAML string, namespace string)
 			Namespace(obj.GetNamespace()).
 			Create(ctx, &obj, metav1.CreateOptions{})
 		if err != nil {
-			_, err = c.dynamicClient.Resource(gvr).
-				Namespace(obj.GetNamespace()).
-				Update(ctx, &obj, metav1.UpdateOptions{})
-			if err != nil {
-				return fmt.Errorf("failed to create/update resource: %w", err)
+			// If already exists, fetch and update
+			if apierrors.IsAlreadyExists(err) {
+				existing, getErr := c.dynamicClient.Resource(gvr).
+					Namespace(obj.GetNamespace()).
+					Get(ctx, obj.GetName(), metav1.GetOptions{})
+				if getErr != nil {
+					return fmt.Errorf("failed to get existing resource for update: %w", getErr)
+				}
+				obj.SetResourceVersion(existing.GetResourceVersion())
+				_, err = c.dynamicClient.Resource(gvr).
+					Namespace(obj.GetNamespace()).
+					Update(ctx, &obj, metav1.UpdateOptions{})
+				if err != nil {
+					return fmt.Errorf("failed to update resource: %w", err)
+				}
+			} else {
+				return fmt.Errorf("failed to create resource: %w", err)
 			}
 		}
 	} else {
@@ -120,38 +133,21 @@ func (c *Client) ApplyCRD(ctx context.Context, crdYAML string, namespace string)
 	return nil
 }
 
-// ensureNamespace ensures that a namespace exists
-func (c *Client) ensureNamespace(ctx context.Context, namespace string) error {
-	_, err := c.clientset.CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
-	if err != nil {
-		_, err = c.clientset.CoreV1().Namespaces().Create(ctx, &corev1.Namespace{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: namespace,
-			},
-		}, metav1.CreateOptions{})
-		if err != nil {
-			return fmt.Errorf("failed to create namespace %s: %w", namespace, err)
-		}
-	}
-	return nil
-}
-
-// GetSimpleAPI retrieves a SimpleAPI resource
-func (c *Client) GetSimpleAPI(
-	ctx context.Context,
-	name, namespace string,
+// GetSingleApp retrieves a single resource
+func (c *Client) GetSingleApp(
+	ctx context.Context, name, namespace string, resource, group, version string,
 ) (*models.GetAPIResponse, error) {
 	gvr := schema.GroupVersionResource{
-		Group:    "apps.api.test",
-		Version:  "v1alpha1",
-		Resource: "simpleapis",
+		Group:    group,
+		Version:  version,
+		Resource: resource,
 	}
 
 	obj, err := c.dynamicClient.Resource(gvr).
 		Namespace(namespace).
 		Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get SimpleAPI %s/%s: %w", namespace, name, err)
+		return nil, fmt.Errorf("failed to get the app %s/%s: %w", namespace, name, err)
 	}
 
 	response := &models.GetAPIResponse{
@@ -165,7 +161,7 @@ func (c *Client) GetSimpleAPI(
 }
 
 // ListSimpleAPIs lists all SimpleAPI resources in a namespace
-func (c *Client) ListSimpleAPIs(
+func (c *Client) ListAllAPPs(
 	ctx context.Context,
 	namespace string,
 ) (*models.ListSimpleAPIResponse, error) {
@@ -196,4 +192,19 @@ func (c *Client) ListSimpleAPIs(
 	}
 
 	return response, nil
+}
+
+// ResourceNameForKind return the plural resource name for a given Kind, Group, and Version
+func (c *Client) ResourceNameForKind(kind, group, version string) (string, error) {
+	gv := group + "/" + version
+	apiResourceList, err := c.clientset.Discovery().ServerResourcesForGroupVersion(gv)
+	if err != nil {
+		return "", fmt.Errorf("failed to discover resources for %s: %w", gv, err)
+	}
+	for _, apiResource := range apiResourceList.APIResources {
+		if apiResource.Kind == kind {
+			return apiResource.Name, nil // Plural resource name
+		}
+	}
+	return "", fmt.Errorf("resource name for kind %s not found in %s", kind, gv)
 }

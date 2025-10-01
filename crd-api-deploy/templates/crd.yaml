@@ -1,4 +1,4 @@
-apiVersion: apps.api.test/v1alpha1
+apiVersion: {{ .Group }}/{{.CrdVersion}}
 kind: {{.Kind}}
 metadata:
   labels:
@@ -12,7 +12,7 @@ spec:
   version: "{{.Version}}"
   port: {{.Port}}
   replicas: {{.Replicas}}
-  ingressType: {{.IngressType}}
+  ingressType: httproute 
   envoyGateway: default-gateway
   envoyGatewayNamespace: envoy-gateway-system
   {{- if .IngressHostName }}
@@ -37,7 +37,7 @@ spec:
       path: "{{.StartupProbe.HTTPGet.Path}}"
       port: {{.StartupProbe.HTTPGet.Port}}
     failureThreshold: {{.StartupProbe.FailureThreshold}}
-    periodSeconds: {{.StartupProbe.PeriodSeconds}}
+    periodSeconds: {{.StartupProbe.PeriodSeconds}} 
   podSecurityContext:
     runAsNonRoot: {{.PodSecurityContext.RunAsNonRoot}}
     runAsUser: {{.PodSecurityContext.RunAsUser}}

@@ -1,0 +1,15 @@
+### 
+
+POST http://localhost:9090/crd HTTP/1.1
+Content-Type: application/json
+
+{
+  "group": "apps.api.test",
+  "image": "aacatwalkregistry.azurecr.io/fast-demo",
+  "imagePullSecret": "regcred",
+  "kind": "Simpleapi",
+  "name": "simpleapi-new",
+  "namespace": "default",
+  "serviceAccount": "simpleapi-sa",
+  "version": "v26"
+}

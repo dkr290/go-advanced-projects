@@ -41,7 +41,7 @@ func main() {
 
 		server := &http.Server{
 			Addr:    fmt.Sprintf(":%d", options.Port),
-			Handler: middleware.SecurityHeaders(middleware.ResponseTimeMiddleware(mux)),
+			Handler: middleware.SecurityHeaders(mux),
 		}
 
 		hooks.OnStart(func() {

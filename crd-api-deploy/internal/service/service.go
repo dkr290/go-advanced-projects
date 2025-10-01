@@ -33,8 +33,8 @@ func NewAPIService() (*APIService, error) {
 	}, nil
 }
 
-// CreateSimpleAPI creates a SimpleAPI CRD in the cluster
-func (s *APIService) CreateSimpleAPI(
+// CreateAPP creates  CRD in the cluster
+func (s *APIService) CreateAPP(
 	ctx context.Context, req *models.CreateAPIRequest,
 ) (*models.CreateAPIResponse, error) {
 	if err := s.validateCreateRequest(req); err != nil {
@@ -47,34 +47,49 @@ func (s *APIService) CreateSimpleAPI(
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate CRD YAML: %w", err)
 	}
+	resourceName, err := s.k8sClient.ResourceNameForKind(req.Kind, req.Group, req.CrdVersion)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Resouce from kind %v", err)
+	}
 
-	err = s.k8sClient.ApplyCRD(ctx, crdYAML, req.Namespace)
+	err = s.k8sClient.ApplyCRD(ctx, crdYAML, req.Namespace, resourceName, req.Group, req.CrdVersion)
 	if err != nil {
 		return nil, fmt.Errorf("failed to apply CRD to cluster: %w", err)
 	}
 
 	return &models.CreateAPIResponse{
-		Message:   "SimpleAPI resource created successfully",
+		Message:   "CRD resource created successfully",
 		Name:      req.Name,
 		Namespace: req.Namespace,
 		Kind:      req.Kind,
 	}, nil
 }
 
-// GetSimpleAPI retrieves a SimpleAPI resource
-func (s *APIService) GetSimpleAPI(
-	ctx context.Context,
-	name, namespace string,
+// GetAPPResouce retrieves a resource
+func (s *APIService) GetAPPResouce(
+	ctx context.Context, req *models.GetAPIInput,
 ) (*models.GetAPIResponse, error) {
-	return s.k8sClient.GetSimpleAPI(ctx, name, namespace)
+	resourceName, err := s.k8sClient.ResourceNameForKind(req.Kind, req.Group, req.CrdVersion)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Resouce from kind %v", err)
+	}
+
+	return s.k8sClient.GetSingleApp(
+		ctx,
+		req.Name,
+		req.Namespace,
+		resourceName,
+		req.Group,
+		req.CrdVersion,
+	)
 }
 
-// ListSimpleAPIs lists SimpleAPI resources in a namespace
-func (s *APIService) ListSimpleAPIs(
+// ListAPPs lists SimpleAPP resources in a namespace
+func (s *APIService) ListAPPs(
 	ctx context.Context,
 	namespace string,
 ) (*models.ListSimpleAPIResponse, error) {
-	return s.k8sClient.ListSimpleAPIs(ctx, namespace)
+	return s.k8sClient.ListAllAPPs(ctx, namespace)
 }
 
 // validateCreateRequest validates the create request
@@ -88,6 +103,10 @@ func (s *APIService) validateCreateRequest(req *models.CreateAPIRequest) error {
 	if req.Kind == "" {
 		return fmt.Errorf("kind is required")
 	}
+	if req.Group == "" {
+		return fmt.Errorf("group is required")
+	}
+
 	if req.Image == "" {
 		return fmt.Errorf("image is required")
 	}
@@ -110,16 +129,16 @@ func (s *APIService) setDefaultValues(req *models.CreateAPIRequest) {
 			{Key: "app", Value: req.Name},
 		}
 	}
-
+	if req.CrdVersion == "" {
+		req.CrdVersion = "v1alpha1"
+	}
 	if req.Port == 0 {
 		req.Port = 8000
 	}
 	if req.Replicas == 0 {
 		req.Replicas = 1
 	}
-	if req.IngressType == "" {
-		req.IngressType = "httproute"
-	}
+
 	if req.Resources.Limits.CPU == "" {
 		req.Resources.Limits.CPU = "1000m"
 	}

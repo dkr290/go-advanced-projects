@@ -10,8 +10,7 @@ type CreateAPIOutput struct {
 }
 
 type GetAPIInput struct {
-	Name      string `path:"name" doc:"Name of the SimpleAPI resource"`
-	Namespace string `            doc:"Namespace of the SimpleAPI resource" query:"namespace" default:"default"`
+	Body models.GetAPIInput `json:"body"`
 }
 
 type GetAPIOutput struct {
