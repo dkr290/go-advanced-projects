@@ -9,14 +9,14 @@ import (
 	"crd-api-deploy/internal/template"
 )
 
-// SimpleAPIService handles SimpleAPI operations
-type SimpleAPIService struct {
+// APIService handles SimpleAPI operations
+type APIService struct {
 	k8sClient      *k8s.Client
 	templateEngine *template.Engine
 }
 
-// NewSimpleAPIService creates a new SimpleAPI service
-func NewSimpleAPIService() (*SimpleAPIService, error) {
+// NewAPIService creates a new SimpleAPI service
+func NewAPIService() (*APIService, error) {
 	k8sClient, err := k8s.NewClient()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Kubernetes client: %w", err)
@@ -27,14 +27,16 @@ func NewSimpleAPIService() (*SimpleAPIService, error) {
 		return nil, fmt.Errorf("failed to create template engine: %w", err)
 	}
 
-	return &SimpleAPIService{
+	return &APIService{
 		k8sClient:      k8sClient,
 		templateEngine: templateEngine,
 	}, nil
 }
 
 // CreateSimpleAPI creates a SimpleAPI CRD in the cluster
-func (s *SimpleAPIService) CreateSimpleAPI(ctx context.Context, req *models.CreateSimpleAPIRequest) (*models.CreateSimpleAPIResponse, error) {
+func (s *APIService) CreateSimpleAPI(
+	ctx context.Context, req *models.CreateAPIRequest,
+) (*models.CreateAPIResponse, error) {
 	if err := s.validateCreateRequest(req); err != nil {
 		return nil, fmt.Errorf("validation failed: %w", err)
 	}
@@ -51,7 +53,7 @@ func (s *SimpleAPIService) CreateSimpleAPI(ctx context.Context, req *models.Crea
 		return nil, fmt.Errorf("failed to apply CRD to cluster: %w", err)
 	}
 
-	return &models.CreateSimpleAPIResponse{
+	return &models.CreateAPIResponse{
 		Message:   "SimpleAPI resource created successfully",
 		Name:      req.Name,
 		Namespace: req.Namespace,
@@ -60,17 +62,23 @@ func (s *SimpleAPIService) CreateSimpleAPI(ctx context.Context, req *models.Crea
 }
 
 // GetSimpleAPI retrieves a SimpleAPI resource
-func (s *SimpleAPIService) GetSimpleAPI(ctx context.Context, name, namespace string) (*models.GetSimpleAPIResponse, error) {
+func (s *APIService) GetSimpleAPI(
+	ctx context.Context,
+	name, namespace string,
+) (*models.GetAPIResponse, error) {
 	return s.k8sClient.GetSimpleAPI(ctx, name, namespace)
 }
 
 // ListSimpleAPIs lists SimpleAPI resources in a namespace
-func (s *SimpleAPIService) ListSimpleAPIs(ctx context.Context, namespace string) (*models.ListSimpleAPIResponse, error) {
+func (s *APIService) ListSimpleAPIs(
+	ctx context.Context,
+	namespace string,
+) (*models.ListSimpleAPIResponse, error) {
 	return s.k8sClient.ListSimpleAPIs(ctx, namespace)
 }
 
 // validateCreateRequest validates the create request
-func (s *SimpleAPIService) validateCreateRequest(req *models.CreateSimpleAPIRequest) error {
+func (s *APIService) validateCreateRequest(req *models.CreateAPIRequest) error {
 	if req.Name == "" {
 		return fmt.Errorf("name is required")
 	}
@@ -91,7 +99,7 @@ func (s *SimpleAPIService) validateCreateRequest(req *models.CreateSimpleAPIRequ
 }
 
 // setDefaultValues sets default values for optional fields
-func (s *SimpleAPIService) setDefaultValues(req *models.CreateSimpleAPIRequest) {
+func (s *APIService) setDefaultValues(req *models.CreateAPIRequest) {
 	if len(req.Labels) == 0 {
 		req.Labels = []models.Label{
 			{Key: "app.kubernetes.io/name", Value: "my-api"},

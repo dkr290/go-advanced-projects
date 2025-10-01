@@ -1,3 +1,4 @@
+// Package k8s deploying the crd after
 package k8s
 
 import (
@@ -96,9 +97,13 @@ func (c *Client) ApplyCRD(ctx context.Context, crdYAML string, namespace string)
 	}
 
 	if obj.GetNamespace() != "" {
-		_, err = c.dynamicClient.Resource(gvr).Namespace(obj.GetNamespace()).Create(ctx, &obj, metav1.CreateOptions{})
+		_, err = c.dynamicClient.Resource(gvr).
+			Namespace(obj.GetNamespace()).
+			Create(ctx, &obj, metav1.CreateOptions{})
 		if err != nil {
-			_, err = c.dynamicClient.Resource(gvr).Namespace(obj.GetNamespace()).Update(ctx, &obj, metav1.UpdateOptions{})
+			_, err = c.dynamicClient.Resource(gvr).
+				Namespace(obj.GetNamespace()).
+				Update(ctx, &obj, metav1.UpdateOptions{})
 			if err != nil {
 				return fmt.Errorf("failed to create/update resource: %w", err)
 			}
@@ -133,30 +138,38 @@ func (c *Client) ensureNamespace(ctx context.Context, namespace string) error {
 }
 
 // GetSimpleAPI retrieves a SimpleAPI resource
-func (c *Client) GetSimpleAPI(ctx context.Context, name, namespace string) (*models.GetSimpleAPIResponse, error) {
+func (c *Client) GetSimpleAPI(
+	ctx context.Context,
+	name, namespace string,
+) (*models.GetAPIResponse, error) {
 	gvr := schema.GroupVersionResource{
 		Group:    "apps.api.test",
 		Version:  "v1alpha1",
 		Resource: "simpleapis",
 	}
 
-	obj, err := c.dynamicClient.Resource(gvr).Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
+	obj, err := c.dynamicClient.Resource(gvr).
+		Namespace(namespace).
+		Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get SimpleAPI %s/%s: %w", namespace, name, err)
 	}
 
-	response := &models.GetSimpleAPIResponse{
+	response := &models.GetAPIResponse{
 		APIVersion: obj.GetAPIVersion(),
 		Kind:       obj.GetKind(),
-		Metadata:   obj.Object["metadata"].(map[string]interface{}),
-		Spec:       obj.Object["spec"].(map[string]interface{}),
+		Metadata:   obj.Object["metadata"].(map[string]any),
+		Spec:       obj.Object["spec"].(map[string]any),
 	}
 
 	return response, nil
 }
 
 // ListSimpleAPIs lists all SimpleAPI resources in a namespace
-func (c *Client) ListSimpleAPIs(ctx context.Context, namespace string) (*models.ListSimpleAPIResponse, error) {
+func (c *Client) ListSimpleAPIs(
+	ctx context.Context,
+	namespace string,
+) (*models.ListSimpleAPIResponse, error) {
 	gvr := schema.GroupVersionResource{
 		Group:    "apps.api.test",
 		Version:  "v1alpha1",
@@ -171,15 +184,15 @@ func (c *Client) ListSimpleAPIs(ctx context.Context, namespace string) (*models.
 	response := &models.ListSimpleAPIResponse{
 		APIVersion: "apps.api.test/v1alpha1",
 		Kind:       "SimpleAPIList",
-		Items:      make([]models.GetSimpleAPIResponse, len(list.Items)),
+		Items:      make([]models.GetAPIResponse, len(list.Items)),
 	}
 
 	for i, item := range list.Items {
-		response.Items[i] = models.GetSimpleAPIResponse{
+		response.Items[i] = models.GetAPIResponse{
 			APIVersion: item.GetAPIVersion(),
 			Kind:       item.GetKind(),
-			Metadata:   item.Object["metadata"].(map[string]interface{}),
-			Spec:       item.Object["spec"].(map[string]interface{}),
+			Metadata:   item.Object["metadata"].(map[string]any),
+			Spec:       item.Object["spec"].(map[string]any),
 		}
 	}
 

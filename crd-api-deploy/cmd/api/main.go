@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"crd-api-deploy/cmd/router"
+	"crd-api-deploy/internal/middleware"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humago"
@@ -18,7 +19,9 @@ import (
 )
 
 type Options struct {
-	Port int `help:"Port to listen on" short:"p" default:"8090"`
+	Port  int    `help:"Port to listen on"      short:"p" default:"8090"`
+	Debug bool   `help:"Debug flag for logging" short:"d" default:"false"     doc:"Enable Debug Logging"`
+	Host  string `help:"Host to run on"         short:"s" default:"localhost" doc:"Hostname to listen to"`
 }
 
 func main() {
@@ -31,7 +34,7 @@ func main() {
 			Name: "API Support",
 		}
 		config.Servers = []*huma.Server{
-			{URL: fmt.Sprintf("http://localhost:%d", options.Port)},
+			{URL: fmt.Sprintf("http://%s:%d", options.Host, options.Port)},
 		}
 
 		api := humago.New(mux, config)
@@ -41,27 +44,18 @@ func main() {
 			log.Fatalf("Failed to register routes: %v", err)
 		}
 
-		api.UseMiddleware(func(ctx huma.Context, next func(huma.Context)) {
-			ctx.SetHeader("Access-Control-Allow-Origin", "*")
-			ctx.SetHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-			ctx.SetHeader("Access-Control-Allow-Headers", "Content-Type, Authorization")
-
-			if ctx.Method() == "OPTIONS" {
-				ctx.SetStatus(200)
-				return
-			}
-
-			next(ctx)
-		})
-
 		server := &http.Server{
 			Addr:    fmt.Sprintf(":%d", options.Port),
-			Handler: mux,
+			Handler: middleware.SecurityHeaders(mux),
 		}
 
 		hooks.OnStart(func() {
 			log.Printf("Starting server on port %d", options.Port)
-			log.Printf("API documentation available at http://localhost:%d/docs", options.Port)
+			log.Printf(
+				"API documentation available at http://%s:%d/docs",
+				options.Host,
+				options.Port,
+			)
 
 			if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 				log.Fatalf("Server failed to start: %v", err)
@@ -92,4 +86,3 @@ func main() {
 
 	cli.Run()
 }
-
