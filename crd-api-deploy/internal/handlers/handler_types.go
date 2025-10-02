@@ -19,10 +19,10 @@ type GetAPIOutput struct {
 
 // ListAPIInput represents the input for listing SimpleAPIs
 type ListAPIInput struct {
-	Namespace string `query:"namespace" default:"default" doc:"Namespace to list SimpleAPI resources from"`
+	Body models.ListAPIInput `json:"body"`
 }
 
 // ListAPIOutput represents the output for listing SimpleAPIs
 type ListAPIOutput struct {
-	Body models.ListSimpleAPIResponse `json:"body"`
+	Body models.ListAPIResponse `json:"body"`
 }

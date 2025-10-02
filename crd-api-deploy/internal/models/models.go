@@ -80,7 +80,7 @@ type GetAPIResponse struct {
 }
 
 // ListSimpleAPIResponse represents a list of SimpleAPI resources
-type ListSimpleAPIResponse struct {
+type ListAPIResponse struct {
 	APIVersion string           `json:"apiVersion" example:"apps.api.test/v1alpha1" doc:"API version"`
 	Kind       string           `json:"kind"       example:"SimpleAPIList"          doc:"Resource kind"`
 	Items      []GetAPIResponse `json:"items"                                       doc:"List of SimpleAPI resources"`
@@ -97,5 +97,11 @@ type GetAPIInput struct {
 	Group      string `json:"group"                example:"apps.api.test" doc:"The Group name"`
 	CrdVersion string `json:"crdversion,omitempty" example:"v1alpha1"      doc:"crd version"`
 	Name       string `json:"name"                                         doc:"Name of the SimpleAPI resource"`
+	Namespace  string `json:"namespace"                                    doc:"Namespace of the SimpleAPI resource"`
+}
+type ListAPIInput struct {
+	Kind       string `json:"kind"                 example:"Simpleapi"     doc:"Kind of the CRD"`
+	Group      string `json:"group"                example:"apps.api.test" doc:"The Group name"`
+	CrdVersion string `json:"crdversion,omitempty" example:"v1alpha1"      doc:"crd version"`
 	Namespace  string `json:"namespace"                                    doc:"Namespace of the SimpleAPI resource"`
 }

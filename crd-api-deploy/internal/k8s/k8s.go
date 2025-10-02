@@ -160,15 +160,15 @@ func (c *Client) GetSingleApp(
 	return response, nil
 }
 
-// ListSimpleAPIs lists all SimpleAPI resources in a namespace
+// ListAllAPPs lists all SimpleAPI resources in a namespace
 func (c *Client) ListAllAPPs(
 	ctx context.Context,
-	namespace string,
-) (*models.ListSimpleAPIResponse, error) {
+	namespace, resource, group, kind, version string,
+) (*models.ListAPIResponse, error) {
 	gvr := schema.GroupVersionResource{
-		Group:    "apps.api.test",
-		Version:  "v1alpha1",
-		Resource: "simpleapis",
+		Group:    group,
+		Version:  version,
+		Resource: resource,
 	}
 
 	list, err := c.dynamicClient.Resource(gvr).Namespace(namespace).List(ctx, metav1.ListOptions{})
@@ -176,9 +176,9 @@ func (c *Client) ListAllAPPs(
 		return nil, fmt.Errorf("failed to list SimpleAPIs in namespace %s: %w", namespace, err)
 	}
 
-	response := &models.ListSimpleAPIResponse{
-		APIVersion: "apps.api.test/v1alpha1",
-		Kind:       "SimpleAPIList",
+	response := &models.ListAPIResponse{
+		APIVersion: group + "/" + version,
+		Kind:       kind,
 		Items:      make([]models.GetAPIResponse, len(list.Items)),
 	}
 

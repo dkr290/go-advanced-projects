@@ -12,9 +12,17 @@ import (
 func RegisterRoutes(mux *http.ServeMux, config huma.Config) *http.ServeMux {
 	handler := handlers.NewHandler()
 	api := humago.New(mux, config)
-	huma.Get(api, "/", handler.RootHandler)
 	huma.Register(api, huma.Operation{
-		OperationID:   "create-simpleapi",
+		OperationID: "health-check",
+		Method:      http.MethodGet,
+		Path:        "/",
+		Summary:     "Root path",
+		Description: "Root Path",
+		Tags:        []string{"Root-check"},
+	}, handler.RootHandler)
+
+	huma.Register(api, huma.Operation{
+		OperationID:   "create-crd",
 		Method:        http.MethodPost,
 		Path:          "/crd-create",
 		Summary:       "Create or Apply a CRD",
@@ -24,21 +32,21 @@ func RegisterRoutes(mux *http.ServeMux, config huma.Config) *http.ServeMux {
 	}, handler.CreateAPIHandler)
 
 	huma.Register(api, huma.Operation{
-		OperationID: "get-simpleapi",
+		OperationID: "get-single-crd",
 		Method:      http.MethodPost,
 		Path:        "/crd-get",
 		Summary:     "Get an application",
 		Description: "Retrieves an application resource by name and namespace and crd group, kind and version",
-		Tags:        []string{"GET-Deployment"},
+		Tags:        []string{"GET-Crd"},
 	}, handler.GetAPIHandler)
 
 	huma.Register(api, huma.Operation{
-		OperationID: "list-simpleapis",
-		Method:      http.MethodGet,
-		Path:        "/crd",
+		OperationID: "list-crds",
+		Method:      http.MethodPost,
+		Path:        "/crd-list",
 		Summary:     "List all resources",
-		Description: "Lists all deployment resources in the specified namespace",
-		Tags:        []string{"List-Deployments"},
+		Description: "Lists all crd resources in the specified namespace",
+		Tags:        []string{"List-Crds"},
 	}, handler.ListHandler)
 
 	return mux

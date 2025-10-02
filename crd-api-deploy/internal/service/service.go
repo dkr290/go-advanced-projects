@@ -86,10 +86,21 @@ func (s *APIService) GetAPPResouce(
 
 // ListAPPs lists SimpleAPP resources in a namespace
 func (s *APIService) ListAPPs(
-	ctx context.Context,
-	namespace string,
-) (*models.ListSimpleAPIResponse, error) {
-	return s.k8sClient.ListAllAPPs(ctx, namespace)
+	ctx context.Context, req *models.ListAPIInput,
+) (*models.ListAPIResponse, error) {
+	resourceName, err := s.k8sClient.ResourceNameForKind(req.Kind, req.Group, req.CrdVersion)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Resouce from kind %v", err)
+	}
+
+	return s.k8sClient.ListAllAPPs(
+		ctx,
+		req.Namespace,
+		resourceName,
+		req.Group,
+		req.Kind,
+		req.CrdVersion,
+	)
 }
 
 // validateCreateRequest validates the create request

@@ -66,5 +66,11 @@ func (h *Handlers) GetAPIHandler(ctx context.Context, input *GetAPIInput) (*GetA
 }
 
 func (h *Handlers) ListHandler(ctx context.Context, input *ListAPIInput) (*ListAPIOutput, error) {
-	return nil, nil
+	result, err := h.service.ListAPPs(ctx, &input.Body)
+	if err != nil {
+		return nil, huma.Error400BadRequest("Failed to create SimpleAPI", err)
+	}
+	return &ListAPIOutput{
+		Body: *result,
+	}, nil
 }
