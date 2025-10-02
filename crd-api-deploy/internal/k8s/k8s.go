@@ -163,7 +163,7 @@ func (c *Client) GetSingleApp(
 // ListAllAPPs lists all SimpleAPI resources in a namespace
 func (c *Client) ListAllAPPs(
 	ctx context.Context,
-	namespace, resource, group, kind, version string,
+	resource, group, kind, version string,
 ) (*models.ListAPIResponse, error) {
 	gvr := schema.GroupVersionResource{
 		Group:    group,
@@ -171,9 +171,9 @@ func (c *Client) ListAllAPPs(
 		Resource: resource,
 	}
 
-	list, err := c.dynamicClient.Resource(gvr).Namespace(namespace).List(ctx, metav1.ListOptions{})
+	list, err := c.dynamicClient.Resource(gvr).List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to list SimpleAPIs in namespace %s: %w", namespace, err)
+		return nil, fmt.Errorf("failed to list Crds in namespace  %w", err)
 	}
 
 	response := &models.ListAPIResponse{

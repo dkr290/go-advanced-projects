@@ -95,7 +95,6 @@ func (s *APIService) ListAPPs(
 
 	return s.k8sClient.ListAllAPPs(
 		ctx,
-		req.Namespace,
 		resourceName,
 		req.Group,
 		req.Kind,

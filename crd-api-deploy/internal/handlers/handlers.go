@@ -74,3 +74,7 @@ func (h *Handlers) ListHandler(ctx context.Context, input *ListAPIInput) (*ListA
 		Body: *result,
 	}, nil
 }
+
+func (h *Handlers) DeleteHandler(ctx context.Context, _ *struct{}) (*struct{}, error) {
+	return nil, nil
+}
