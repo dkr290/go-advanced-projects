@@ -10,7 +10,7 @@ type CreateAPIOutput struct {
 }
 
 type GetAPIInput struct {
-	Body models.GetAPIInput `json:"body"`
+	Body models.GetSigleCrdInput `json:"body"`
 }
 
 type GetAPIOutput struct {

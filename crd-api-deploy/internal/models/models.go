@@ -92,12 +92,11 @@ type ErrorResponse struct {
 	Details string `json:"details,omitempty" example:"Invalid namespace"         doc:"Error details"`
 }
 
-type GetAPIInput struct {
+type GetSigleCrdInput struct {
 	Kind       string `json:"kind"                 example:"Simpleapi"     doc:"Kind of the CRD"`
 	Group      string `json:"group"                example:"apps.api.test" doc:"The Group name"`
 	CrdVersion string `json:"crdversion,omitempty" example:"v1alpha1"      doc:"crd version"`
 	Name       string `json:"name"                                         doc:"Name of the SimpleAPI resource"`
-	Namespace  string `json:"namespace"                                    doc:"Namespace of the SimpleAPI resource"`
 }
 type ListAPIInput struct {
 	Kind       string `json:"kind"                 example:"Simpleapi"     doc:"Kind of the CRD"`

@@ -135,7 +135,7 @@ func (c *Client) ApplyCRD(
 
 // GetSingleApp retrieves a single resource
 func (c *Client) GetSingleApp(
-	ctx context.Context, name, namespace string, resource, group, version string,
+	ctx context.Context, name, resource, group, version string,
 ) (*models.GetAPIResponse, error) {
 	gvr := schema.GroupVersionResource{
 		Group:    group,
@@ -144,10 +144,9 @@ func (c *Client) GetSingleApp(
 	}
 
 	obj, err := c.dynamicClient.Resource(gvr).
-		Namespace(namespace).
 		Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get the app %s/%s: %w", namespace, name, err)
+		return nil, fmt.Errorf("failed to get the app %s: %w", name, err)
 	}
 
 	response := &models.GetAPIResponse{

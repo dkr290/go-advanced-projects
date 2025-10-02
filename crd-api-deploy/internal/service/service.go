@@ -67,7 +67,7 @@ func (s *APIService) CreateAPP(
 
 // GetAPPResouce retrieves a resource
 func (s *APIService) GetAPPResouce(
-	ctx context.Context, req *models.GetAPIInput,
+	ctx context.Context, req *models.GetSigleCrdInput,
 ) (*models.GetAPIResponse, error) {
 	resourceName, err := s.k8sClient.ResourceNameForKind(req.Kind, req.Group, req.CrdVersion)
 	if err != nil {
@@ -77,7 +77,6 @@ func (s *APIService) GetAPPResouce(
 	return s.k8sClient.GetSingleApp(
 		ctx,
 		req.Name,
-		req.Namespace,
 		resourceName,
 		req.Group,
 		req.CrdVersion,
