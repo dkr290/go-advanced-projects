@@ -4,13 +4,15 @@ package router
 import (
 	"net/http"
 
+	"model-image-deployer/internal/handlers"
+	"model-image-deployer/internal/service"
+
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humago"
-	"github.com/dkr290/go-advanced-projects/crd-api-deploy/internal/handlers"
 )
 
-func RegisterRoutes(mux *http.ServeMux, config huma.Config) *http.ServeMux {
-	handler := handlers.NewHandler()
+func RegisterRoutes(mux *http.ServeMux, config huma.Config, apiService service.APIServiceInterface) *http.ServeMux {
+	handler := handlers.NewHandler(apiService)
 	api := humago.New(mux, config)
 	huma.Register(api, huma.Operation{
 		OperationID: "health-check",
@@ -25,29 +27,28 @@ func RegisterRoutes(mux *http.ServeMux, config huma.Config) *http.ServeMux {
 		OperationID:   "create-crd",
 		Method:        http.MethodPost,
 		Path:          "/crd-create",
-		Summary:       "Create or Apply a CRD",
-		Description:   "Creates or applies a new Custom Resource Definition in the Kubernetes cluster",
-		Tags:          []string{"Apply-CRD"},
+		Summary:       "Create or Apply model CRD",
+		Description:   "Creates or applies a new Custom Resource Definition for a model in the Kubernetes cluster",
+		Tags:          []string{"Apply-ModelCrd"},
 		DefaultStatus: http.StatusCreated,
-	}, handler.CreateAPIHandler)
-
-	huma.Register(api, huma.Operation{
-		OperationID: "get-single-crd",
-		Method:      http.MethodPost,
-		Path:        "/crd-get",
-		Summary:     "Get an application",
-		Description: "Retrieves an application resource by name and namespace and crd group, kind and version",
-		Tags:        []string{"GET-Crd"},
-	}, handler.GetAPIHandler)
+	}, handler.CreateCRDHandler)
 
 	huma.Register(api, huma.Operation{
 		OperationID: "list-crds",
-		Method:      http.MethodPost,
+		Method:      http.MethodGet,
 		Path:        "/crd-list",
-		Summary:     "List all resources",
-		Description: "Lists all crd resources in the specified namespace",
-		Tags:        []string{"List-Crds"},
+		Summary:     "List all models CRD",
+		Description: "Lists all crd resources for the models",
+		Tags:        []string{"List-ModelCrds"},
 	}, handler.ListHandler)
+	huma.Register(api, huma.Operation{
+		OperationID: "delete-crds",
+		Method:      http.MethodPost,
+		Path:        "/crd-delete",
+		Summary:     "Delete model CRD",
+		Description: "Delete crd resources for the models",
+		Tags:        []string{"Delete-ModelCrd"},
+	}, handler.DeleteHandler)
 
 	return mux
 }

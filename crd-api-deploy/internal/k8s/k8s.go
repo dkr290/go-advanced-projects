@@ -1,3 +1,4 @@
+// Package k8s - responsible for all k8s operations
 package k8s
 
 import (
@@ -5,19 +6,36 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/dkr290/go-advanced-projects/crd-api-deploy/internal/models"
-
+	"github.com/rs/zerolog/log"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 	"sigs.k8s.io/yaml"
+
+	"model-image-deployer/internal/apierror"
+	"model-image-deployer/internal/models"
 )
+
+// K8sClientInterface defines the interface for k8s client operations.
+type K8sClientInterface interface {
+	ApplyCRD(ctx context.Context, crdYAML string, namespace, resource, group, version string) error
+	DeleteCrd(
+		ctx context.Context,
+		name, resource, group, kind, version, namespace string,
+	) (*models.DeleteCrdResponse, error)
+	ListAllAPPs(
+		ctx context.Context,
+		resource, group, kind, version string,
+	) (*models.ListAPIResponse, error)
+	ResourceNameForKind(kind, group, version string) (string, error)
+}
 
 // Client wraps Kubernetes clients
 type Client struct {
@@ -71,21 +89,26 @@ func getKubernetesConfig() (*rest.Config, error) {
 	return config, nil
 }
 
-// ApplyCRD applies a CRD YAML to the cluster
-// it checks if it exists and get existing copy bahaving like kubectl apply
+// ApplyCRD applies a CRD YAML to the cluster using server-side apply.
 func (c *Client) ApplyCRD(
 	ctx context.Context,
 	crdYAML string,
 	namespace, resource, group, version string,
 ) error {
+	log.Info().
+		Str("namespace", namespace).
+		Str("resource", resource).
+		Str("group", group).
+		Str("version", version).
+		Msg("Applying CRD with server-side apply")
+
 	var objMap map[string]any
-	err := yaml.Unmarshal([]byte(crdYAML), &objMap)
-	if err != nil {
+	if err := yaml.Unmarshal([]byte(crdYAML), &objMap); err != nil {
+		log.Error().Err(err).Msg("Failed to unmarshal YAML")
 		return fmt.Errorf("failed to unmarshal YAML: %w", err)
 	}
 
 	obj := unstructured.Unstructured{Object: objMap}
-
 	if namespace != "" {
 		obj.SetNamespace(namespace)
 	}
@@ -96,66 +119,59 @@ func (c *Client) ApplyCRD(
 		Resource: resource,
 	}
 
-	if obj.GetNamespace() != "" {
-		_, err = c.dynamicClient.Resource(gvr).
-			Namespace(obj.GetNamespace()).
-			Create(ctx, &obj, metav1.CreateOptions{})
-		if err != nil {
-			// If already exists, fetch and update
-			if apierrors.IsAlreadyExists(err) {
-				existing, getErr := c.dynamicClient.Resource(gvr).
-					Namespace(obj.GetNamespace()).
-					Get(ctx, obj.GetName(), metav1.GetOptions{})
-				if getErr != nil {
-					return fmt.Errorf("failed to get existing resource for update: %w", getErr)
-				}
-				obj.SetResourceVersion(existing.GetResourceVersion())
-				_, err = c.dynamicClient.Resource(gvr).
-					Namespace(obj.GetNamespace()).
-					Update(ctx, &obj, metav1.UpdateOptions{})
-				if err != nil {
-					return fmt.Errorf("failed to update resource: %w", err)
-				}
-			} else {
-				return fmt.Errorf("failed to create resource: %w", err)
-			}
-		}
-	} else {
-		_, err = c.dynamicClient.Resource(gvr).Create(ctx, &obj, metav1.CreateOptions{})
-		if err != nil {
-			_, err = c.dynamicClient.Resource(gvr).Update(ctx, &obj, metav1.UpdateOptions{})
-			if err != nil {
-				return fmt.Errorf("failed to create/update resource: %w", err)
-			}
-		}
+	patchOptions := metav1.PatchOptions{
+		FieldManager: "model-image-deployer",
+		Force:        func() *bool { b := true; return &b }(),
 	}
 
+	var dr dynamic.ResourceInterface
+	if obj.GetNamespace() != "" {
+		dr = c.dynamicClient.Resource(gvr).Namespace(obj.GetNamespace())
+	} else {
+		dr = c.dynamicClient.Resource(gvr)
+	}
+
+	_, err := dr.Patch(ctx, obj.GetName(), types.ApplyPatchType, []byte(crdYAML), patchOptions)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to apply CRD with server-side apply")
+		if apierrors.IsConflict(err) {
+			return apierror.ErrK8sConflict
+		}
+		return apierror.ErrK8sAPIFailure
+	}
+
+	log.Info().Str("name", obj.GetName()).Msg("CRD applied successfully using server-side apply")
 	return nil
 }
 
-// GetSingleApp retrieves a single resource
-func (c *Client) GetSingleApp(
-	ctx context.Context, name, resource, group, version string,
-) (*models.GetAPIResponse, error) {
+func (c *Client) DeleteCrd(
+	ctx context.Context,
+	name, resource, group, kind, version, namespace string,
+) (*models.DeleteCrdResponse, error) {
+	log.Info().Str("name", name).Str("namespace", namespace).Msg("Deleting Crd")
 	gvr := schema.GroupVersionResource{
 		Group:    group,
 		Version:  version,
 		Resource: resource,
 	}
 
-	obj, err := c.dynamicClient.Resource(gvr).
-		Get(ctx, name, metav1.GetOptions{})
+	err := c.dynamicClient.Resource(gvr).
+		Namespace(namespace).
+		Delete(ctx, name, metav1.DeleteOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get the app %s: %w", name, err)
+		log.Error().Err(err).Msg("Failed to delete Crd")
+		if apierrors.IsNotFound(err) {
+			return nil, apierror.ErrNotFound
+		}
+		return nil, apierror.ErrK8sAPIFailure
 	}
 
-	response := &models.GetAPIResponse{
-		APIVersion: obj.GetAPIVersion(),
-		Kind:       obj.GetKind(),
-		Metadata:   obj.Object["metadata"].(map[string]any),
-		Spec:       obj.Object["spec"].(map[string]any),
+	response := &models.DeleteCrdResponse{
+		Name:       name,
+		APIVersion: group + "/" + version,
+		Kind:       kind,
 	}
-
+	log.Info().Interface("response", response).Msg("Crd deleted successfully")
 	return response, nil
 }
 
@@ -164,6 +180,12 @@ func (c *Client) ListAllAPPs(
 	ctx context.Context,
 	resource, group, kind, version string,
 ) (*models.ListAPIResponse, error) {
+	log.Info().
+		Str("resource", resource).
+		Str("group", group).
+		Str("kind", kind).
+		Str("version", version).
+		Msg("Listing all APPs")
 	gvr := schema.GroupVersionResource{
 		Group:    group,
 		Version:  version,
@@ -172,6 +194,7 @@ func (c *Client) ListAllAPPs(
 
 	list, err := c.dynamicClient.Resource(gvr).List(ctx, metav1.ListOptions{})
 	if err != nil {
+		log.Error().Err(err).Msg("Failed to list Crds")
 		return nil, fmt.Errorf("failed to list Crds in namespace  %w", err)
 	}
 
@@ -189,21 +212,29 @@ func (c *Client) ListAllAPPs(
 			Spec:       item.Object["spec"].(map[string]any),
 		}
 	}
-
+	log.Info().Int("count", len(response.Items)).Msg("APPs listed successfully")
 	return response, nil
 }
 
 // ResourceNameForKind return the plural resource name for a given Kind, Group, and Version
 func (c *Client) ResourceNameForKind(kind, group, version string) (string, error) {
+	log.Info().
+		Str("kind", kind).
+		Str("group", group).
+		Str("version", version).
+		Msg("Discovering resource name for kind")
 	gv := group + "/" + version
 	apiResourceList, err := c.clientset.Discovery().ServerResourcesForGroupVersion(gv)
 	if err != nil {
+		log.Error().Err(err).Msg("Failed to discover resources")
 		return "", fmt.Errorf("failed to discover resources for %s: %w", gv, err)
 	}
 	for _, apiResource := range apiResourceList.APIResources {
 		if apiResource.Kind == kind {
+			log.Info().Str("resourceName", apiResource.Name).Msg("Resource name discovered")
 			return apiResource.Name, nil // Plural resource name
 		}
 	}
+	log.Error().Msg("Resource name not found")
 	return "", fmt.Errorf("resource name for kind %s not found in %s", kind, gv)
 }

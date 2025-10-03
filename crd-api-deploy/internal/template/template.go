@@ -8,8 +8,13 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/dkr290/go-advanced-projects/crd-api-deploy/internal/models"
+	"model-image-deployer/internal/models"
 )
+
+// TemplateEngineInterface defines the interface for the template engine.
+type TemplateEngineInterface interface {
+	GenerateCRD(req *models.SetDefaultValues) (string, error)
+}
 
 // Engine handles template generation
 type Engine struct {
@@ -44,7 +49,7 @@ func NewEngineFromFile(templatePath string) (*Engine, error) {
 }
 
 // GenerateCRD generates a CRD YAML from the request
-func (e *Engine) GenerateCRD(req *models.CreateAPIRequest) (string, error) {
+func (e *Engine) GenerateCRD(req *models.SetDefaultValues) (string, error) {
 	var buf bytes.Buffer
 
 	// Execute template

@@ -1,33 +1,43 @@
+// Package service
 package service
 
 import (
 	"context"
 	"fmt"
+	"strings"
 
-	"github.com/dkr290/go-advanced-projects/crd-api-deploy/internal/k8s"
-	"github.com/dkr290/go-advanced-projects/crd-api-deploy/internal/models"
-	"github.com/dkr290/go-advanced-projects/crd-api-deploy/internal/template"
+	"model-image-deployer/config"
+	"model-image-deployer/internal/apierror"
+	"model-image-deployer/internal/k8s"
+	"model-image-deployer/internal/models"
+	"model-image-deployer/internal/template"
+
+	"github.com/rs/zerolog/log"
+	"k8s.io/apimachinery/pkg/util/validation"
 )
+
+// APIServiceInterface defines the interface for the APIService.
+type APIServiceInterface interface {
+	CreateAPP(ctx context.Context, req *models.CreateCrdRequest) (*models.CreateCrdResponse, error)
+	ListAPPs(ctx context.Context) (*models.ListAPIResponse, error)
+	DeleteAPP(ctx context.Context, req *models.DeleteCrdInput) (*models.DeleteCrdResponse, error)
+}
 
 // APIService handles SimpleAPI operations
 type APIService struct {
-	k8sClient      *k8s.Client
-	templateEngine *template.Engine
+	config         *config.Config
+	k8sClient      k8s.K8sClientInterface
+	templateEngine template.TemplateEngineInterface
 }
 
 // NewAPIService creates a new SimpleAPI service
-func NewAPIService() (*APIService, error) {
-	k8sClient, err := k8s.NewClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create Kubernetes client: %w", err)
-	}
-
-	templateEngine, err := template.NewEngine()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create template engine: %w", err)
-	}
-
+func NewAPIService(
+	cfg *config.Config,
+	k8sClient k8s.K8sClientInterface,
+	templateEngine template.TemplateEngineInterface,
+) (*APIService, error) {
 	return &APIService{
+		config:         cfg,
 		k8sClient:      k8sClient,
 		templateEngine: templateEngine,
 	}, nil
@@ -35,157 +45,194 @@ func NewAPIService() (*APIService, error) {
 
 // CreateAPP creates  CRD in the cluster
 func (s *APIService) CreateAPP(
-	ctx context.Context, req *models.CreateAPIRequest,
-) (*models.CreateAPIResponse, error) {
+	ctx context.Context, req *models.CreateCrdRequest,
+) (*models.CreateCrdResponse, error) {
+	log.Info().Interface("request", req).Msg("Creating CRD")
 	if err := s.validateCreateRequest(req); err != nil {
-		return nil, fmt.Errorf("validation failed: %w", err)
+		log.Error().Err(err).Msg("Validation failed")
+		return nil, err
 	}
 
-	s.setDefaultValues(req)
+	defaultValues := s.setDefaultValues(req)
+	log.Debug().Interface("defaults", defaultValues).Msg("Default values set")
 
-	crdYAML, err := s.templateEngine.GenerateCRD(req)
+	crdYAML, err := s.templateEngine.GenerateCRD(defaultValues)
 	if err != nil {
+		log.Error().Err(err).Msg("Failed to generate CRD YAML")
 		return nil, fmt.Errorf("failed to generate CRD YAML: %w", err)
 	}
-	resourceName, err := s.k8sClient.ResourceNameForKind(req.Kind, req.Group, req.CrdVersion)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get Resouce from kind %v", err)
-	}
+	log.Debug().Str("yaml", crdYAML).Msg("Generated CRD YAML")
 
-	err = s.k8sClient.ApplyCRD(ctx, crdYAML, req.Namespace, resourceName, req.Group, req.CrdVersion)
-	if err != nil {
-		return nil, fmt.Errorf("failed to apply CRD to cluster: %w", err)
-	}
-
-	return &models.CreateAPIResponse{
-		Message:   "CRD resource created successfully",
-		Name:      req.Name,
-		Namespace: req.Namespace,
-		Kind:      req.Kind,
-	}, nil
-}
-
-// GetAPPResouce retrieves a resource
-func (s *APIService) GetAPPResouce(
-	ctx context.Context, req *models.GetSigleCrdInput,
-) (*models.GetAPIResponse, error) {
-	resourceName, err := s.k8sClient.ResourceNameForKind(req.Kind, req.Group, req.CrdVersion)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get Resouce from kind %v", err)
-	}
-
-	return s.k8sClient.GetSingleApp(
-		ctx,
-		req.Name,
-		resourceName,
-		req.Group,
-		req.CrdVersion,
+	resourceName, err := s.k8sClient.ResourceNameForKind(
+		defaultValues.Kind,
+		defaultValues.Group,
+		defaultValues.CrdVersion,
 	)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get resource from kind")
+		return nil, fmt.Errorf("failed to get Resource from kind %v", err)
+	}
+	log.Debug().Str("resourceName", resourceName).Msg("Got resource name")
+
+	err = s.k8sClient.ApplyCRD(
+		ctx,
+		crdYAML,
+		defaultValues.Namespace,
+		resourceName,
+		defaultValues.Group,
+		defaultValues.CrdVersion,
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to apply CRD to cluster")
+		return nil, err
+	}
+
+	response := &models.CreateCrdResponse{
+		Message:   "CRD resource created successfully",
+		Name:      defaultValues.Name,
+		Namespace: defaultValues.Namespace,
+		Kind:      defaultValues.Kind,
+	}
+	log.Info().Interface("response", response).Msg("CRD created successfully")
+	return response, nil
 }
 
 // ListAPPs lists SimpleAPP resources in a namespace
 func (s *APIService) ListAPPs(
-	ctx context.Context, req *models.ListAPIInput,
+	ctx context.Context,
 ) (*models.ListAPIResponse, error) {
-	resourceName, err := s.k8sClient.ResourceNameForKind(req.Kind, req.Group, req.CrdVersion)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get Resouce from kind %v", err)
-	}
+	log.Info().Msg("Listing CRDs")
+	conf := s.config
 
-	return s.k8sClient.ListAllAPPs(
+	resourceName, err := s.k8sClient.ResourceNameForKind(conf.Kind, conf.Group, conf.CrdVersion)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get resource from kind")
+		return nil, fmt.Errorf("failed to get Resource from kind %v", err)
+	}
+	log.Debug().Str("resourceName", resourceName).Msg("Got resource name")
+
+	response, err := s.k8sClient.ListAllAPPs(
 		ctx,
 		resourceName,
-		req.Group,
-		req.Kind,
-		req.CrdVersion,
+		conf.Group,
+		conf.Kind,
+		conf.CrdVersion,
 	)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to list CRDs")
+		return nil, err
+	}
+	log.Info().Int("count", len(response.Items)).Msg("CRDs listed successfully")
+	return response, nil
+}
+
+func (s *APIService) DeleteAPP(
+	ctx context.Context, req *models.DeleteCrdInput,
+) (*models.DeleteCrdResponse, error) {
+	log.Info().Interface("request", req).Msg("Deleting CRD")
+	conf := s.config
+
+	resourceName, err := s.k8sClient.ResourceNameForKind(conf.Kind, conf.Group, conf.CrdVersion)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get resource from kind")
+		return nil, fmt.Errorf("failed to get Resource from kind %v", err)
+	}
+	log.Debug().Str("resourceName", resourceName).Msg("Got resource name")
+
+	response, err := s.k8sClient.DeleteCrd(
+		ctx,
+		req.Name,
+		resourceName,
+		conf.Group,
+		conf.Kind,
+		conf.CrdVersion,
+		conf.Namespace,
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to delete CRD")
+		return nil, err
+	}
+	log.Info().Interface("response", response).Msg("CRD deleted successfully")
+	return response, nil
 }
 
 // validateCreateRequest validates the create request
-func (s *APIService) validateCreateRequest(req *models.CreateAPIRequest) error {
+func (s *APIService) validateCreateRequest(req *models.CreateCrdRequest) error {
 	if req.Name == "" {
-		return fmt.Errorf("name is required")
-	}
-	if req.Namespace == "" {
-		return fmt.Errorf("namespace is required")
-	}
-	if req.Kind == "" {
-		return fmt.Errorf("kind is required")
-	}
-	if req.Group == "" {
-		return fmt.Errorf("group is required")
+		return fmt.Errorf("%w: name is required", apierror.ErrInvalidInput)
 	}
 
-	if req.Image == "" {
-		return fmt.Errorf("image is required")
+	if errs := validation.IsDNS1123Subdomain(req.Name); len(errs) > 0 {
+		return fmt.Errorf("%w: invalid name: %s", apierror.ErrInvalidInput, strings.Join(errs, ", "))
 	}
+
 	if req.Version == "" {
-		return fmt.Errorf("version is required")
-	}
-	if req.ServiceAccount == "" {
-		return fmt.Errorf("service account required")
+		return fmt.Errorf("%w: version is required", apierror.ErrInvalidInput)
 	}
 
 	return nil
 }
 
 // setDefaultValues sets default values for optional fields
-func (s *APIService) setDefaultValues(req *models.CreateAPIRequest) {
-	if len(req.Labels) == 0 {
-		req.Labels = []models.Label{
+func (s *APIService) setDefaultValues(req *models.CreateCrdRequest) *models.SetDefaultValues {
+	conf := s.config
+
+	if req.Replicas == nil {
+		defaultReplicas := 1
+		req.Replicas = &defaultReplicas
+
+	}
+
+	httpHostName := strings.ToLower(fmt.Sprintf("%s.k8s-%s.bankingcircle.net", req.Name, conf.Env))
+
+	defaults := &models.SetDefaultValues{
+		Labels: []models.Label{
 			{Key: "app.kubernetes.io/name", Value: req.Name},
 			{Key: "app.kubernetes.io/managed-by", Value: "operator"},
 			{Key: "app", Value: req.Name},
-		}
+		},
+		Group:                 conf.Group,
+		CrdVersion:            conf.CrdVersion,
+		Kind:                  conf.Kind,
+		Env:                   conf.Env,
+		Namespace:             conf.Namespace,
+		Name:                  strings.ToLower(req.Name),
+		Image:                 conf.ImageRepo + "/" + req.Name,
+		ServiceAccount:        strings.ToLower(req.Name + "-sa"),
+		ImagePullPolicy:       conf.ImagePullPolicy,
+		EnvoyGateway:          conf.EnvoyGateway,
+		IngressType:           conf.IngressType,
+		EnvoyGatewayNamespace: conf.EnvoyGatewayNamespace,
+		Version:               req.Version,
+		Replicas:              req.Replicas,
+		Port:                  int32(conf.Port),
+		Resources: models.ResourceRequirements{
+			Limits:   conf.Limits,
+			Requests: conf.Requests,
+		},
+		StartupProbe: models.StartupProbe{
+			HTTPGet:          conf.HTTPGetStartup,
+			FailureThreshold: int32(conf.FailureThreshold),
+			PeriodSeconds:    int32(conf.PeriodSeconds),
+		},
+		PodSecurityContext: models.PodSecurityContext{
+			RunAsUser:    int64(conf.RunAsUser),
+			RunAsNonRoot: conf.RunAsNonRoot,
+			RunAsGroup:   int64(conf.RunAsGroup),
+			FSGroup:      int64(conf.FSGroup),
+		},
 	}
-	if req.CrdVersion == "" {
-		req.CrdVersion = "v1alpha1"
+	if conf.Env == "prd" {
+		defaults.Affinity = conf.Affinity
+		defaults.Tolerations = conf.Tolerations
+		defaults.IngressHostName = httpHostName
 	}
-	if req.Port == 0 {
-		req.Port = 8000
-	}
-	if req.Replicas == 0 {
-		req.Replicas = 1
-	}
-
-	if req.Resources.Limits.CPU == "" {
-		req.Resources.Limits.CPU = "1000m"
-	}
-	if req.Resources.Limits.Memory == "" {
-		req.Resources.Limits.Memory = "2Gi"
-	}
-	if req.Resources.Limits.EphemeralStorage == "" {
-		req.Resources.Limits.EphemeralStorage = "6Gi"
-	}
-	if req.Resources.Requests.CPU == "" {
-		req.Resources.Requests.CPU = "500m"
-	}
-	if req.Resources.Requests.Memory == "" {
-		req.Resources.Requests.Memory = "256Mi"
-	}
-	if req.StartupProbe.HTTPGet.Path == "" {
-		req.StartupProbe.HTTPGet.Path = "/"
-	}
-	if req.StartupProbe.HTTPGet.Port == 0 {
-		req.StartupProbe.HTTPGet.Port = req.Port
-	}
-	if req.StartupProbe.FailureThreshold == 0 {
-		req.StartupProbe.FailureThreshold = 20
-	}
-	if req.StartupProbe.PeriodSeconds == 0 {
-		req.StartupProbe.PeriodSeconds = 10
-	}
-	if req.PodSecurityContext.RunAsUser == 0 {
-		req.PodSecurityContext.RunAsNonRoot = true
-		req.PodSecurityContext.RunAsUser = 1000
-		req.PodSecurityContext.RunAsGroup = 3000
-		req.PodSecurityContext.FSGroup = 2000
+	if conf.Env == "uat" || conf.Env == "dev" {
+		defaults.IngressHostName = httpHostName
 	}
 
-	if req.Affinity == nil {
-		req.Affinity = make(map[string]any)
+	if conf.Env == "test" {
+		defaults.ImagePullSecret = conf.ImagePullSecret
 	}
-	if req.Tolerations == nil {
-		req.Tolerations = []map[string]any{}
-	}
+	return defaults
 }

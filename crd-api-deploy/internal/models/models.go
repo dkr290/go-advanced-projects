@@ -41,34 +41,43 @@ type PodSecurityContext struct {
 	FSGroup      int64 `json:"fsGroup"      example:"2000" doc:"Filesystem group ID"`
 }
 
-// CreateAPIRequest represents the request payload for creating a SimpleAPI CRD
-type CreateAPIRequest struct {
-	Kind               string               `json:"kind"                         example:"Simpleapi"             doc:"Kind of the CRD"`
-	Group              string               `json:"group"                        example:"apps.api.test"         doc:"The Group name"`
-	CrdVersion         string               `json:"crdversion,omitempty"         example:"v1alpha1"              doc:"crd version"`
-	Port               int32                `json:"port,omitempty"               example:"8000"                  doc:"Port number"`
-	Name               string               `json:"name"                         example:"simpleapi-new"         doc:"Name of the SimpleAPI resource"`
-	Namespace          string               `json:"namespace"                    example:"default"               doc:"Namespace for the resource"`
-	Labels             []Label              `json:"labels,omitempty"                                             doc:"Labels to be applied to the resource"`
-	Replicas           int32                `json:"replicas,omitempty"           example:"1"                     doc:"Number of replicas"`
-	Image              string               `json:"image"                        example:"nginx"                 doc:"Container image"`
-	Version            string               `json:"version"                      example:"latest"                doc:"Image version/tag"`
-	IngressHostName    string               `json:"ingressHostName,omitempty"    example:"simpleapi.example.com" doc:"Ingress hostname"`
-	ImagePullSecret    string               `json:"imagePullSecret,omitempty"    example:"regcred"               doc:"Image pull secret name"`
-	ServiceAccount     string               `json:"serviceAccount,omitempty"     example:"simpleapi-sa"          doc:"Service account name"`
-	Resources          ResourceRequirements `json:"resources,omitempty"                                          doc:"Resource requirements"`
-	PodSecurityContext PodSecurityContext   `json:"podSecurityContext,omitempty"                                 doc:"Pod security context"`
-	StartupProbe       StartupProbe         `json:"startupProbe,omitempty"                                       doc:"Startup probe configuration"`
-	Affinity           map[string]any       `json:"affinity,omitempty"                                           doc:"Affinity configuration"`
-	Tolerations        []map[string]any     `json:"tolerations,omitempty"                                        doc:"Tolerations"`
+type SetDefaultValues struct {
+	Kind                  string               `json:"kind"                         example:"Simpleapi"             doc:"Kind of the CRD"`
+	Env                   string               `json:"env"                          example:"dev,test,uat,prd"      doc:"Env"`
+	Group                 string               `json:"group"                        example:"apps.api.test"         doc:"The Group name"`
+	CrdVersion            string               `json:"crdversion,omitempty"         example:"v1alpha1"              doc:"crd version"`
+	Port                  int32                `json:"port,omitempty"               example:"8000"                  doc:"Port number"`
+	Namespace             string               `json:"namespace"                    example:"default"               doc:"Namespace for the resource"`
+	Labels                []Label              `json:"labels,omitempty"                                             doc:"Labels to be applied to the resource"`
+	Image                 string               `json:"image"                        example:"nginx"                 doc:"Container image"`
+	IngressHostName       string               `json:"ingressHostName,omitempty"    example:"simpleapi.example.com" doc:"Ingress hostname"`
+	IngressType           string               `json:"ingressType"`
+	EnvoyGateway          string               `json:"envoyGateway"`
+	EnvoyGatewayNamespace string               `json:"envoyGatewayNamespace"`
+	ImagePullSecret       string               `json:"imagePullSecret,omitempty"    example:"regcred"               doc:"Image pull secret name"`
+	ImagePullPolicy       string               `json:"imagePullPolicy,omitempty"    example:"IfNotPresent"          doc:"Image pull policy"`
+	ServiceAccount        string               `json:"serviceAccount,omitempty"     example:"simpleapi-sa"          doc:"Service account name"`
+	Resources             ResourceRequirements `json:"resources,omitempty"                                          doc:"Resource requirements"`
+	PodSecurityContext    PodSecurityContext   `json:"podSecurityContext,omitempty"                                 doc:"Pod security context"`
+	StartupProbe          StartupProbe         `json:"startupProbe,omitempty"                                       doc:"Startup probe configuration"`
+	Affinity              map[string]any       `json:"affinity,omitempty"                                           doc:"Affinity configuration"`
+	Tolerations           []map[string]any     `json:"tolerations,omitempty"                                        doc:"Tolerations"`
+	Name                  string               `json:"name"                         example:"buzzword"              doc:"Name of the model resource"`
+	Version               string               `json:"version"                      example:"v23"                   doc:"Image version/tag"`
+	Replicas              *int                 `json:"replicas,omitempty"           example:"3"                     doc:"Replicas for the model"`
+}
+type CreateCrdRequest struct {
+	Name     string `json:"name"               example:"buzzword" doc:"Name of the model resource"`
+	Version  string `json:"version"            example:"v23"      doc:"Image version/tag"`
+	Replicas *int   `json:"replicas,omitempty" example:"1"        doc:"Replicas for the model"`
 }
 
-// CreateAPIResponse represents the response after creating a SimpleAPI CRD
-type CreateAPIResponse struct {
-	Message   string `json:"message"   example:"SimpleAPI resource created successfully" doc:"Response message"`
-	Name      string `json:"name"      example:"simpleapi-new"                           doc:"Name of the created resource"`
-	Namespace string `json:"namespace" example:"default"                                 doc:"Namespace of the created resource"`
-	Kind      string `json:"kind"      example:"Simpleapi"                               doc:"Kind of the created resource"`
+// CreateCrdResponse represents the response after creating the app with by operator CRD
+type CreateCrdResponse struct {
+	Message   string `json:"message"   example:"The resource created successfully" doc:"Response message"`
+	Name      string `json:"name"      example:"buzzword"                          doc:"Name of the created resource"`
+	Namespace string `json:"namespace" example:"default"                           doc:"Namespace of the created resource"`
+	Kind      string `json:"kind"      example:"buzzword"                          doc:"Kind of the created resource"`
 }
 
 // GetAPIResponse represents a SimpleAPI resource response
@@ -85,21 +94,17 @@ type ListAPIResponse struct {
 	Kind       string           `json:"kind"       example:"SimpleAPIList"          doc:"Resource kind"`
 	Items      []GetAPIResponse `json:"items"                                       doc:"List of SimpleAPI resources"`
 }
+type DeleteCrdResponse struct {
+	Name       string `json:"name"       example:"buzzword"               doc:"Name of the created resource"`
+	APIVersion string `json:"apiVersion" example:"apps.api.test/v1alpha1" doc:"API version"`
+	Kind       string `json:"kind"       example:"SimpleAPIList"          doc:"Resource kind"`
+}
+type DeleteCrdInput struct {
+	Name string `json:"name" example:"buzzword" doc:"Name of the model resource"`
+}
 
 // ErrorResponse represents an error response
 type ErrorResponse struct {
 	Error   string `json:"error"             example:"Failed to create resource" doc:"Error message"`
 	Details string `json:"details,omitempty" example:"Invalid namespace"         doc:"Error details"`
-}
-
-type GetSigleCrdInput struct {
-	Kind       string `json:"kind"                 example:"Simpleapi"     doc:"Kind of the CRD"`
-	Group      string `json:"group"                example:"apps.api.test" doc:"The Group name"`
-	CrdVersion string `json:"crdversion,omitempty" example:"v1alpha1"      doc:"crd version"`
-	Name       string `json:"name"                                         doc:"Name of the SimpleAPI resource"`
-}
-type ListAPIInput struct {
-	Kind       string `json:"kind"                 example:"Simpleapi"     doc:"Kind of the CRD"`
-	Group      string `json:"group"                example:"apps.api.test" doc:"The Group name"`
-	CrdVersion string `json:"crdversion,omitempty" example:"v1alpha1"      doc:"crd version"`
 }
