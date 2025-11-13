@@ -10,7 +10,7 @@ type Balancer interface {
 }
 
 type RoundRobin struct {
-	n int
+	n   int
 	idx uint64
 }
 

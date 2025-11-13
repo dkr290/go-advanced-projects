@@ -1,10 +1,12 @@
 package server
 
 import (
-	"log"
+	"fmt"
 	"net"
 	"sync"
 	"time"
+
+	"go-lb/pkg/logger"
 )
 
 type TCPHealthChecker struct {
@@ -12,13 +14,19 @@ type TCPHealthChecker struct {
 	Status   map[int]bool
 	mu       sync.RWMutex
 	interval time.Duration
+	log      logger.Logger
 }
 
-func NewTCPHealthChecker(backends []string, interval time.Duration) *TCPHealthChecker {
+func NewTCPHealthChecker(
+	backends []string,
+	interval time.Duration,
+	log logger.Logger,
+) *TCPHealthChecker {
 	hc := &TCPHealthChecker{
 		Backends: backends,
 		Status:   make(map[int]bool, len(backends)),
 		interval: interval,
+		log:      log,
 	}
 	for i := range backends {
 		hc.Status[i] = true
@@ -46,9 +54,9 @@ func (hc *TCPHealthChecker) checkLoop(idx int, backend string) {
 		hc.mu.Unlock()
 		if healthy != prevHealthy {
 			if healthy {
-				log.Printf("TCP backend %s is now healthy", backend)
+				hc.log.Info(fmt.Sprintf("TCP backend %s is now healthy", backend))
 			} else {
-				log.Printf("TCP backend %s is now UNHEALTHY", backend)
+				hc.log.Warn(fmt.Sprintf("TCP backend %s is now UNHEALTHY", backend))
 			}
 			prevHealthy = healthy
 		}

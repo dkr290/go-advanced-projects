@@ -1,10 +1,12 @@
 package server
 
 import (
-	"log"
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
+
+	"go-lb/pkg/logger"
 )
 
 type HealthChecker struct {
@@ -13,14 +15,21 @@ type HealthChecker struct {
 	mu       sync.RWMutex
 	interval time.Duration
 	path     string
+	log      logger.Logger
 }
 
-func NewHealthChecker(backends []string, interval time.Duration, path string) *HealthChecker {
+func NewHealthChecker(
+	backends []string,
+	interval time.Duration,
+	path string,
+	log logger.Logger,
+) *HealthChecker {
 	hc := &HealthChecker{
 		Backends: backends,
 		Status:   make(map[int]bool, len(backends)),
 		interval: interval,
 		path:     path,
+		log:      log,
 	}
 	for i := range backends {
 		hc.Status[i] = true // assume healthy at start
@@ -53,9 +62,9 @@ func (hc *HealthChecker) checkLoop(idx int, backend string) {
 		hc.mu.Unlock()
 		if healthy != prevHealthy {
 			if healthy {
-				log.Printf("Backend %s is now healthy", backend)
+				hc.log.Info(fmt.Sprintf("Backend %s is now healthy", backend))
 			} else {
-				log.Printf("Backend %s is now UNHEALTHY", backend)
+				hc.log.Warn(fmt.Sprintf("Backend %s is now UNHEALTHY", backend))
 			}
 			prevHealthy = healthy
 		}

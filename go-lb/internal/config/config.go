@@ -1,8 +1,10 @@
+// Package config - doing all the configuration or fetching environment variables if they are present
 package config
 
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 )
@@ -16,10 +18,12 @@ type Config struct {
 	HealthPath     string
 	HealthInterval string
 	Mode           string
+	DebugLog       string
 }
 
 func Load() *Config {
 	var (
+		debugLog = flag.String("debuglog", "false", "The debug logging")
 		frontIP  = flag.String("front", "0.0.0.0:8080", "Front listen IP:port")
 		backends = flag.String(
 			"backends",
@@ -55,9 +59,13 @@ func Load() *Config {
 		HealthPath:     getEnvOrDefault("LB_HEALTH_PATH", *healthPath),
 		HealthInterval: getEnvOrDefault("LB_HEALTH_INTERVAL", *healthInterval),
 		Mode:           getEnvOrDefault("LB_MODE", *mode),
+		DebugLog:       getEnvOrDefault("DEBUG_LOG", *debugLog),
 	}
 	cfg.Weights = parseIntSlice(getEnvOrDefault("LB_WEIGHTS", *weights))
 	cfg.Percentages = parseIntSlice(getEnvOrDefault("LB_PERCENTAGES", *percentages))
+	if *algo != "roundrobin" && *algo != "weighted" && *algo != "percentage" {
+		log.Fatal("wrong algorithm")
+	}
 	return cfg
 }
 
