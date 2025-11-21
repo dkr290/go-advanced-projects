@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  wan2-video-server:
+    build: .
+    container_name: wan2-video-server
+    ports:
+      - "8080:8080"
+      - "5000:5000"
+    environment:
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=8080
+      - ENABLE_GPU=true
+      - GPU_DEVICE_ID=0
+      - PYTHON_BACKEND_URL=http://localhost:5000
+      - PYTHON_BACKEND_ENABLED=true
+      - MODEL_CACHE_DIR=/app/models
+      - LOG_LEVEL=info
+    volumes:
+      - ./models:/app/models
+      - ./uploads:/app/uploads
+      - ./outputs:/app/outputs
+      - ./.env:/app/.env
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

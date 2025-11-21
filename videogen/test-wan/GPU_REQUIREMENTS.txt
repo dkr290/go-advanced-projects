@@ -1,0 +1,103 @@
+╔══════════════════════════════════════════════════════════════════╗
+║                    GPU REQUIREMENTS QUICK REF                    ║
+╚══════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────┐
+│ LTX-VIDEO (WAN2.1) MODEL                                        │
+└─────────────────────────────────────────────────────────────────┘
+
+GPU Memory     Status    Resolution    Frames    Notes
+─────────────────────────────────────────────────────────────────
+4GB            ❌ NO     N/A           N/A       Too small
+6GB            ❌ NO     N/A           N/A       Too small
+8GB            ⚠️ Maybe  128x128       8-16      Extreme limits
+12GB           ✅ Min    256x256       32        Minimal
+16GB           ✅ Good   512x512       64        Recommended
+24GB           ✅✅ Best  768x768       128       Comfortable
+40GB+          ✅✅✅     1024x1024     128+      Production
+
+
+┌─────────────────────────────────────────────────────────────────┐
+│ ALTERNATIVE MODELS FOR SMALLER GPUs                             │
+└─────────────────────────────────────────────────────────────────┘
+
+Model               GPU Req   Resolution   Quality   Speed
+──────────────────────────────────────────────────────────────
+ModelScope 1.7B     4GB       256x256      Good      Medium
+ZeroScope v2        4GB       576x320      Good      Fast
+AnimateDiff         6GB       512x512      Excellent Medium
+LTX-Video (Wan2.1)  12GB+     512x512+     Excellent Slow
+
+
+┌─────────────────────────────────────────────────────────────────┐
+│ YOUR OPTIONS WITH 4GB GPU                                       │
+└─────────────────────────────────────────────────────────────────┘
+
+Option                      Cost        Speed     Works?
+──────────────────────────────────────────────────────────────
+1. CPU Mode                 Free        Slow      ✅ Yes
+2. Switch to ModelScope     Free        Medium    ✅ Yes
+3. Google Colab (T4 16GB)   Free        Fast      ✅ Yes
+4. Kaggle (P100 16GB)       Free        Fast      ✅ Yes
+5. Vast.ai ($0.15/hr)       Paid        Fast      ✅ Yes
+6. RunPod ($0.20/hr)        Paid        Fast      ✅ Yes
+
+
+┌─────────────────────────────────────────────────────────────────┐
+│ CONFIGURATION FOR 4GB GPU                                       │
+└─────────────────────────────────────────────────────────────────┘
+
+# Option A: CPU Mode (Slow but works)
+cp .env.low_memory .env
+# Edit .env:
+ENABLE_GPU=false
+DEFAULT_WIDTH=256
+DEFAULT_HEIGHT=256
+MAX_FRAMES=16
+
+# Option B: Switch to ModelScope (4GB compatible)
+ENABLE_GPU=true
+HUGGINGFACE_MODEL_ID=damo-vilab/text-to-video-ms-1.7b
+DEFAULT_WIDTH=256
+DEFAULT_HEIGHT=256
+MAX_FRAMES=24
+
+
+┌─────────────────────────────────────────────────────────────────┐
+│ QUICK MEMORY TEST                                               │
+└─────────────────────────────────────────────────────────────────┘
+
+python3 -c "import torch; print(f'GPU: {torch.cuda.get_device_name(0)}'); print(f'Memory: {torch.cuda.get_device_properties(0).total_memory/1024**3:.1f}GB')"
+
+
+┌─────────────────────────────────────────────────────────────────┐
+│ RECOMMENDED SETUPS                                              │
+└─────────────────────────────────────────────────────────────────┘
+
+Your GPU         Best Choice
+─────────────────────────────────────────────────────────────────
+4GB              ModelScope model OR Google Colab
+8GB              ModelScope/ZeroScope OR Cloud GPU
+12GB             LTX-Video (minimal settings)
+16GB             LTX-Video (recommended) ⭐
+24GB+            LTX-Video (full settings)
+
+
+┌─────────────────────────────────────────────────────────────────┐
+│ NEED HELP?                                                      │
+└─────────────────────────────────────────────────────────────────┘
+
+📖 Read: docs/LOW_MEMORY_GUIDE.md
+🔧 Config: .env.low_memory
+💡 Ask: Want me to configure ModelScope for you?
+
+
+═══════════════════════════════════════════════════════════════════
+
+TL;DR for 4GB GPU:
+  ❌ LTX-Video won't work
+  ✅ Use Google Colab (free) OR
+  ✅ Switch to ModelScope model OR
+  ✅ Use CPU mode (very slow)
+
+═══════════════════════════════════════════════════════════════════

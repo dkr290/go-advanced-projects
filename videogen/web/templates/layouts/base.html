@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .Title }}</title>
+    
+    <!-- Bootstrap 5.3 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/style.css">
+    
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-film"></i> Wan2.1 Video Generator
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {{ if eq .Page "home" }}active{{ end }}" href="/">
+                            <i class="bi bi-house"></i> Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ if eq .Page "text-to-video" }}active{{ end }}" href="/text-to-video">
+                            <i class="bi bi-chat-text"></i> Text to Video
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ if eq .Page "image-to-video" }}active{{ end }}" href="/image-to-video">
+                            <i class="bi bi-image"></i> Image to Video
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ if eq .Page "video-to-video" }}active{{ end }}" href="/video-to-video">
+                            <i class="bi bi-camera-video"></i> Video to Video
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ if eq .Page "gallery" }}active{{ end }}" href="/gallery">
+                            <i class="bi bi-grid-3x3"></i> Gallery
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link {{ if eq .Page "settings" }}active{{ end }}" href="/settings">
+                            <i class="bi bi-gear"></i> Settings
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        {{ template "content" . }}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="bi bi-film"></i> Wan2.1 Video Generator</h5>
+                    <p class="text-muted">AI-powered video generation with LTX-Video</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <p class="text-muted mb-0">
+                        <i class="bi bi-code-square"></i> Built with Go, HTMX & Bootstrap
+                    </p>
+                    <p class="text-muted">
+                        <a href="https://github.com" class="text-decoration-none">
+                            <i class="bi bi-github"></i> GitHub
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

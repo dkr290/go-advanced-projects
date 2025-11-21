@@ -1,0 +1,200 @@
+{{ define "content" }}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="mb-4">
+                <h1 class="display-5 fw-bold">
+                    <i class="bi bi-chat-text text-primary"></i> Text to Video
+                </h1>
+                <p class="lead text-muted">Describe your video and let AI create it for you</p>
+            </div>
+
+            <div class="card bg-dark border-secondary">
+                <div class="card-body p-4">
+                    <form hx-post="/api/generate/text-to-video" 
+                          hx-target="#result" 
+                          hx-indicator="#loading"
+                          id="text-to-video-form">
+                        
+                        <!-- Prompt -->
+                        <div class="mb-4">
+                            <label for="prompt" class="form-label fw-bold">
+                                <i class="bi bi-pencil"></i> Prompt *
+                            </label>
+                            <textarea class="form-control form-control-lg" 
+                                      id="prompt" 
+                                      name="prompt" 
+                                      rows="3" 
+                                      placeholder="e.g., A cat playing with a ball of yarn in slow motion"
+                                      required></textarea>
+                            <div class="form-text">Describe the video you want to generate in detail</div>
+                        </div>
+
+                        <!-- Negative Prompt -->
+                        <div class="mb-4">
+                            <label for="negative_prompt" class="form-label fw-bold">
+                                <i class="bi bi-x-circle"></i> Negative Prompt
+                            </label>
+                            <textarea class="form-control" 
+                                      id="negative_prompt" 
+                                      name="negative_prompt" 
+                                      rows="2" 
+                                      placeholder="e.g., blurry, low quality, distorted"></textarea>
+                            <div class="form-text">What to avoid in the generation</div>
+                        </div>
+
+                        <!-- Advanced Settings Accordion -->
+                        <div class="accordion accordion-flush mb-4" id="advancedSettings">
+                            <div class="accordion-item bg-dark border-secondary">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed bg-dark text-light" 
+                                            type="button" 
+                                            data-bs-toggle="collapse" 
+                                            data-bs-target="#collapseSettings">
+                                        <i class="bi bi-sliders me-2"></i> Advanced Settings
+                                    </button>
+                                </h2>
+                                <div id="collapseSettings" 
+                                     class="accordion-collapse collapse" 
+                                     data-bs-parent="#advancedSettings">
+                                    <div class="accordion-body">
+                                        <div class="row g-3">
+                                            <!-- Number of Frames -->
+                                            <div class="col-md-6">
+                                                <label for="num_frames" class="form-label">Frames</label>
+                                                <input type="number" class="form-control" 
+                                                       id="num_frames" name="num_frames" 
+                                                       value="64" min="8" max="128">
+                                                <div class="form-text">8-128 frames</div>
+                                            </div>
+
+                                            <!-- FPS -->
+                                            <div class="col-md-6">
+                                                <label for="fps" class="form-label">FPS</label>
+                                                <input type="number" class="form-control" 
+                                                       id="fps" name="fps" 
+                                                       value="24" min="12" max="60">
+                                                <div class="form-text">Frames per second</div>
+                                            </div>
+
+                                            <!-- Width -->
+                                            <div class="col-md-6">
+                                                <label for="width" class="form-label">Width</label>
+                                                <select class="form-select" id="width" name="width">
+                                                    <option value="256">256px</option>
+                                                    <option value="512" selected>512px</option>
+                                                    <option value="768">768px</option>
+                                                    <option value="1024">1024px</option>
+                                                </select>
+                                            </div>
+
+                                            <!-- Height -->
+                                            <div class="col-md-6">
+                                                <label for="height" class="form-label">Height</label>
+                                                <select class="form-select" id="height" name="height">
+                                                    <option value="256">256px</option>
+                                                    <option value="512" selected>512px</option>
+                                                    <option value="768">768px</option>
+                                                    <option value="1024">1024px</option>
+                                                </select>
+                                            </div>
+
+                                            <!-- Guidance Scale -->
+                                            <div class="col-md-6">
+                                                <label for="guidance_scale" class="form-label">
+                                                    Guidance Scale: <span id="guidance_value">7.5</span>
+                                                </label>
+                                                <input type="range" class="form-range" 
+                                                       id="guidance_scale" name="guidance_scale" 
+                                                       min="1" max="20" step="0.5" value="7.5"
+                                                       oninput="document.getElementById('guidance_value').textContent = this.value">
+                                                <div class="form-text">1-20 (how closely to follow prompt)</div>
+                                            </div>
+
+                                            <!-- Inference Steps -->
+                                            <div class="col-md-6">
+                                                <label for="num_inference_steps" class="form-label">
+                                                    Inference Steps: <span id="steps_value">50</span>
+                                                </label>
+                                                <input type="range" class="form-range" 
+                                                       id="num_inference_steps" name="num_inference_steps" 
+                                                       min="10" max="100" step="5" value="50"
+                                                       oninput="document.getElementById('steps_value').textContent = this.value">
+                                                <div class="form-text">10-100 (quality vs speed)</div>
+                                            </div>
+
+                                            <!-- Seed -->
+                                            <div class="col-12">
+                                                <label for="seed" class="form-label">Seed</label>
+                                                <input type="number" class="form-control" 
+                                                       id="seed" name="seed" 
+                                                       value="-1" placeholder="-1 for random">
+                                                <div class="form-text">-1 for random, or specific number for reproducibility</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-magic"></i> Generate Video
+                            </button>
+                        </div>
+
+                        <!-- Loading Indicator -->
+                        <div id="loading" class="htmx-indicator mt-3">
+                            <div class="alert alert-info d-flex align-items-center">
+                                <div class="spinner-border spinner-border-sm me-2" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                Submitting request...
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Result Area -->
+            <div id="result" class="mt-4"></div>
+
+            <!-- Examples -->
+            <div class="card bg-dark border-secondary mt-4">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-lightbulb"></i> Example Prompts
+                    </h5>
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <button class="btn btn-outline-secondary btn-sm w-100 text-start" 
+                                    onclick="document.getElementById('prompt').value = this.textContent">
+                                A majestic eagle soaring through a sunset sky
+                            </button>
+                        </div>
+                        <div class="col-md-6">
+                            <button class="btn btn-outline-secondary btn-sm w-100 text-start" 
+                                    onclick="document.getElementById('prompt').value = this.textContent">
+                                Ocean waves crashing on a rocky shore in slow motion
+                            </button>
+                        </div>
+                        <div class="col-md-6">
+                            <button class="btn btn-outline-secondary btn-sm w-100 text-start" 
+                                    onclick="document.getElementById('prompt').value = this.textContent">
+                                A futuristic city with flying cars at night
+                            </button>
+                        </div>
+                        <div class="col-md-6">
+                            <button class="btn btn-outline-secondary btn-sm w-100 text-start" 
+                                    onclick="document.getElementById('prompt').value = this.textContent">
+                                Cherry blossoms falling in a Japanese garden
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{ end }}

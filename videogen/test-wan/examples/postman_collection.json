@@ -1,0 +1,186 @@
+{
+  "info": {
+    "name": "Wan2.1 Video Server API",
+    "description": "API for generating videos using the LTX-Video (Wan2.1) model",
+    "version": "1.0.0"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": ["{{base_url}}"],
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "Model Info",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/model/info",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "model", "info"]
+        }
+      }
+    },
+    {
+      "name": "Text to Video",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"prompt\": \"A beautiful sunset over the ocean\",\n  \"negative_prompt\": \"blurry, low quality\",\n  \"num_frames\": 64,\n  \"fps\": 24,\n  \"width\": 512,\n  \"height\": 512,\n  \"guidance_scale\": 7.5,\n  \"num_inference_steps\": 50,\n  \"seed\": 42\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/generate/text-to-video",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "generate", "text-to-video"]
+        }
+      }
+    },
+    {
+      "name": "Image to Video",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "image",
+              "type": "file",
+              "src": "/path/to/image.jpg"
+            },
+            {
+              "key": "prompt",
+              "value": "A cat playing with a ball",
+              "type": "text"
+            },
+            {
+              "key": "num_frames",
+              "value": "64",
+              "type": "text"
+            },
+            {
+              "key": "fps",
+              "value": "24",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/generate/image-to-video",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "generate", "image-to-video"]
+        }
+      }
+    },
+    {
+      "name": "Video to Video",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "video",
+              "type": "file",
+              "src": "/path/to/video.mp4"
+            },
+            {
+              "key": "prompt",
+              "value": "Transform into anime style",
+              "type": "text"
+            },
+            {
+              "key": "strength",
+              "value": "0.8",
+              "type": "text"
+            },
+            {
+              "key": "fps",
+              "value": "24",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/generate/video-to-video",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "generate", "video-to-video"]
+        }
+      }
+    },
+    {
+      "name": "Get Job Status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/job/:job_id",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "job", ":job_id"],
+          "variable": [
+            {
+              "key": "job_id",
+              "value": "job_123456"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "List Models",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/models",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "models"]
+        }
+      }
+    },
+    {
+      "name": "Download Model",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"model_id\": \"Lightricks/LTX-Video\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/models/download",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "models", "download"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    }
+  ]
+}

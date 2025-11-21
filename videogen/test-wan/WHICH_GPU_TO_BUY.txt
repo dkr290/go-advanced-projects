@@ -1,0 +1,157 @@
+═══════════════════════════════════════════════════════════════════
+           WHICH GPU SHOULD I BUY? - DECISION TREE
+═══════════════════════════════════════════════════════════════════
+
+START: Do you use Windows?
+│
+├─ YES → BUY NVIDIA ✅
+│        (AMD won't work for GPU acceleration on Windows)
+│        
+│        Budget?
+│        ├─ $500-800   → RTX 4070 Ti (12GB)
+│        ├─ $800-1000  → RTX 3090 Used (24GB) ⭐ BEST VALUE
+│        ├─ $1000-1300 → RTX 4080 (16GB)
+│        └─ $1300+     → RTX 4090 (24GB) 🏆 BEST
+│
+└─ NO (Linux/Mac) → Continue...
+    │
+    Do you want the EASIEST setup?
+    │
+    ├─ YES → BUY NVIDIA ✅
+    │        Same recommendations as above
+    │
+    └─ NO → Continue...
+        │
+        Are you comfortable with command line / troubleshooting?
+        │
+        ├─ NO → BUY NVIDIA ✅ (AMD will frustrate you)
+        │
+        └─ YES → Continue...
+            │
+            Budget priority or ease of use?
+            │
+            ├─ EASE → BUY NVIDIA ✅
+            │         ./setup.sh just works!
+            │
+            └─ BUDGET → Consider AMD
+                │
+                Budget?
+                ├─ ~$500  → AMD RX 7800 XT (16GB) 💰
+                ├─ ~$750  → AMD RX 7900 XT (20GB) 💰
+                ├─ ~$950  → AMD RX 7900 XTX (24GB) 💰
+                │
+                OR still get NVIDIA for easier life:
+                └─ ~$800  → RTX 3090 Used (24GB) ⭐
+
+
+═══════════════════════════════════════════════════════════════════
+                    QUICK RECOMMENDATION
+═══════════════════════════════════════════════════════════════════
+
+Windows User?           → NVIDIA (AMD won't work)
+First AI/ML project?    → NVIDIA (easier)
+Want "just works"?      → NVIDIA (./setup.sh)
+Multiple AI tools?      → NVIDIA (better support)
+Best value overall?     → NVIDIA RTX 3090 Used ($700-900, 24GB!)
+Linux + budget tight?   → AMD RX 7800 XT ($500, 16GB)
+Money not an issue?     → NVIDIA RTX 4090 ($1600, 24GB)
+
+
+═══════════════════════════════════════════════════════════════════
+                  SPECIFIC TO THIS PROJECT
+═══════════════════════════════════════════════════════════════════
+
+                    Setup Difficulty    Performance    Value
+NVIDIA (any OS)     ⭐ Easy            ✅ 100%        💰💰
+AMD (Linux only)    ⭐⭐⭐ Hard          ✅ 90-95%      💰💰💰
+AMD (Windows)       ❌ Impossible      ❌ CPU only    ❌
+
+
+═══════════════════════════════════════════════════════════════════
+                   MY PERSONAL ADVICE
+═══════════════════════════════════════════════════════════════════
+
+If I were buying today for this project:
+
+1st Choice: NVIDIA RTX 3090 (Used, $700-900)
+   ✅ 24GB VRAM (future-proof)
+   ✅ Works everywhere
+   ✅ Great value
+   ✅ Easy setup
+   ⚠️ Higher power draw (350W)
+
+2nd Choice: NVIDIA RTX 4070 Ti ($800)
+   ✅ Good VRAM (12GB)
+   ✅ Modern architecture
+   ✅ Lower power (285W)
+   ✅ New warranty
+   ⚠️ Less VRAM than 3090
+
+3rd Choice: AMD RX 7800 XT ($500) - IF LINUX ONLY
+   ✅ Cheapest per GB VRAM
+   ✅ 16GB VRAM
+   ✅ Good performance
+   ❌ Linux only
+   ❌ More setup work
+   ❌ Less software support
+
+DON'T BUY:
+   ❌ Any GPU with <12GB (not enough for LTX-Video)
+   ❌ AMD if you use Windows (won't work)
+   ❌ Very old GPUs (GTX 1080 etc - too slow)
+
+
+═══════════════════════════════════════════════════════════════════
+                  WILL IT WORK? FINAL ANSWER
+═══════════════════════════════════════════════════════════════════
+
+Question: "If I buy AMD or NVIDIA, will it work in both?"
+
+Answer:  NO - It depends on your OS!
+
+┌─────────────────────────────────────────────────────────────┐
+│  OS        │  NVIDIA GPU   │  AMD GPU                      │
+├─────────────────────────────────────────────────────────────┤
+│  Windows   │  ✅ YES       │  ❌ NO (CPU mode only)        │
+│  Linux     │  ✅ YES       │  ✅ YES (with setup)          │
+│  macOS     │  ✅ YES       │  ❌ NO                        │
+└─────────────────────────────────────────────────────────────┘
+
+NVIDIA = Universal (works everywhere)
+AMD    = Linux only (requires ROCm)
+
+
+═══════════════════════════════════════════════════════════════════
+                      THE BOTTOM LINE
+═══════════════════════════════════════════════════════════════════
+
+🎯 For 99% of users: BUY NVIDIA
+   - Works on Windows/Linux/Mac
+   - Easy setup (./setup.sh)
+   - Better software support
+   - This project "just works"
+
+💰 If Linux + very budget-conscious: Consider AMD
+   - Saves $200-400
+   - More VRAM per dollar
+   - But requires ./setup_rocm.sh + troubleshooting
+   - Windows users: DON'T BUY AMD for this
+
+🏆 Best Overall Value: Used NVIDIA RTX 3090
+   - $700-900 on eBay/Craigslist
+   - Massive 24GB VRAM
+   - Works everywhere
+   - Easy setup
+
+
+═══════════════════════════════════════════════════════════════════
+
+Need help deciding? Ask yourself:
+
+❓ Do I use Windows?          YES → NVIDIA only
+❓ Is this my first AI GPU?   YES → NVIDIA (easier)
+❓ Want minimum hassle?       YES → NVIDIA (./setup.sh)
+❓ Linux + love terminal?     YES → AMD is option
+❓ Want future-proof VRAM?    YES → RTX 3090 or 7900 XTX
+
+═══════════════════════════════════════════════════════════════════

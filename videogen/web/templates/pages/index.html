@@ -1,0 +1,178 @@
+{{ define "content" }}
+<div class="hero-section">
+    <div class="container py-5">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">
+                    <i class="bi bi-magic"></i> AI Video Generation
+                </h1>
+                <p class="lead mb-4">
+                    Transform your ideas into stunning videos with Wan2.1 (LTX-Video). 
+                    Create videos from text descriptions, animate images, or transform existing videos.
+                </p>
+                <div class="d-grid gap-2 d-md-flex">
+                    <a href="/text-to-video" class="btn btn-primary btn-lg">
+                        <i class="bi bi-chat-text"></i> Start Creating
+                    </a>
+                    <a href="/gallery" class="btn btn-outline-light btn-lg">
+                        <i class="bi bi-grid-3x3"></i> View Gallery
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card bg-dark border-secondary">
+                    <div class="card-body p-4">
+                        <div class="ratio ratio-16x9">
+                            <div class="d-flex align-items-center justify-content-center bg-secondary rounded">
+                                <i class="bi bi-film" style="font-size: 5rem; opacity: 0.3;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-5">
+    <!-- Features -->
+    <div class="row mb-5">
+        <div class="col-12 text-center mb-4">
+            <h2 class="fw-bold">Powerful Features</h2>
+            <p class="text-muted">Everything you need to create amazing videos</p>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card h-100 bg-dark border-secondary hover-card">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="bi bi-chat-text text-primary" style="font-size: 3rem;"></i>
+                    </div>
+                    <h4 class="card-title">Text to Video</h4>
+                    <p class="card-text text-muted">
+                        Describe your vision in words and watch as AI brings it to life in stunning video format.
+                    </p>
+                    <a href="/text-to-video" class="btn btn-outline-primary">
+                        Try it now <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 bg-dark border-secondary hover-card">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="bi bi-image text-success" style="font-size: 3rem;"></i>
+                    </div>
+                    <h4 class="card-title">Image to Video</h4>
+                    <p class="card-text text-muted">
+                        Upload a static image and animate it with AI. Perfect for bringing photos to life.
+                    </p>
+                    <a href="/image-to-video" class="btn btn-outline-success">
+                        Animate image <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 bg-dark border-secondary hover-card">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="bi bi-camera-video text-warning" style="font-size: 3rem;"></i>
+                    </div>
+                    <h4 class="card-title">Video to Video</h4>
+                    <p class="card-text text-muted">
+                        Transform existing videos with AI. Apply styles, effects, and creative modifications.
+                    </p>
+                    <a href="/video-to-video" class="btn btn-outline-warning">
+                        Transform video <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="card bg-dark border-secondary text-center">
+                <div class="card-body">
+                    <h3 class="text-primary"><i class="bi bi-gpu-card"></i></h3>
+                    <h4 class="fw-bold">GPU Accelerated</h4>
+                    <p class="text-muted mb-0">Fast generation with CUDA</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark border-secondary text-center">
+                <div class="card-body">
+                    <h3 class="text-success"><i class="bi bi-lightning-charge"></i></h3>
+                    <h4 class="fw-bold">High Quality</h4>
+                    <p class="text-muted mb-0">Up to 768x768 resolution</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark border-secondary text-center">
+                <div class="card-body">
+                    <h3 class="text-warning"><i class="bi bi-sliders"></i></h3>
+                    <h4 class="fw-bold">Customizable</h4>
+                    <p class="text-muted mb-0">Full control over parameters</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark border-secondary text-center">
+                <div class="card-body">
+                    <h3 class="text-info"><i class="bi bi-cloud-arrow-down"></i></h3>
+                    <h4 class="fw-bold">Easy Export</h4>
+                    <p class="text-muted mb-0">Download in MP4 format</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Start -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card bg-dark border-secondary">
+                <div class="card-body p-4">
+                    <h3 class="card-title mb-4">
+                        <i class="bi bi-rocket-takeoff"></i> Quick Start
+                    </h3>
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="text-center">
+                                <div class="badge bg-primary rounded-circle p-3 mb-2">1</div>
+                                <p class="mb-0">Choose generation mode</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="text-center">
+                                <div class="badge bg-primary rounded-circle p-3 mb-2">2</div>
+                                <p class="mb-0">Enter your prompt or upload files</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="text-center">
+                                <div class="badge bg-primary rounded-circle p-3 mb-2">3</div>
+                                <p class="mb-0">Adjust parameters (optional)</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="text-center">
+                                <div class="badge bg-primary rounded-circle p-3 mb-2">4</div>
+                                <p class="mb-0">Generate and download</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{ end }}
