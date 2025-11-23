@@ -1,7 +1,7 @@
 flask>=3.0.0
-torch>=2.0.0
+torch>=2.4.0
 diffusers>=0.25.0
-transformers>=4.35.0
+transformers>=4.36.0
 accelerate>=0.25.0
 pillow>=10.0.0
 opencv-python>=4.8.0
@@ -10,3 +10,11 @@ huggingface-hub>=0.19.0
 xformers>=0.0.22  # Optional but recommended for memory efficiency
 imageio>=2.33.0
 imageio-ffmpeg>=0.4.9
+scipy>=1.10.0
+ftfy
+tqdm
+imageio[ffmpeg]
+easydict
+dashscope
+imageio-ffmpeg
+numpy>=1.23.5,<2
