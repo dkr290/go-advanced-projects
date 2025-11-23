@@ -1,3 +1,5 @@
+// Package logger for logging
+
 package logger
 
 import (
@@ -6,17 +8,22 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var log *logrus.Logger
+type Logger struct {
+	*logrus.Logger
+}
+
+var log *Logger
 
 func init() {
-	log = logrus.New()
-	log.SetFormatter(&logrus.JSONFormatter{})
-	log.SetOutput(os.Stdout)
-	log.SetLevel(logrus.InfoLevel)
+	logrusLogger := logrus.New()
+	logrusLogger.SetFormatter(&logrus.JSONFormatter{})
+	logrusLogger.SetOutput(os.Stdout)
+	logrusLogger.SetLevel(logrus.InfoLevel)
+	log = &Logger{logrusLogger}
 }
 
 // NewLogger returns a new logger instance
-func NewLogger() *logrus.Logger {
+func NewLogger() *Logger {
 	return log
 }
 

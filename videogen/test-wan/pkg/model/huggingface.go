@@ -31,7 +31,7 @@ func (d *HuggingFaceDownloader) Download() error {
 
 	// Create cache directory
 	cacheDir := filepath.Join(d.config.Model.CacheDir, d.config.Model.HuggingFaceModelID)
-	if err := os.MkdirAll(cacheDir, 0755); err != nil {
+	if err := os.MkdirAll(cacheDir, 0o755); err != nil {
 		return fmt.Errorf("failed to create cache directory: %w", err)
 	}
 
@@ -45,7 +45,11 @@ func (d *HuggingFaceDownloader) Download() error {
 		"merges.txt",
 	}
 
-	baseURL := fmt.Sprintf("%s/%s/resolve/main", d.config.HF.APIURL, d.config.Model.HuggingFaceModelID)
+	baseURL := fmt.Sprintf(
+		"%s/%s/resolve/main",
+		d.config.HF.APIURL,
+		d.config.Model.HuggingFaceModelID,
+	)
 
 	for _, file := range files {
 		if err := d.downloadFile(baseURL, file, cacheDir); err != nil {
