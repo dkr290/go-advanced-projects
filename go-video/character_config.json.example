@@ -1,0 +1,16 @@
+{
+  "seed": 42,
+  "output_dir": "./output",
+  "resolution": [768, 1024],
+  "num_inference_steps": 20,
+  "guidance_scale": 3.5,
+  "style_suffix": "high quality, detailed, professional digital art, sharp focus",
+  "negative_prompt": "blurry, low quality, distorted, deformed, ugly, bad anatomy, watermark, signature",
+  "prompts": [
+    "character standing in front view, full body",
+    "character standing in side view, full body",
+    "character standing in back view, full body",
+    "character portrait, face closeup",
+    "character upper body, three-quarter view"
+  ]
+}
