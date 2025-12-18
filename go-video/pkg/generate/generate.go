@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+	"unsafe"
 
 	"gfluxgo/pkg/config"
 	"gfluxgo/pkg/utils"
@@ -19,6 +20,24 @@ func Generate(
 	promptConf config.PromptConfig,
 	modelPath, loraDir string,
 ) error {
+	sd.SetLogCallback(func(level sd.LogLevel, text string, data unsafe.Pointer) {
+		switch level {
+		case sd.LogDebug:
+			fmt.Print("DEBUG:", text)
+		case sd.LogInfo:
+			fmt.Print("INFO:", text)
+		case sd.LogWarn:
+			fmt.Print("WARN:", text)
+		case sd.LogError:
+			fmt.Print("ERROR:", text)
+		default:
+			fmt.Print("???:", text)
+		}
+	})
+	sd.SetProgressCallback(func(step, steps int, time time.Duration, data unsafe.Pointer) {
+		fmt.Printf("PROGRESS: Completed step %d of %d in %0.2fs\n", step, steps, time.Seconds())
+	})
+
 	sdBuilder := sd.New().SetModel(modelPath)
 	// Only set the LoRA dir if it contains at least one .safetensors file
 	if cmdConf.LoraURL != "" {
