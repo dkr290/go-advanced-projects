@@ -3,6 +3,7 @@ package config
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -45,7 +46,7 @@ func (c *Config) GetFlags() {
 	flag.StringVar(
 		&c.ConfigPath,
 		"config",
-		"picture_config.json",
+		"",
 		"Path to the JSON configuration file.",
 	)
 
@@ -101,6 +102,10 @@ func (c *Config) GetFlags() {
 		"Download path of the lora",
 	)
 	flag.Parse()
+	if c.ConfigPath == "" {
+		fmt.Println("Need the configuration file")
+		os.Exit(1)
+	}
 
 	if model := getEnv("MODEL_URL"); model != "" {
 		c.ModelURL = model
