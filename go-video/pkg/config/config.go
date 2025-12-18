@@ -106,7 +106,6 @@ func (c *Config) GetFlags() {
 		"./models/lora",
 		"Download path of the lora",
 	)
-	flag.Parse()
 
 	// New CLI toggles
 	flag.BoolVar(&c.NoCUDA, "no-cuda", false, "Disable CUDA and use CPU (sets GGML_NO_CUDA=1)")
@@ -118,6 +117,8 @@ func (c *Config) GetFlags() {
 	)
 	flag.BoolVar(&c.ForceMMQ, "force-mmq", false, "Force MMQ kernels (sets GGML_CUDA_FORCE_MMQ=1)")
 	flag.BoolVar(&c.SkipLoRA, "skip-lora", false, "Skip loading any LoRA files")
+
+	flag.Parse()
 
 	if c.ConfigPath == "" {
 		fmt.Println("Need the configuration file")
