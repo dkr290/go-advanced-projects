@@ -16,7 +16,7 @@ type Config struct {
 	Steps         int
 	GuidanceScale float32
 	Prompt        PromptConfig
-	Cmd           CmdConf
+	CmdConf
 }
 
 type PromptConfig struct {
@@ -26,9 +26,11 @@ type PromptConfig struct {
 }
 
 type CmdConf struct {
-	ConfigPath string
-	ModelURL   string
-	LoraURL    string
+	ConfigPath        string
+	ModelURL          string
+	LoraURL           string
+	ModelDownloadPath string
+	LoraDownloadpath  string
 }
 
 func LoadConfig() *Config {
@@ -40,23 +42,22 @@ func LoadConfig() *Config {
 func (c *Config) GetFlags() {
 	var res string
 	var guidanceScale float64
-	var st int
 	flag.StringVar(
-		&c.Cmd.ConfigPath,
+		&c.ConfigPath,
 		"config",
 		"picture_config.json",
 		"Path to the JSON configuration file.",
 	)
 
 	flag.StringVar(
-		&c.Cmd.ModelURL,
+		&c.ModelURL,
 		"model-url",
 		"https://huggingface.co/city96/FLUX.1-dev-gguf/resolve/main/flux1-dev-Q4_K_S.gguf",
 		"URL to download the FLUX GGUF model if not found locally.",
 	)
 
 	flag.StringVar(
-		&c.Cmd.LoraURL,
+		&c.LoraURL,
 		"lora-url",
 		"",
 		"URL to download the LoRA safetensors file if not found locally.",
@@ -85,14 +86,21 @@ func (c *Config) GetFlags() {
 		"number steps for the model, depends on the model",
 	)
 
+	flag.StringVar(
+		&c.ModelDownloadPath,
+		"model-down-path",
+		"./models",
+		"Download path of the models",
+	)
+
 	flag.Parse()
 
 	if model := getEnv("MODEL_URL"); model != "" {
-		c.Cmd.ModelURL = model
+		c.ModelURL = model
 	}
 
 	if lora := getEnv("LORA_URL"); lora != "" {
-		c.Cmd.LoraURL = lora
+		c.LoraURL = lora
 	}
 
 	if seed := getEnv("SEED"); seed != "" {
