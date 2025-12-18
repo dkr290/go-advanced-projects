@@ -6,7 +6,6 @@ import (
 	"image/png"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"gfluxgo/pkg/config"
@@ -20,23 +19,31 @@ func Generate(
 	promptConf config.PromptConfig,
 	modelPath, loraDir string,
 ) error {
+	if cmdConf.NoCUDA {
+		_ = os.Setenv("GGML_NO_CUDA", "1")
+	} else {
+		_ = os.Unsetenv("GGML_NO_CUDA")
+	}
+	if cmdConf.ForceCUBLAS {
+		_ = os.Setenv("GGML_CUDA_FORCE_CUBLAS", "1")
+	} else {
+		_ = os.Unsetenv("GGML_CUDA_FORCE_CUBLAS")
+	}
+	if cmdConf.ForceMMQ {
+		_ = os.Setenv("GGML_CUDA_FORCE_MMQ", "1")
+	} else {
+		_ = os.Unsetenv("GGML_CUDA_FORCE_MMQ")
+	}
+
 	sdBuilder := sd.New().SetModel(modelPath)
 	// Only set the LoRA dir if it contains at least one .safetensors file
-	if info, err := os.Stat(loraDir); err == nil && info.IsDir() {
-		if entries, err := os.ReadDir(loraDir); err == nil {
-			for _, e := range entries {
-				if !e.IsDir() && strings.HasSuffix(strings.ToLower(e.Name()), ".safetensors") {
-					sdBuilder.SetLoRaDir(loraDir)
-					break
-				}
-			}
-		}
+	if cmdConf.LoraURL != "" {
+		sdBuilder.SetLoRaDir(loraDir)
 	}
 
 	ctx, err := sdBuilder.Load()
 	if err != nil {
-		fmt.Printf("FATAL CGO Model Load Error (Is your GGUF file correct?): %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("CGO model load error (GGUF/driver mismatch?): %w", err)
 	}
 	// Validate context is not nil
 	if ctx == nil {
