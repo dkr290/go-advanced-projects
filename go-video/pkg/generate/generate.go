@@ -38,6 +38,7 @@ func Generate(
 	sdBuilder := sd.New().SetModel(modelPath)
 	// Only set the LoRA dir if it contains at least one .safetensors file
 	if cmdConf.LoraURL != "" {
+		fmt.Println("Setting the lora")
 		sdBuilder.SetLoRaDir(loraDir)
 	}
 
