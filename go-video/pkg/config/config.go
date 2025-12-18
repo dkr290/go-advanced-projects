@@ -69,7 +69,7 @@ func (c *Config) GetFlags() {
 	flag.StringVar(
 		&c.OutputDir,
 		"output",
-		"/lib/output",
+		"./output",
 		"the output directory for the generated piuctures",
 	)
 	flag.StringVar(&res, "resolution", "1024x1024", "The resolution default 1024")

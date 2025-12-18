@@ -6,6 +6,7 @@ import (
 	"image/png"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"gfluxgo/pkg/config"
@@ -20,22 +21,35 @@ func Generate(
 	modelPath, loraDir string,
 ) error {
 	sdBuilder := sd.New().SetModel(modelPath)
-	sdBuilder.SetLoRaDir(loraDir)
+	// Only set the LoRA dir if it contains at least one .safetensors file
+	if info, err := os.Stat(loraDir); err == nil && info.IsDir() {
+		if entries, err := os.ReadDir(loraDir); err == nil {
+			for _, e := range entries {
+				if !e.IsDir() && strings.HasSuffix(strings.ToLower(e.Name()), ".safetensors") {
+					sdBuilder.SetLoRaDir(loraDir)
+					break
+				}
+			}
+		}
+	}
+
 	ctx, err := sdBuilder.Load()
 	if err != nil {
 		fmt.Printf("FATAL CGO Model Load Error (Is your GGUF file correct?): %v\n", err)
 		os.Exit(1)
 	}
-	defer ctx.Free() // Releases C++ resources
-
 	// Validate context is not nil
 	if ctx == nil {
 		return fmt.Errorf("context is nil after loading model")
 	}
 
+	defer ctx.Free() // Releases C++ resources
+
 	// --- 4. Generation Loop ---
 	outputDir := cmdConf.OutputDir
-	os.MkdirAll(outputDir, 0o755)
+	if err := os.MkdirAll(outputDir, 0o755); err != nil {
+		return fmt.Errorf("failed creating output dir %q: %w", outputDir, err)
+	}
 
 	fmt.Printf("\nStarting character sheet generation for %d poses...\n", len(promptConf.Prompts))
 
@@ -86,6 +100,14 @@ func Generate(
 
 		// CGO CALL: The generation happens here
 		imageData := ctx.GenerateImage(params)
+		img := imageData.Image()
+		if img == nil {
+			imageData.Free()
+			return fmt.Errorf(
+				"GenerateImage returned a nil image (model context may not be initialized)",
+			)
+		}
+
 		// Save Image
 		safeLabel := utils.SanitizeFilename(p)
 		filename := fmt.Sprintf("%02d_%s_s%d.png", i+1, safeLabel, params.Seed)
@@ -94,15 +116,13 @@ func Generate(
 		targetFile, err := os.OpenFile(outputPath, os.O_WRONLY|os.O_CREATE, 0o600)
 		if err != nil {
 			imageData.Free()
-			fmt.Printf("Error creating file %s: %v\n", outputPath, err)
-			os.Exit(1)
+			return fmt.Errorf("creating file %s: %w", outputPath, err)
 		}
 
 		if err = png.Encode(targetFile, imageData.Image()); err != nil {
 			targetFile.Close()
 			imageData.Free()
-			fmt.Printf("Error encoding PNG %s: %v\n", outputPath, err)
-			os.Exit(1)
+			return fmt.Errorf("encoding PNG %s: %w", outputPath, err)
 		}
 		targetFile.Close()
 		imageData.Free()
