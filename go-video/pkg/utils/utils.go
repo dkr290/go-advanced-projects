@@ -33,7 +33,7 @@ func DownloadFiles(modelPath, modelURL, loraURL, loraPath string, l logging.Logg
 			return err
 		}
 		l.Logging.Infof("Model not found locally. Downloading to '%s'...\n", modelPath)
-		if err := download.DownloadFile(modelURL, modelPath); err != nil {
+		if err := download.DownloadFile(modelURL, modelPath, l); err != nil {
 			l.Logging.Errorf("FATAL Download Error: %v\n", err)
 			return err
 		}
@@ -44,7 +44,7 @@ func DownloadFiles(modelPath, modelURL, loraURL, loraPath string, l logging.Logg
 	if _, err := os.Stat(loraPath); os.IsNotExist(err) {
 		if loraURL != "" {
 			l.Logging.Infof("LoRA file not found locally. Downloading to '%s'...\n", loraPath)
-			if err := download.DownloadFile(loraURL, loraPath); err != nil {
+			if err := download.DownloadFile(loraURL, loraPath, l); err != nil {
 				l.Logging.Errorf("LoRA Download Error: %v.\n", err)
 				return err
 			}

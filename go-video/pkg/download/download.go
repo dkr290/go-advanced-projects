@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	"gfluxgo/pkg/logging"
 )
 
 type WriteCounter struct {
@@ -56,18 +58,24 @@ func byteCountToHuman(b int64) string {
 }
 
 // DownloadFile handles the download, saving it to a local file.
-func DownloadFile(url, destPath string) error {
-	fmt.Printf("Attempting to download from: %s\n", url)
+func DownloadFile(url, destPath string, l logging.Logger) error {
+	l.Logging.Infof("Attempting to download from: %s\n", url)
 
 	// 1. HTTP GET request
 	resp, err := http.Get(url)
 	if err != nil {
-		return fmt.Errorf("failed to make HTTP request: %w", err)
+		return l.ErrorLogger(err, "failed to make HTTP request")
 	}
-	defer resp.Body.Close()
+	defer func() {
+		err := resp.Body.Close()
+		if err != nil {
+			l.Logging.Error(err.Error())
+			os.Exit(1)
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("bad HTTP status: %s", resp.Status)
+		return l.ErrorMessage(fmt.Sprintf("bad HTTP status: %s", resp.Status))
 	}
 
 	// 2. Setup the output file
@@ -75,7 +83,15 @@ func DownloadFile(url, destPath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create file %s: %w", destPath, err)
 	}
-	defer out.Close()
+
+	defer func() {
+		err := out.Close()
+		if err != nil {
+			l.Logging.Error(err.Error())
+			os.Exit(1)
+
+		}
+	}()
 
 	// 3. Write and track progress
 	counter := &WriteCounter{Size: resp.ContentLength}
@@ -83,12 +99,12 @@ func DownloadFile(url, destPath string) error {
 	// TeeReader pipes the data through the counter while copying to the file
 	_, err = io.Copy(out, io.TeeReader(resp.Body, counter))
 	if err != nil {
-		return fmt.Errorf("failed to write file content: %w", err)
+		return l.ErrorLogger(err, "failed to write file content")
 	}
 
 	// Final progress update to ensure 100% is displayed
 	counter.Total = counter.Size // Force total to size for final display
 	counter.PrintProgress()
-	fmt.Println("\nDownload complete.")
+	l.Logging.Info("\nDownload complete.\n")
 	return nil
 }
