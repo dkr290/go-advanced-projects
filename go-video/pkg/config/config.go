@@ -93,6 +93,12 @@ func (c *Config) GetFlags() {
 		"Download path of the models",
 	)
 
+	flag.StringVar(
+		&c.LoraDownloadpath,
+		"lora-down-path",
+		"./models/lora",
+		"Download path of the lora",
+	)
 	flag.Parse()
 
 	if model := getEnv("MODEL_URL"); model != "" {
