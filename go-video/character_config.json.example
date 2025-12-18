@@ -1,9 +1,4 @@
 {
-  "seed": 42,
-  "output_dir": "./output",
-  "resolution": [768, 1024],
-  "num_inference_steps": 20,
-  "guidance_scale": 3.5,
   "style_suffix": "high quality, detailed, professional digital art, sharp focus",
   "negative_prompt": "blurry, low quality, distorted, deformed, ugly, bad anatomy, watermark, signature",
   "prompts": [

@@ -69,12 +69,7 @@ Edit `character_config.json`:
 
 ```json
 {
-  "seed": 42,
-  "output_dir": "./output",
-  "resolution": [768, 1024],
-  "num_inference_steps": 20,
-  "guidance_scale": 3.5,
-  "style_suffix": "high quality, detailed",
+   "style_suffix": "high quality, detailed",
   "negative_prompt": "blurry, low quality",
   "prompts": [
     "your prompt here",

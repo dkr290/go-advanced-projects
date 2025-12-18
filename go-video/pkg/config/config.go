@@ -15,7 +15,6 @@ type Config struct {
 	Resolution    []int
 	Steps         int
 	GuidanceScale float32
-	Prompt        PromptConfig
 	CmdConf
 }
 
@@ -31,6 +30,7 @@ type CmdConf struct {
 	LoraURL           string
 	ModelDownloadPath string
 	LoraDownloadpath  string
+	Debug             bool
 }
 
 func LoadConfig() *Config {
@@ -55,6 +55,7 @@ func (c *Config) GetFlags() {
 		"https://huggingface.co/city96/FLUX.1-dev-gguf/resolve/main/flux1-dev-Q4_K_S.gguf",
 		"URL to download the FLUX GGUF model if not found locally.",
 	)
+	flag.BoolVar(&c.Debug, "debug", false, "Using debug true or false")
 
 	flag.StringVar(
 		&c.LoraURL,
