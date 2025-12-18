@@ -2,6 +2,7 @@
 package utils
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -14,6 +15,25 @@ func SanitizeFilename(text string) string {
 	text = strings.ReplaceAll(text, " ", "-")
 	text = strings.ReplaceAll(text, ",", "")
 	return strings.ToLower(text)
+}
+
+func SanitizeFilenameForImage(prompt string, index int) string {
+	// Sanitize the prompt
+	sanitized := SanitizeFilename(prompt)
+
+	// Take first 10 characters (or less) for the prompt part
+	promptPart := sanitized
+	if len(promptPart) > 10 {
+		promptPart = promptPart[:10]
+	}
+
+	// Remove trailing dash if present
+	promptPart = strings.TrimSuffix(promptPart, "-")
+
+	// Format: {index}_{prompt10}.png
+	// Max: 2 + 1 + 10 + 4 = 17 chars (well under 20)
+
+	return fmt.Sprintf("%02d_%s.png", index, promptPart)
 }
 
 func GetFilenameFromURL(url string) string {

@@ -120,8 +120,8 @@ func Generate(
 		}
 
 		// Save Image
-		safeLabel := utils.SanitizeFilename(p)
-		filename := fmt.Sprintf("%02d_%s_s%d.png", i+1, safeLabel, params.Seed)
+		filename := utils.SanitizeFilenameForImage(p, i+1)
+		// filename := fmt.Sprintf("%02d_%s_s%d.png", i+1, safeLabel, params.Seed)
 		outputPath := filepath.Join(outputDir, filename)
 
 		targetFile, err := os.OpenFile(outputPath, os.O_WRONLY|os.O_CREATE, 0o600)
