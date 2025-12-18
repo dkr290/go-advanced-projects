@@ -32,11 +32,6 @@ type CmdConf struct {
 	ModelDownloadPath string
 	LoraDownloadpath  string
 	Debug             bool
-
-	NoCUDA      bool // --no-cuda or NO_CUDA
-	ForceCUBLAS bool // --force-cublas or FORCE_CUBLAS
-	ForceMMQ    bool // --force-mmq or FORCE_MMQ
-	SkipLoRA    bool // --skip-lora or SKIP_LORA
 }
 
 func LoadConfig() *Config {
@@ -106,17 +101,6 @@ func (c *Config) GetFlags() {
 		"./models/lora",
 		"Download path of the lora",
 	)
-
-	// New CLI toggles
-	flag.BoolVar(&c.NoCUDA, "no-cuda", false, "Disable CUDA and use CPU (sets GGML_NO_CUDA=1)")
-	flag.BoolVar(
-		&c.ForceCUBLAS,
-		"force-cublas",
-		false,
-		"Force cuBLAS kernels (sets GGML_CUDA_FORCE_CUBLAS=1)",
-	)
-	flag.BoolVar(&c.ForceMMQ, "force-mmq", false, "Force MMQ kernels (sets GGML_CUDA_FORCE_MMQ=1)")
-	flag.BoolVar(&c.SkipLoRA, "skip-lora", false, "Skip loading any LoRA files")
 
 	flag.Parse()
 
