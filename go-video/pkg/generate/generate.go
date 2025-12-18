@@ -28,11 +28,28 @@ func Generate(
 	}
 	defer ctx.Free() // Releases C++ resources
 
+	// Validate context is not nil
+	if ctx == nil {
+		return fmt.Errorf("context is nil after loading model")
+	}
+
 	// --- 4. Generation Loop ---
 	outputDir := cmdConf.OutputDir
 	os.MkdirAll(outputDir, 0o755)
 
 	fmt.Printf("\nStarting character sheet generation for %d poses...\n", len(promptConf.Prompts))
+
+	// Validate resolution
+	if len(cmdConf.Resolution) != 2 {
+		return fmt.Errorf(
+			"invalid resolution format, expected [width, height], got %v",
+			cmdConf.Resolution,
+		)
+	}
+	width, height := cmdConf.Resolution[0], cmdConf.Resolution[1]
+	if width <= 0 || height <= 0 {
+		return fmt.Errorf("invalid resolution: width=%d, height=%d", width, height)
+	}
 
 	for i, p := range promptConf.Prompts {
 		// Construct the final prompt
@@ -42,15 +59,31 @@ func Generate(
 
 		// Create the generation parameters
 		params := sd.NewImageGenerationParams()
-		params.Width = cmdConf.Resolution[0]
-		params.Height = cmdConf.Resolution[1]
+		params.Width = width
+		params.Height = height
 		params.Prompt = prompt
 		params.NegativePrompt = promptConf.NegativePrompt
 		params.SampleSteps = cmdConf.Steps
 		params.Guidance.TxtCfg = cmdConf.GuidanceScale
 		params.Seed = int64(cmdConf.Seed + i)
 
+		// Validate parameters
+		if params.Prompt == "" {
+			fmt.Printf("Warning: Empty prompt for pose %d, skipping\n", i+1)
+			continue
+		}
+
 		start := time.Now()
+
+		// CGO CALL: The generation happens here
+		fmt.Printf(
+			"    Calling CGO GenerateImage with params: width=%d, height=%d, steps=%d, seed=%d\n",
+			params.Width,
+			params.Height,
+			params.SampleSteps,
+			params.Seed,
+		)
+
 		// CGO CALL: The generation happens here
 		imageData := ctx.GenerateImage(params)
 		// Save Image
