@@ -69,7 +69,7 @@ func GenerateWithPython(
 		filename := utils.SanitizeFilenameForImage(p, i+1)
 		outputPath := filepath.Join(cmdConf.OutputDir, filename)
 
-		fmt.Printf("[%d/%d] Generating: %s\n", i+1, len(promptConf.Prompts), p)
+		fmt.Printf("[%d/%d] Generating: %s\n", i+1, len(promptConf.Prompts), prompt)
 
 		args := []string{
 			scriptPath,

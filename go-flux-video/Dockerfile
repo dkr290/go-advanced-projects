@@ -65,6 +65,7 @@ RUN pip3 install --no-cache-dir \
     xformers \
     hf_transfer \
     gguf>=0.10.0 \
+    peft  \
     && rm -rf ~/.cache/pip
 
 # Create directories for runtime data
@@ -85,6 +86,7 @@ EXPOSE 22
 # Start SSH server in foreground for Runpod
 CMD ["/usr/sbin/sshd", "-D"]
 
+ENV HF_HOME=/app/models/.cache
 # Labels for documentation
 LABEL maintainer="your-email@example.com"
 LABEL description="FLUX Stable Diffusion image generator with CUDA support"

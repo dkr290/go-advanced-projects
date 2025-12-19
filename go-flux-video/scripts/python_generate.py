@@ -1,4 +1,5 @@
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -14,6 +15,20 @@ from diffusers import (
 from diffusers.utils import logging as diffusers_logging
 from PIL import Image
 
+_PIPELINE_CACHE = {}
+
+
+def get_cache_key(args):
+    """Create a unique cache key based on model configuration"""
+    key_parts = [
+        args.model,
+        args.gguf or "",
+        args.lora or "",
+        args.lora_file or "",
+        str(args.low_vram),
+    ]
+    return hashlib.md5(":".join(key_parts).encode()).hexdigest()
+
 
 def save_image(image: Image.Image, output_path: str) -> None:
     """Save image as PNG, matching Go's png.Encode behavior."""
@@ -25,9 +40,99 @@ def save_image(image: Image.Image, output_path: str) -> None:
         image.save(f, format="PNG", optimize=False)
 
 
+def load_pipeline(args):
+    """Load pipeline with caching"""
+    cache_key = get_cache_key(args)
+
+    # Return cached pipeline if available
+    if cache_key in _PIPELINE_CACHE:
+        print("✓ Using cached pipeline", file=sys.stderr)
+        return _PIPELINE_CACHE[cache_key]
+
+    print(f"Loading model: {args.model}", file=sys.stderr, flush=True)
+    if args.gguf:
+        print(f"Using GGUF: {args.gguf}", file=sys.stderr, flush=True)
+
+    start = time.time()
+    diffusers_logging.set_verbosity_error()
+
+    # Load pipeline (same as before)
+    if args.gguf and os.path.exists(args.gguf):
+        transformer = FluxTransformer2DModel.from_single_file(
+            args.gguf,
+            quantization_config=GGUFQuantizationConfig(compute_dtype=torch.bfloat16),
+            torch_dtype=torch.bfloat16,
+        )
+
+        pipe = FluxPipeline.from_pretrained(
+            args.model,
+            transformer=transformer,
+            torch_dtype=torch.bfloat16,
+        )
+        if hasattr(pipe, "tokenizer") and hasattr(pipe.tokenizer, "model_max_length"):
+            pipe.tokenizer.model_max_length = 512
+            print("✓ Updated tokenizer max length to 512 for T5", file=sys.stderr)
+
+        if hasattr(pipe.tokenizer, "add_prefix_space"):
+            pipe.tokenizer.add_prefix_space = False
+            print("✓ Disabled add_prefix_space to avoid warning", file=sys.stderr)
+
+    else:
+        pipe = AutoPipelineForText2Image.from_pretrained(
+            args.model,
+            torch_dtype=torch.float16,
+        )
+        if hasattr(pipe, "tokenizer"):
+            if hasattr(pipe.tokenizer, "model_max_length"):
+                pipe.tokenizer.model_max_length = 512
+            print(
+                "✓ Loaded FluxPipeline, set tokenizer to 512 tokens",
+                file=sys.stderr,
+                flush=True,
+            )
+        print("✓ Using  using default model", file=sys.stderr, flush=True)
+
+    # Memory optimizations
+    if args.low_vram:
+        pipe.enable_model_cpu_offload()
+        pipe.enable_attention_slicing("auto")
+        print("✓ Low VRAM mode enabled", file=sys.stderr)
+    else:
+        pipe.to("cuda")
+        print("✓ Full GPU mode", file=sys.stderr)
+
+    try:
+        pipe.enable_xformers_memory_efficient_attention()
+        print("✓ xformers enabled", file=sys.stderr)
+    except Exception:
+        pass
+
+    # Load LoRA if specified
+    if args.lora and args.lora_file:
+        print(f"Loading LoRA: {args.lora}", file=sys.stderr)
+        print(f"  File: {args.lora_file}", file=sys.stderr)
+        try:
+            pipe.load_lora_weights(
+                args.lora,
+                weight_name=os.path.basename(args.lora_file),
+                adapter_name="uncensored",
+            )
+            if hasattr(pipe, "safety_checker"):
+                pipe.safety_checker = None
+                print("✓ Safety checker disabled", file=sys.stderr)
+        except Exception as e:
+            print(f"⚠ LoRA loading failed: {e}", file=sys.stderr)
+            print("  Continuing without LoRA...", file=sys.stderr)
+
+    print(f"✓ Model loaded in {time.time() - start:.1f}s", file=sys.stderr)
+
+    # Cache the pipeline
+    _PIPELINE_CACHE[cache_key] = pipe
+    return pipe
+
+
 def main():
-    # Always safe optimizations
-    torch.backends.cudnn.benchmark = True  # Works on all CUDA GPUs
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", required=True, help="HuggingFace model ID")
     parser.add_argument("--gguf", default="", help="Path to GGUF file (optional)")
@@ -49,92 +154,8 @@ def main():
     )
 
     args = parser.parse_args()
-
-    print(f"Loading model: {args.model}", file=sys.stderr)
-    if args.gguf:
-        print(f"Using GGUF: {args.gguf}", file=sys.stderr)
-    start = time.time()
-    diffusers_logging.set_verbosity_error()
     try:
-        # Load pipeline
-        if args.gguf and os.path.exists(args.gguf):
-            transformer = FluxTransformer2DModel.from_single_file(
-                args.gguf,
-                quantization_config=GGUFQuantizationConfig(
-                    compute_dtype=torch.bfloat16
-                ),
-                torch_dtype=torch.bfloat16,
-            )
-
-            pipe = FluxPipeline.from_pretrained(
-                args.model,
-                transformer=transformer,
-                torch_dtype=torch.bfloat16,
-            )
-            if hasattr(pipe, "tokenizer") and hasattr(
-                pipe.tokenizer, "model_max_length"
-            ):
-                # Flux 1.1 Dev uses T5 which supports 512 tokens
-                pipe.tokenizer.model_max_length = 512
-                print("✓ Updated tokenizer max length to 512 for T5", file=sys.stderr)
-
-            # Fix the add_prefix_space warning
-            if hasattr(pipe.tokenizer, "add_prefix_space"):
-                pipe.tokenizer.add_prefix_space = False
-                print("✓ Disabled add_prefix_space to avoid warning", file=sys.stderr)
-
-        else:
-            pipe = AutoPipelineForText2Image.from_pretrained(
-                args.model,
-                torch_dtype=torch.float16,
-            )
-
-        # Memory optimizations
-        if args.low_vram:
-            pipe.enable_model_cpu_offload()
-            pipe.enable_attention_slicing("auto")
-            print(
-                "✓ Low VRAM mode: CPU offload + attention slicing enabled",
-                file=sys.stderr,
-            )
-        else:
-            # Full GPU mode - fastest on high VRAM GPUs
-            pipe.to("cuda")
-            print("✓ Full GPU mode: maximum performance", file=sys.stderr)
-
-        try:
-            pipe.enable_xformers_memory_efficient_attention()
-            print("✓ xformers enabled", file=sys.stderr)
-        except Exception:
-            pass
-
-        # Load LoRA if specified
-        if args.lora:
-            print(f"Loading LoRA: {args.lora}", file=sys.stderr)
-            print(f"  File: {args.lora_file}", file=sys.stderr)
-            try:
-                pipe.load_lora_weights(
-                    args.lora,
-                    weight_name=os.path.basename(args.lora_file),
-                    adapter_name="uncensored",
-                )
-
-                if hasattr(pipe, "safety_checker"):
-                    pipe.safety_checker = None
-                    print("✓ Safety checker disabled")
-                else:
-                    print("✓ LoRA loaded (no safety checker found)")
-
-            except Exception as e:
-                print(f"⚠ LoRA loading failed: {e}", file=sys.stderr)
-                print("  Continuing without LoRA...", file=sys.stderr)
-
-        print(f"✓ Model loaded in {time.time() - start:.1f}s", file=sys.stderr)
-        if torch.cuda.is_available():
-            print(
-                f"  VRAM used: {torch.cuda.memory_allocated() / 1024**3:.1f}GB",
-                file=sys.stderr,
-            )
+        pipe = load_pipeline(args)
 
         # Generate
         generator = torch.Generator().manual_seed(args.seed)
