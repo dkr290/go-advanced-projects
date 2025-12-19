@@ -33,6 +33,7 @@ type CmdConf struct {
 	ModelDownloadPath string
 	LoraDownloadpath  string
 	LowVRAM           bool
+	HfModelID         string
 	Debug             bool
 }
 
@@ -54,10 +55,18 @@ func (c *Config) GetFlags() {
 
 	flag.StringVar(
 		&c.ModelURL,
-		"model-url",
-		"https://huggingface.co/city96/FLUX.1-dev-gguf/resolve/main/flux1-dev-Q4_K_S.gguf",
+		"gguf-model-url",
+		"",
 		"URL to download the FLUX GGUF model if not found locally.",
 	)
+
+	flag.StringVar(
+		&c.HfModelID,
+		"hf-model",
+		"black-forest-labs/FLUX.1-dev",
+		"HuggingFace model ID (default: FLUX.1-dev)",
+	)
+
 	flag.BoolVar(&c.Debug, "debug", false, "Using debug true or false")
 
 	flag.StringVar(
@@ -138,6 +147,9 @@ func (c *Config) GetFlags() {
 		}
 		c.Seed = int(s)
 
+	}
+	if hfModel := getEnv("HF_MODEL"); hfModel != "" {
+		c.HfModelID = hfModel
 	}
 
 	if output := getEnv("OUTPUT"); output != "" {

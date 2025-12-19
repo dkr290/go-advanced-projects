@@ -5,15 +5,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"gfluxgo/pkg/config"
+	"gfluxgo/pkg/utils"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
-
-	"gfluxgo/pkg/config"
-	"gfluxgo/pkg/utils"
 )
 
 type PythonResult struct {
@@ -43,9 +42,9 @@ func GenerateWithPython(
 	var hfModel, ggufPath string
 	if strings.HasSuffix(strings.ToLower(modelPath), ".gguf") {
 		ggufPath = modelPath
-		hfModel = "black-forest-labs/FLUX.1-dev"
+		hfModel = cmdConf.HfModelID
 	} else {
-		hfModel = modelPath
+		hfModel = cmdConf.HfModelID
 	}
 
 	// Find LoRA file if loraDir is provided

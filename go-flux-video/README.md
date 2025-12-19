@@ -41,13 +41,32 @@ Go-orchestrated FLUX image generator using Python diffusers with CUDA accelerati
    go run main.go --config character_config.json
    ```
 
+# Use default FLUX.1-dev model (no GGUF)
+
+./go-flux-video --config config.json
+
+# Use a different HuggingFace model
+
+./go-flux-video --config config.json --hf-model "stabilityai/stable-diffusion-2"
+
+# Use environment variable
+
+export HF_MODEL="runwayml/stable-diffusion-v1-5"
+./go-flux-video --config config.json
+
+# Use with GGUF file
+
+./go-flux-video --config config.json --gguf-model-url "https://example.com/flux.gguf"
+
+````
+
 ### Docker (RunPod)
 
 1. **Build the image:**
 
-   ```bash
-   docker buildx build -t gfluxgo .
-   ```
+```bash
+docker buildx build -t gfluxgo .
+````
 
 2. **Run container:**
 
