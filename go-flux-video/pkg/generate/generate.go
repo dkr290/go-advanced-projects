@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"gfluxgo/pkg/config"
 	"gfluxgo/pkg/utils"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -101,45 +102,35 @@ func GenerateWithPython(
 
 		cmd := exec.Command("python3", args...)
 
-		var stdout bytes.Buffer
-		var stderr bytes.Buffer
-		cmd.Stdout = &stdout
-		cmd.Stderr = &stderr
+		stdoutPipe, err := cmd.StdoutPipe()
+		if err != nil {
+			return fmt.Errorf("failed to create stdout pipe: %w", err)
+		}
 
-		if err := cmd.Run(); err != nil {
-			// Build comprehensive error message
+		// Stream stderr directly to terminal for progress
+		cmd.Stderr = os.Stderr
 
-			errMsg := fmt.Sprintf("python execution failed: %v", err)
-			if stderr.Len() > 0 {
-				errMsg += fmt.Sprintf("\nPython stderr:\n%s", stderr.String())
-			}
-			if stdout.Len() > 0 {
-				errMsg += fmt.Sprintf("\nPython stdout:\n%s", stdout.String())
-			}
-			return fmt.Errorf("%s", errMsg)
+		if err := cmd.Start(); err != nil {
+			return fmt.Errorf("failed to start python: %w", err)
+		}
+
+		var stdoutBuffer bytes.Buffer
+		// MultiWriter writes to both buffer and terminal
+		stdoutMulti := io.MultiWriter(&stdoutBuffer, os.Stdout)
+		if _, err := io.Copy(stdoutMulti, stdoutPipe); err != nil {
+			return fmt.Errorf("failed to read python output: %w", err)
+		}
+
+		if err := cmd.Wait(); err != nil {
+			return fmt.Errorf("python execution failed: %v", err)
 		}
 
 		var result PythonResult
-		if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
-			errMsg := fmt.Sprintf("failed to parse python output: %v", err)
-			if stdout.Len() > 0 {
-				errMsg += fmt.Sprintf("\nRaw stdout:\n%s", stdout.String())
-			}
-			if stderr.Len() > 0 {
-				errMsg += fmt.Sprintf("\nStderr:\n%s", stderr.String())
-			}
-			return fmt.Errorf("%s", errMsg)
+		if err := json.Unmarshal(stdoutBuffer.Bytes(), &result); err != nil {
+			return fmt.Errorf("failed to parse python output: %v", err)
 		}
-
 		if result.Status != "success" {
-			errMsg := "generation failed"
-			if result.Error != "" {
-				errMsg += fmt.Sprintf(": %s", result.Error)
-			}
-			if stderr.Len() > 0 {
-				errMsg += fmt.Sprintf("\nPython stderr:\n%s", stderr.String())
-			}
-			return fmt.Errorf("%s", errMsg)
+			return fmt.Errorf("generation failed: %s", result.Error)
 		}
 
 		fmt.Printf("    ✓ Saved to %s in %s\n", filename, time.Since(start))

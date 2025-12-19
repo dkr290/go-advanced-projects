@@ -18,6 +18,6 @@ jobs:
     with:
       name: Build and push go-flux image generator docker image
       docker_image_name: ghcr.io/${{ github.repository }}/go-flux-video
-      version: "0.0.4"
+      version: "0.0.5"
       folder: go-flux-video
       dockerfileName: Dockerfile

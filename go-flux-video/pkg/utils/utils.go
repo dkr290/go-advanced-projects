@@ -3,11 +3,10 @@ package utils
 
 import (
 	"fmt"
-	"os"
-	"strings"
-
 	"gfluxgo/pkg/download"
 	"gfluxgo/pkg/logging"
+	"os"
+	"strings"
 )
 
 func SanitizeFilename(text string) string {
@@ -45,17 +44,13 @@ func GetFilenameFromURL(url string) string {
 func DownloadFiles(modelPath, modelURL, loraURL, loraPath string, l logging.Logger) error {
 	// --- 1. CONDITIONAL DOWNLOAD LOGIC (Model) ---
 	if _, err := os.Stat(modelPath); os.IsNotExist(err) {
-		if modelURL == "" {
-			l.Logging.Errorf(
-				"FATAL: Model file not found at '%s', and no --model-url was provided.\n",
-				modelPath,
-			)
-			return err
-		}
-		l.Logging.Infof("Model not found locally. Downloading to '%s'...\n", modelPath)
-		if err := download.DownloadFile(modelURL, modelPath, l); err != nil {
-			l.Logging.Errorf("FATAL Download Error: %v\n", err)
-			return err
+		if modelURL != "" {
+
+			l.Logging.Infof("Model not found locally. Downloading to '%s'...\n", modelPath)
+			if err := download.DownloadFile(modelURL, modelPath, l); err != nil {
+				l.Logging.Errorf("FATAL Download Error: %v\n", err)
+				return err
+			}
 		}
 	} else {
 		l.Logging.Infof("Model found locally at: %s\n", modelPath)

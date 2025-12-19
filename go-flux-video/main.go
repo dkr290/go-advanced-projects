@@ -3,13 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
-
 	"gfluxgo/pkg/config"
 	"gfluxgo/pkg/generate"
 	"gfluxgo/pkg/logging"
 	"gfluxgo/pkg/utils"
+	"os"
+	"path/filepath"
 )
 
 func main() {
@@ -49,11 +48,9 @@ func main() {
 		fmt.Printf("Error creating lora directory: %v\n", err)
 		os.Exit(1)
 	}
-	if cmdConf.ModelURL != "" {
-		if err := utils.DownloadFiles(modelPath, cmdConf.ModelURL, cmdConf.LoraURL, loraPath, *llogger); err != nil {
-			llogger.Logging.Errorf("error %v", err)
-			os.Exit(1)
-		}
+	if err := utils.DownloadFiles(modelPath, cmdConf.ModelURL, cmdConf.LoraURL, loraPath, *llogger); err != nil {
+		llogger.Logging.Errorf("error %v", err)
+		os.Exit(1)
 	}
 
 	llogger.Logging.Infof(
