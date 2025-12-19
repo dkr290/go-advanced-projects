@@ -100,7 +100,7 @@ func GenerateWithPython(
 
 		start := time.Now()
 
-		cmd := exec.Command("python", args...)
+		cmd := exec.Command("python3", args...)
 
 		var stdout bytes.Buffer
 		cmd.Stdout = &stdout

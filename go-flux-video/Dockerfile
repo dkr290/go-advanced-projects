@@ -56,13 +56,15 @@ RUN pip3 install --no-cache-dir \
     sentencepiece \
     protobuf \
     pillow \
-    xformers
+    xformers \
+    hf_transfer
 
 # Create directories for runtime data
 RUN mkdir -p /app/models/lora /app/output
 
 # Set library path for CUDA
 ENV LD_LIBRARY_PATH="/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}"
+
 
 # SSH for Runpod
 RUN mkdir -p /run/sshd && \
