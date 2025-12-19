@@ -5,7 +5,13 @@ import sys
 import time
 
 import torch
-from diffusers import AutoPipelineForText2Image, FluxPipeline
+from diffusers import (
+    AutoPipelineForText2Image,
+    FluxPipeline,
+    FluxTransformer2DModel,
+    GGUFQuantizationConfig,
+)
+from diffusers.utils import logging as diffusers_logging
 from PIL import Image
 
 
@@ -48,13 +54,21 @@ def main():
     if args.gguf:
         print(f"Using GGUF: {args.gguf}", file=sys.stderr)
     start = time.time()
-
+    diffusers_logging.set_verbosity_error()
     try:
         # Load pipeline
         if args.gguf and os.path.exists(args.gguf):
+            transformer = FluxTransformer2DModel.from_single_file(
+                args.gguf,
+                quantization_config=GGUFQuantizationConfig(
+                    compute_dtype=torch.bfloat16
+                ),
+                torch_dtype=torch.bfloat16,
+            )
+
             pipe = FluxPipeline.from_pretrained(
                 args.model,
-                gguf_file=args.gguf,
+                transformer=transformer,
                 torch_dtype=torch.bfloat16,
             )
         else:

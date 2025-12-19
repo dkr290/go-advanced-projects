@@ -60,7 +60,8 @@ RUN pip3 install --no-cache-dir \
     protobuf \
     pillow \
     xformers \
-    hf_transfer
+    hf_transfer \
+    gguf>=0.10.0
 
 # Create directories for runtime data
 RUN mkdir -p /app/models/lora /app/output

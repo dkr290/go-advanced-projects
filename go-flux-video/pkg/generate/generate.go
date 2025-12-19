@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -103,20 +104,26 @@ func GenerateWithPython(
 		cmd := exec.Command("python3", args...)
 
 		var stdout bytes.Buffer
+		var stderr bytes.Buffer
 		cmd.Stdout = &stdout
-		cmd.Stderr = os.Stderr
+		cmd.Stderr = io.MultiWriter(os.Stderr, &stderr) // Print AND capture
 
 		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("python failed: %w", err)
+			return fmt.Errorf("python failed: %w\nstderr: %s", err, stderr.String())
 		}
 
 		var result PythonResult
 		if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
-			return fmt.Errorf("parse error: %w, output: %s", err, stdout.String())
+			return fmt.Errorf(
+				"parse error: %w\nstdout: %s\nstderr: %s",
+				err,
+				stdout.String(),
+				stderr.String(),
+			)
 		}
 
 		if result.Status != "success" {
-			return fmt.Errorf("generation failed: %s", result.Error)
+			return fmt.Errorf("generation failed: %s\nstderr: %s", result.Error, stderr.String())
 		}
 
 		fmt.Printf("    ✓ Saved to %s in %s\n", filename, time.Since(start))
