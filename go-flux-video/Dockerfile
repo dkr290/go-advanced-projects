@@ -43,6 +43,8 @@ RUN apt-get update && apt-get install -y \
     htop \
     && rm -rf /var/lib/apt/lists/*
 
+
+
 WORKDIR /app
 
 COPY --from=builder /app/sd-generator /app/
@@ -62,7 +64,8 @@ RUN pip3 install --no-cache-dir \
     pillow \
     xformers \
     hf_transfer \
-    gguf>=0.10.0
+    gguf>=0.10.0 \
+    && rm -rf ~/.cache/pip
 
 # Create directories for runtime data
 RUN mkdir -p /app/models/lora /app/output
@@ -73,6 +76,7 @@ ENV LD_LIBRARY_PATH="/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_
 
 # SSH for Runpod
 RUN mkdir -p /run/sshd && \
+    echo 'root:root' | chpasswd && \
     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
     sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
 # Expose SSH port
