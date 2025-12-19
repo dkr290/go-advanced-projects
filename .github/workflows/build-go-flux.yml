@@ -14,7 +14,7 @@ on:
 jobs:
   # This workflow contains a single job called "build"
   build-api-service:
-    uses: dkr290/go-advanced-projects/.github/workflows/docker-build-template.yml@main
+    uses: dkr290/go-advanced-projects/.github/workflows/docker-build-template-noscan.yml@main
     with:
       name: Build and push go-flux image generator docker image
       docker_image_name: ghcr.io/${{ github.repository }}/go-flux-video
