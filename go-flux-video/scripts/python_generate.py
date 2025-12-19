@@ -71,6 +71,18 @@ def main():
                 transformer=transformer,
                 torch_dtype=torch.bfloat16,
             )
+            if hasattr(pipe, "tokenizer") and hasattr(
+                pipe.tokenizer, "model_max_length"
+            ):
+                # Flux 1.1 Dev uses T5 which supports 512 tokens
+                pipe.tokenizer.model_max_length = 512
+                print("✓ Updated tokenizer max length to 512 for T5", file=sys.stderr)
+
+            # Fix the add_prefix_space warning
+            if hasattr(pipe.tokenizer, "add_prefix_space"):
+                pipe.tokenizer.add_prefix_space = False
+                print("✓ Disabled add_prefix_space to avoid warning", file=sys.stderr)
+
         else:
             pipe = AutoPipelineForText2Image.from_pretrained(
                 args.model,

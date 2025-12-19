@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -106,24 +105,42 @@ func GenerateWithPython(
 		var stdout bytes.Buffer
 		var stderr bytes.Buffer
 		cmd.Stdout = &stdout
-		cmd.Stderr = io.MultiWriter(os.Stderr, &stderr) // Print AND capture
+		cmd.Stderr = &stderr
 
 		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("python failed: %w\nstderr: %s", err, stderr.String())
+			// Build comprehensive error message
+
+			errMsg := fmt.Sprintf("python execution failed: %v", err)
+			if stderr.Len() > 0 {
+				errMsg += fmt.Sprintf("\nPython stderr:\n%s", stderr.String())
+			}
+			if stdout.Len() > 0 {
+				errMsg += fmt.Sprintf("\nPython stdout:\n%s", stdout.String())
+			}
+			return fmt.Errorf("%s", errMsg)
 		}
 
 		var result PythonResult
 		if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
-			return fmt.Errorf(
-				"parse error: %w\nstdout: %s\nstderr: %s",
-				err,
-				stdout.String(),
-				stderr.String(),
-			)
+			errMsg := fmt.Sprintf("failed to parse python output: %v", err)
+			if stdout.Len() > 0 {
+				errMsg += fmt.Sprintf("\nRaw stdout:\n%s", stdout.String())
+			}
+			if stderr.Len() > 0 {
+				errMsg += fmt.Sprintf("\nStderr:\n%s", stderr.String())
+			}
+			return fmt.Errorf("%s", errMsg)
 		}
 
 		if result.Status != "success" {
-			return fmt.Errorf("generation failed: %s\nstderr: %s", result.Error, stderr.String())
+			errMsg := "generation failed"
+			if result.Error != "" {
+				errMsg += fmt.Sprintf(": %s", result.Error)
+			}
+			if stderr.Len() > 0 {
+				errMsg += fmt.Sprintf("\nPython stderr:\n%s", stderr.String())
+			}
+			return fmt.Errorf("%s", errMsg)
 		}
 
 		fmt.Printf("    ✓ Saved to %s in %s\n", filename, time.Since(start))
