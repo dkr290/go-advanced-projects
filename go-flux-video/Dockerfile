@@ -49,9 +49,8 @@ COPY --from=builder /app/sd-generator /app/
 # Copy Python script
 COPY scripts/python_generate.py /app/scripts/
 
-RUN pip3 install uv 
 # Install Python dependencies
-RUN uv pip install --no-cache-dir \
+RUN pip3 install --no-cache-dir \
     torch \
     diffusers \
     transformers \
