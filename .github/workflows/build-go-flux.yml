@@ -1,0 +1,23 @@
+name: Docker build and push CI
+
+on:
+  push:
+    paths:
+      - "go-flux-video/**"
+
+    branches:
+      - main
+  pull_request:
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+jobs:
+  # This workflow contains a single job called "build"
+  build-api-service:
+    uses: dkr290/go-advanced-projects/.github/workflows/docker-build-template.yml@main
+    with:
+      name: Build and push go-flux image generator docker image
+      docker_image_name: ghcr.io/${{ github.repository }}/go-flux-video
+      version: "0.0.1"
+      folder: go-flux-video
+      dockerfileName: Dockerfile
