@@ -38,6 +38,8 @@ RUN apt-get update && apt-get install -y \
     python3-venv \
     ca-certificates \
     openssh-server \
+    vim \
+    nano \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
