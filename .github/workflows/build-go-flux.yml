@@ -1,4 +1,4 @@
-name: Docker build and push CI
+name: Docker build and push go-flux
 
 on:
   push:
