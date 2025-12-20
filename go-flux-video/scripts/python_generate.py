@@ -111,8 +111,7 @@ def load_pipeline(args):
 
     # Load LoRA if specified
     if args.lora_file:
-        print(f"Loading LoRA: {args.lora}", file=sys.stderr)
-        print(f"  File: {args.lora_file}", file=sys.stderr)
+        print(f"Loading LoRA: {args.lora_file}", file=sys.stderr)
         try:
             # Get the directory containing the lora file
             lora_dir = os.path.dirname(args.lora_file)

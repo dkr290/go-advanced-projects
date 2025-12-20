@@ -29,7 +29,6 @@ type CmdConf struct {
 	ConfigPath        string
 	ModelURL          string
 	LoraURL           string
-	LoraRepo          string
 	ModelDownloadPath string
 	LoraDownloadpath  string
 	LowVRAM           bool
@@ -74,12 +73,6 @@ func (c *Config) GetFlags() {
 		"lora-url",
 		"",
 		"URL to download the LoRA safetensors file if not found locally.",
-	)
-	flag.StringVar(
-		&c.LoraRepo,
-		"lora-repo",
-		"",
-		"HuggingFace LoRA repo ID (e.g., Heartsync/FLUX-NSFW-uncensored)",
 	)
 
 	flag.IntVar(&c.Seed, "seed", 42, "seed number")

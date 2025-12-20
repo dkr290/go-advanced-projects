@@ -70,11 +70,12 @@ RUN pip3 install --no-cache-dir \
     && rm -rf ~/.cache/pip
 
 # Create directories for runtime data
-RUN mkdir -p /app/models/lora /app/output
+RUN mkdir -p /app/models/lora /app/models/.cache /app/output 
+#   && echo "export HF_HOME=/app/models/.cache" > /etc/profile.d/hf_home.sh
+
 
 # Set library path for CUDA
 ENV LD_LIBRARY_PATH="/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}"
-
 ENV HF_HOME=/app/models/.cache
 
 # SSH for Runpod
