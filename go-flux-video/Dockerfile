@@ -32,7 +32,7 @@ FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 # Install Python and runtime dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y  \
     python3 \
     python3-pip \
     python3-venv \
@@ -41,11 +41,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     vim \
     nano \
     htop \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean \
-    && rm -rf /usr/share/doc/* \
-    && rm -rf /usr/share/man/* \
-    && rm -rf /usr/share/locale/*
+    && rm -rf /var/lib/apt/lists/* 
 
 
 

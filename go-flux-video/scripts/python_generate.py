@@ -133,7 +133,23 @@ def load_pipeline(args):
 
 
 def main():
-
+    # Add diagnostic checks here
+    print(f"PyTorch version: {torch.__version__}", file=sys.stderr)
+    print(f"CUDA available: {torch.cuda.is_available()}", file=sys.stderr)
+    if torch.cuda.is_available():
+        print(f"CUDA device count: {torch.cuda.device_count()}", file=sys.stderr)
+        for i in range(torch.cuda.device_count()):
+            print(f"  Device {i}: {torch.cuda.get_device_name(i)}", file=sys.stderr)
+            print(
+                f"    Memory allocated: {torch.cuda.memory_allocated(i)/1e9:.2f} GB",
+                file=sys.stderr,
+            )
+            print(
+                f"    Memory reserved: {torch.cuda.memory_reserved(i)/1e9:.2f} GB",
+                file=sys.stderr,
+            )
+    else:
+        print("WARNING: CUDA not available.", file=sys.stderr)
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", required=True, help="HuggingFace model ID")
     parser.add_argument("--gguf", default="", help="Path to GGUF file (optional)")
