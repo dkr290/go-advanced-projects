@@ -51,7 +51,7 @@ def load_pipeline(args):
     else:
         pipe = AutoPipelineForText2Image.from_pretrained(
             args.model,
-            torch_dtype=torch.float16,
+            torch_dtype=torch.bfloat16,
         )
 
         print("✓ Using  using default FULL model", file=sys.stderr, flush=True)
@@ -110,13 +110,18 @@ def load_pipeline(args):
         pass
 
     # Load LoRA if specified
-    if args.lora and args.lora_file:
+    if args.lora_file:
         print(f"Loading LoRA: {args.lora}", file=sys.stderr)
         print(f"  File: {args.lora_file}", file=sys.stderr)
         try:
+            # Get the directory containing the lora file
+            lora_dir = os.path.dirname(args.lora_file)
+            lora_filename = os.path.basename(args.lora_file)
+
+            # Load from local directory instead of HuggingFace
             pipe.load_lora_weights(
-                args.lora,
-                weight_name=os.path.basename(args.lora_file),
+                lora_dir,
+                weight_name=lora_filename,
                 adapter_name="uncensored",
             )
             if hasattr(pipe, "safety_checker"):
@@ -160,7 +165,6 @@ def main():
     parser.add_argument("--guidance-scale", type=float, default=3.5)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--output-dir", required=True)
-    parser.add_argument("--lora", default="", help="LoRA HuggingFace repo ID")
     parser.add_argument("--lora-file", default="", help="safesensoes file")
     # New argument to accept multiple prompts and their data
     parser.add_argument(
@@ -212,7 +216,7 @@ def main():
             image = result.images[0]
 
             # Save image (matching Go's approach)
-            save_image(image, args.output_path)
+            save_image(image, output_path)
 
             elapsed = time.time() - gen_start
             print(f"✓ Saved to {output_path} in {elapsed:.1f}s", file=sys.stderr)

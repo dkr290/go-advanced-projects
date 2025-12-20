@@ -112,7 +112,6 @@ func GenerateWithPython(
 
 	// Pass both LoRA repo ID and file path
 	if cmdConf.LoraRepo != "" && loraFilePath != "" {
-		args = append(args, "--lora", cmdConf.LoraRepo)
 		args = append(args, "--lora-file", loraFilePath)
 	}
 	// Add low VRAM flag if enabled
