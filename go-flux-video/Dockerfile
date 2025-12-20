@@ -75,6 +75,7 @@ RUN mkdir -p /app/models/lora /app/output
 # Set library path for CUDA
 ENV LD_LIBRARY_PATH="/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}"
 
+ENV HF_HOME=/app/models/.cache
 
 # SSH for Runpod
 RUN mkdir -p /run/sshd && \
@@ -87,7 +88,6 @@ EXPOSE 22
 # Start SSH server in foreground for Runpod
 CMD ["/usr/sbin/sshd", "-D"]
 
-ENV HF_HOME=/app/models/.cache
 # Labels for documentation
 LABEL maintainer="your-email@example.com"
 LABEL description="FLUX Stable Diffusion image generator with CUDA support"
