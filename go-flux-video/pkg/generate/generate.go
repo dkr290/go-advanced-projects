@@ -5,8 +5,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"gfluxgo/pkg/config"
-	"gfluxgo/pkg/utils"
 	"io"
 	"os"
 	"os/exec"
@@ -14,12 +12,28 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"gfluxgo/pkg/config"
+	"gfluxgo/pkg/utils"
 )
 
-type PythonResult struct {
-	Status string `json:"status"`
-	Output string `json:"output"`
-	Error  string `json:"error,omitempty"`
+type PromptData struct {
+	Prompt   string `json:"prompt"`
+	Filename string `json:"filename"`
+	Seed     int    `json:"seed"`
+}
+
+type PythonGenerationResult struct {
+	Status      string `json:"status"`
+	Output      string `json:"output"`
+	PromptIndex int    `json:"prompt_index"`
+}
+
+// PythonOverallResult represents the overall JSON output from the Python script
+type PythonOverallResult struct {
+	OverallStatus string                   `json:"all_status"`
+	Generations   []PythonGenerationResult `json:"generations"`
+	Error         string                   `json:"error,omitempty"`
 }
 
 // GenerateWithPython calls Python for FLUX GGUF generation
@@ -64,77 +78,97 @@ func GenerateWithPython(
 
 	fmt.Printf("\nStarting FLUX generation for %d images...\n", len(promptConf.Prompts))
 
+	var promptsData []PromptData
 	for i, p := range promptConf.Prompts {
-		prompt := fmt.Sprintf("%s, %s", p, promptConf.StyleSuffix)
+		prompt := fmt.Sprintf("%s %s", p, promptConf.StyleSuffix)
 		filename := utils.SanitizeFilenameForImage(p, i+1)
-		outputPath := filepath.Join(cmdConf.OutputDir, filename)
-
-		fmt.Printf("[%d/%d] Generating: %s\n", i+1, len(promptConf.Prompts), prompt)
-
-		args := []string{
-			scriptPath,
-			"--model", hfModel,
-			"--prompt", prompt,
-			"--negative-prompt", promptConf.NegativePrompt,
-			"--width", strconv.Itoa(cmdConf.Resolution[0]),
-			"--height", strconv.Itoa(cmdConf.Resolution[1]),
-			"--steps", strconv.Itoa(cmdConf.Steps),
-			"--guidance-scale", fmt.Sprintf("%.2f", cmdConf.GuidanceScale),
-			"--seed", strconv.Itoa(cmdConf.Seed + i),
-			"--output", outputPath,
-		}
-
-		if ggufPath != "" {
-			args = append(args, "--gguf", ggufPath)
-		}
-
-		// Pass both LoRA repo ID and file path
-		if cmdConf.LoraRepo != "" && loraFilePath != "" {
-			args = append(args, "--lora", cmdConf.LoraRepo)
-			args = append(args, "--lora-file", loraFilePath)
-		}
-		// Add low VRAM flag if enabled
-		if cmdConf.LowVRAM {
-			args = append(args, "--low-vram")
-		}
-
-		start := time.Now()
-
-		cmd := exec.Command("python3", args...)
-
-		stdoutPipe, err := cmd.StdoutPipe()
-		if err != nil {
-			return fmt.Errorf("failed to create stdout pipe: %w", err)
-		}
-
-		// Stream stderr directly to terminal for progress
-		cmd.Stderr = os.Stderr
-
-		if err := cmd.Start(); err != nil {
-			return fmt.Errorf("failed to start python: %w", err)
-		}
-
-		var stdoutBuffer bytes.Buffer
-		// MultiWriter writes to both buffer and terminal
-		stdoutMulti := io.MultiWriter(&stdoutBuffer, os.Stdout)
-		if _, err := io.Copy(stdoutMulti, stdoutPipe); err != nil {
-			return fmt.Errorf("failed to read python output: %w", err)
-		}
-
-		if err := cmd.Wait(); err != nil {
-			return fmt.Errorf("python execution failed: %v", err)
-		}
-
-		var result PythonResult
-		if err := json.Unmarshal(stdoutBuffer.Bytes(), &result); err != nil {
-			return fmt.Errorf("failed to parse python output: %v", err)
-		}
-		if result.Status != "success" {
-			return fmt.Errorf("generation failed: %s", result.Error)
-		}
-
-		fmt.Printf("    ✓ Saved to %s in %s\n", filename, time.Since(start))
+		promptsData = append(promptsData, PromptData{
+			Prompt:   prompt,
+			Filename: filename,
+			Seed:     cmdConf.Seed + i,
+		})
 	}
+
+	promptsDataJSON, err := json.Marshal(promptsData)
+	if err != nil {
+		return fmt.Errorf("failed to marshal prompts data to JSON: %w", err)
+	}
+
+	args := []string{
+		scriptPath,
+		"--model", hfModel,
+		"--negative-prompt", promptConf.NegativePrompt,
+		"--width", strconv.Itoa(cmdConf.Resolution[0]),
+		"--height", strconv.Itoa(cmdConf.Resolution[1]),
+		"--steps", strconv.Itoa(cmdConf.Steps),
+		"--guidance-scale", fmt.Sprintf("%.2f", cmdConf.GuidanceScale),
+		"--output-dir", cmdConf.OutputDir,
+		"--prompts-data", string(promptsDataJSON),
+	}
+
+	if ggufPath != "" {
+		args = append(args, "--gguf", ggufPath)
+	}
+
+	// Pass both LoRA repo ID and file path
+	if cmdConf.LoraRepo != "" && loraFilePath != "" {
+		args = append(args, "--lora", cmdConf.LoraRepo)
+		args = append(args, "--lora-file", loraFilePath)
+	}
+	// Add low VRAM flag if enabled
+	if cmdConf.LowVRAM {
+		args = append(args, "--low-vram")
+	}
+
+	start := time.Now()
+
+	cmd := exec.Command("python3", args...)
+
+	stdoutPipe, err := cmd.StdoutPipe()
+	if err != nil {
+		return fmt.Errorf("failed to create stdout pipe: %w", err)
+	}
+
+	// Stream stderr directly to terminal for progress
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("failed to start python: %w", err)
+	}
+
+	var stdoutBuffer bytes.Buffer
+	// MultiWriter writes to both buffer and terminal
+	stdoutMulti := io.MultiWriter(&stdoutBuffer, os.Stdout)
+	if _, err := io.Copy(stdoutMulti, stdoutPipe); err != nil {
+		return fmt.Errorf("failed to read python output: %w", err)
+	}
+
+	if err := cmd.Wait(); err != nil {
+		return fmt.Errorf("python execution failed: %v", err)
+	}
+
+	var overallResult PythonOverallResult
+	if err := json.Unmarshal(stdoutBuffer.Bytes(), &overallResult); err != nil {
+		return fmt.Errorf("failed to parse python output: %v", err)
+	}
+
+	if overallResult.OverallStatus != "success" {
+		return fmt.Errorf("overall generation failed: %s", overallResult.Error)
+	}
+
+	for _, res := range overallResult.Generations {
+		if res.Status != "success" {
+			// You might want to handle individual generation failures differently
+			fmt.Printf("⚠ Generation for prompt index %d failed: %s\n", res.PromptIndex, res.Output)
+		} else {
+			fmt.Printf("    ✓ Saved to %s (Prompt %d) in %s\n", filepath.Base(res.Output), res.PromptIndex+1, time.Since(start))
+		}
+	}
+	fmt.Printf(
+		"\nTotal generation time for %d images: %s\n",
+		len(promptConf.Prompts),
+		time.Since(start),
+	)
 
 	return nil
 }

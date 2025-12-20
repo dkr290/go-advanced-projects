@@ -1,5 +1,4 @@
 import argparse
-import hashlib
 import json
 import os
 import sys
@@ -15,20 +14,6 @@ from diffusers import (
 from diffusers.utils import logging as diffusers_logging
 from PIL import Image
 
-_PIPELINE_CACHE = {}
-
-
-def get_cache_key(args):
-    """Create a unique cache key based on model configuration"""
-    key_parts = [
-        args.model,
-        args.gguf or "",
-        args.lora or "",
-        args.lora_file or "",
-        str(args.low_vram),
-    ]
-    return hashlib.md5(":".join(key_parts).encode()).hexdigest()
-
 
 def save_image(image: Image.Image, output_path: str) -> None:
     """Save image as PNG, matching Go's png.Encode behavior."""
@@ -41,13 +26,6 @@ def save_image(image: Image.Image, output_path: str) -> None:
 
 
 def load_pipeline(args):
-    """Load pipeline with caching"""
-    cache_key = get_cache_key(args)
-
-    # Return cached pipeline if available
-    if cache_key in _PIPELINE_CACHE:
-        print("✓ Using cached pipeline", file=sys.stderr)
-        return _PIPELINE_CACHE[cache_key]
 
     print(f"Loading model: {args.model}", file=sys.stderr, flush=True)
     if args.gguf:
@@ -69,28 +47,52 @@ def load_pipeline(args):
             transformer=transformer,
             torch_dtype=torch.bfloat16,
         )
-        if hasattr(pipe, "tokenizer") and hasattr(pipe.tokenizer, "model_max_length"):
-            pipe.tokenizer.model_max_length = 512
-            print("✓ Updated tokenizer max length to 512 for T5", file=sys.stderr)
-
-        if hasattr(pipe.tokenizer, "add_prefix_space"):
-            pipe.tokenizer.add_prefix_space = False
-            print("✓ Disabled add_prefix_space to avoid warning", file=sys.stderr)
 
     else:
         pipe = AutoPipelineForText2Image.from_pretrained(
             args.model,
             torch_dtype=torch.float16,
         )
-        if hasattr(pipe, "tokenizer"):
-            if hasattr(pipe.tokenizer, "model_max_length"):
+
+        print("✓ Using  using default FULL model", file=sys.stderr, flush=True)
+
+    if hasattr(pipe, "tokenizer"):
+        # Check and set model_max_length to 512
+        if hasattr(pipe.tokenizer, "model_max_length"):
+            current_max_length = pipe.tokenizer.model_max_length
+            if current_max_length != 512:
                 pipe.tokenizer.model_max_length = 512
+                print(
+                    f"✓ Tokenizer max length updated from {current_max_length} to 512.",
+                    file=sys.stderr,
+                )
+            else:
+                print("✓ Tokenizer max length is already 512.", file=sys.stderr)
+        else:
             print(
-                "✓ Loaded FluxPipeline, set tokenizer to 512 tokens",
+                "⚠ Warning: Tokenizer does not have 'model_max_length' attribute. Cannot enforce 512 tokens.",
                 file=sys.stderr,
-                flush=True,
             )
-        print("✓ Using  using default model", file=sys.stderr, flush=True)
+
+        # Check and disable add_prefix_space
+        if hasattr(pipe.tokenizer, "add_prefix_space"):
+            if pipe.tokenizer.add_prefix_space:
+                pipe.tokenizer.add_prefix_space = False
+                print(
+                    "✓ Disabled 'add_prefix_space' to avoid warnings.", file=sys.stderr
+                )
+            else:
+                print("✓ 'add_prefix_space' is already disabled.", file=sys.stderr)
+        else:
+            print(
+                "⚠ Warning: Tokenizer does not have 'add_prefix_space' attribute.",
+                file=sys.stderr,
+            )
+    else:
+        print(
+            "⚠ Warning: Pipeline does not have a tokenizer. Max length and prefix space checks skipped.",
+            file=sys.stderr,
+        )
 
     # Memory optimizations
     if args.low_vram:
@@ -127,7 +129,6 @@ def load_pipeline(args):
     print(f"✓ Model loaded in {time.time() - start:.1f}s", file=sys.stderr)
 
     # Cache the pipeline
-    _PIPELINE_CACHE[cache_key] = pipe
     return pipe
 
 
@@ -136,16 +137,22 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", required=True, help="HuggingFace model ID")
     parser.add_argument("--gguf", default="", help="Path to GGUF file (optional)")
-    parser.add_argument("--prompt", required=True)
     parser.add_argument("--negative-prompt", default="")
     parser.add_argument("--width", type=int, default=1024)
     parser.add_argument("--height", type=int, default=1024)
     parser.add_argument("--steps", type=int, default=28)
     parser.add_argument("--guidance-scale", type=float, default=3.5)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--output", required=True)
+    parser.add_argument("--output-dir", required=True)
     parser.add_argument("--lora", default="", help="LoRA HuggingFace repo ID")
     parser.add_argument("--lora-file", default="", help="safesensoes file")
+    # New argument to accept multiple prompts and their data
+    parser.add_argument(
+        "--prompts-data",
+        required=True,
+        help='JSON string of prompt data, e.g., \'[{"prompt": "a dog", "filename": "dog.png", "seed": 123}]\'',
+    )
+
     # Performance flag
     parser.add_argument(
         "--low-vram",
@@ -157,34 +164,47 @@ def main():
     try:
         pipe = load_pipeline(args)
 
-        # Generate
-        generator = torch.Generator().manual_seed(args.seed)
+        # Parse the incoming JSON string for prompts data
+        prompts_data = json.loads(args.prompts_data)
+        all_results = []
 
-        print(f"Generating: {args.prompt[:60]}...", file=sys.stderr)
-        print(
-            f"  Size: {args.width}x{args.height}, Steps: {args.steps}, Seed: {args.seed}",
-            file=sys.stderr,
-        )
-        gen_start = time.time()
+        for i, p_data in enumerate(prompts_data):
+            prompt = p_data["prompt"]
+            filename = p_data["filename"]
+            seed = p_data["seed"]
+            output_path = os.path.join(args.output_dir, filename)
+            # Generate
+            generator = torch.Generator().manual_seed(args.seed)
 
-        result = pipe(
-            prompt=args.prompt,
-            negative_prompt=args.negative_prompt or None,
-            width=args.width,
-            height=args.height,
-            num_inference_steps=args.steps,
-            guidance_scale=args.guidance_scale,
-            generator=generator,
-        )
+            print(f"Generating: {prompt[:60]}...", file=sys.stderr)
+            print(
+                f"  Size: {args.width}x{args.height}, Steps: {args.steps}, Seed: {seed}",
+                file=sys.stderr,
+            )
+            gen_start = time.time()
 
-        image = result.images[0]
+            result = pipe(
+                prompt=prompt,
+                negative_prompt=args.negative_prompt,
+                width=args.width,
+                height=args.height,
+                num_inference_steps=args.steps,
+                guidance_scale=args.guidance_scale,
+                generator=generator,
+            )
 
-        # Save image (matching Go's approach)
-        save_image(image, args.output)
+            image = result.images[0]
 
-        elapsed = time.time() - gen_start
-        print(f"✓ Saved to {args.output} in {elapsed:.1f}s", file=sys.stderr)
-        print(json.dumps({"status": "success", "output": args.output}))
+            # Save image (matching Go's approach)
+            save_image(image, args.output_path)
+
+            elapsed = time.time() - gen_start
+            print(f"✓ Saved to {output_path} in {elapsed:.1f}s", file=sys.stderr)
+            all_results.append(
+                {"status": "success", "output": output_path, "prompt_index": i}
+            )
+
+        print(json.dumps({"all_status": "success", "generations": all_results}))
 
     except Exception as e:
         print(json.dumps({"status": "error", "error": str(e)}))
