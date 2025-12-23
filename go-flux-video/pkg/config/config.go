@@ -38,6 +38,7 @@ type CmdConf struct {
 	Strength          float32 // Transformation strength for img2img
 	WebServer         bool    // Enable web server mode
 	WebPort           int     // Web server port
+	UseQwen           bool    // Use Qwen-Image-Edit model
 	SdCmd
 }
 
@@ -197,13 +198,24 @@ func (c *Config) GetFlags() {
 		"Disable safety checker (allows NSFW content)",
 	)
 
+	// Qwen model flag
+	flag.BoolVar(
+		&c.UseQwen,
+		"use-qwen",
+		false,
+		"Use Qwen-Image-Edit model for image editing tasks",
+	)
+
 	flag.Parse()
 
 	// Set strength after parsing
 	c.Strength = float32(strength)
 
-	if c.ConfigPath == "" {
-		fmt.Println("Need the configuration file")
+	// Config file is only required for image generation, not for web-only mode
+	if c.ConfigPath == "" && !c.WebServer {
+		fmt.Println("Error: Configuration file is required for image generation")
+		fmt.Println("For web-only mode, use: ./gfluxgo --web --output ./output_dir")
+		fmt.Println("For image generation, use: ./gfluxgo --config config.json [other flags]")
 		os.Exit(1)
 	}
 
@@ -225,6 +237,14 @@ func (c *Config) GetFlags() {
 	}
 	if hfModel := getEnv("HF_MODEL"); hfModel != "" {
 		c.HfModelID = hfModel
+	}
+
+	if qwen := getEnv("USE_QWEN"); qwen != "" {
+		if q, err := strconv.ParseBool(qwen); err == nil {
+			c.UseQwen = q
+		} else {
+			log.Printf("Warning: cannot parse USE_QWEN from env: %v", err)
+		}
 	}
 
 	if output := getEnv("OUTPUT"); output != "" {

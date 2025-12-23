@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io"
 	"io/fs"
 	"net/http"
 	"os"
@@ -40,6 +41,11 @@ func NewServer(outputDir string, port int) *Server {
 
 // Start starts the web server
 func (s *Server) Start() error {
+	// Create output directory if it doesn't exist
+	if err := os.MkdirAll(s.OutputDir, 0o755); err != nil {
+		return fmt.Errorf("failed to create output directory %s: %w", s.OutputDir, err)
+	}
+
 	// Serve static files (images)
 	fs := http.FileServer(http.Dir(s.OutputDir))
 	http.Handle("/images/", http.StripPrefix("/images/", fs))
@@ -48,6 +54,8 @@ func (s *Server) Start() error {
 	http.HandleFunc("/api/images", s.handleListImages)
 	http.HandleFunc("/api/download/", s.handleDownload)
 	http.HandleFunc("/api/delete/", s.handleDelete)
+	http.HandleFunc("/api/upload", s.handleUpload)
+	http.HandleFunc("/api/upload-images", s.handleUploadToImagesDir)
 
 	// Main gallery page
 	http.HandleFunc("/", s.handleGallery)
@@ -55,19 +63,47 @@ func (s *Server) Start() error {
 	addr := fmt.Sprintf(":%d", s.Port)
 	fmt.Printf("\n🌐 Web UI started at http://localhost%s\n", addr)
 	fmt.Printf("📁 Serving images from: %s\n", s.OutputDir)
+	fmt.Println("📤 Upload images to ./images/ directory for img2img processing")
 	fmt.Println("Press Ctrl+C to stop the server")
 
 	return http.ListenAndServe(addr, nil)
 }
 
+// loadTemplates loads the HTML template from the templates directory
+func (s *Server) loadTemplates() (*template.Template, error) {
+	// Parse the single template file
+	tmpl, err := template.ParseFiles("templates/gallery.html")
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse template: %w", err)
+	}
+
+	return tmpl, nil
+}
+
 // handleGallery serves the main gallery HTML page
 func (s *Server) handleGallery(w http.ResponseWriter, r *http.Request) {
-	tmpl := template.Must(template.New("gallery").Parse(galleryHTML))
+	tmpl, err := s.loadTemplates()
+	if err != nil {
+		http.Error(
+			w,
+			fmt.Sprintf("Failed to load templates: %v", err),
+			http.StatusInternalServerError,
+		)
+		return
+	}
+
 	data := map[string]interface{}{
 		"Title":     "FLUX Image Gallery",
 		"OutputDir": s.OutputDir,
 	}
-	tmpl.Execute(w, data)
+
+	if err := tmpl.Execute(w, data); err != nil {
+		http.Error(
+			w,
+			fmt.Sprintf("Failed to render template: %v", err),
+			http.StatusInternalServerError,
+		)
+	}
 }
 
 // handleListImages returns JSON list of all images
@@ -91,7 +127,7 @@ func (s *Server) handleDownload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	filepath := filepath.Join(s.OutputDir, filename)
-	
+
 	// Security check - prevent directory traversal
 	if !strings.HasPrefix(filepath, s.OutputDir) {
 		http.Error(w, "Invalid filename", http.StatusBadRequest)
@@ -117,7 +153,7 @@ func (s *Server) handleDelete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	filepath := filepath.Join(s.OutputDir, filename)
-	
+
 	// Security check
 	if !strings.HasPrefix(filepath, s.OutputDir) {
 		http.Error(w, "Invalid filename", http.StatusBadRequest)
@@ -131,6 +167,171 @@ func (s *Server) handleDelete(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"status": "deleted"})
+}
+
+// handleUpload handles image uploads to the output directory
+func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Parse multipart form with 10MB max memory
+	err := r.ParseMultipartForm(10 << 20) // 10 MB
+	if err != nil {
+		http.Error(w, "Failed to parse form: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Get the file from form data
+	file, handler, err := r.FormFile("image")
+	if err != nil {
+		http.Error(w, "No image file provided: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	// Validate file extension
+	ext := strings.ToLower(filepath.Ext(handler.Filename))
+	allowedExts := []string{".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"}
+	validExt := false
+	for _, allowed := range allowedExts {
+		if ext == allowed {
+			validExt = true
+			break
+		}
+	}
+	if !validExt {
+		http.Error(
+			w,
+			"Invalid file type. Allowed: PNG, JPG, JPEG, WebP, GIF, BMP",
+			http.StatusBadRequest,
+		)
+		return
+	}
+
+	// Create unique filename
+	timestamp := time.Now().Format("20060102_150405")
+	uniqueFilename := fmt.Sprintf("upload_%s_%s", timestamp, handler.Filename)
+	destPath := filepath.Join(s.OutputDir, uniqueFilename)
+
+	// Create destination file
+	destFile, err := os.Create(destPath)
+	if err != nil {
+		http.Error(w, "Failed to create file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer destFile.Close()
+
+	// Copy the uploaded file to destination
+	_, err = io.Copy(destFile, file)
+	if err != nil {
+		http.Error(w, "Failed to save file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Return success response
+	response := map[string]interface{}{
+		"status":   "success",
+		"filename": uniqueFilename,
+		"path":     "/images/" + uniqueFilename,
+		"size":     handler.Size,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+// handleUploadToImagesDir handles image uploads specifically to the ./images/ directory
+func (s *Server) handleUploadToImagesDir(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Parse multipart form with 10MB max memory
+	err := r.ParseMultipartForm(10 << 20) // 10 MB
+	if err != nil {
+		http.Error(w, "Failed to parse form: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Get the file from form data
+	file, handler, err := r.FormFile("image")
+	if err != nil {
+		http.Error(w, "No image file provided: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	// Validate file extension
+	ext := strings.ToLower(filepath.Ext(handler.Filename))
+	allowedExts := []string{".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"}
+	validExt := false
+	for _, allowed := range allowedExts {
+		if ext == allowed {
+			validExt = true
+			break
+		}
+	}
+	if !validExt {
+		http.Error(
+			w,
+			"Invalid file type. Allowed: PNG, JPG, JPEG, WebP, GIF, BMP",
+			http.StatusBadRequest,
+		)
+		return
+	}
+
+	// Create images directory if it doesn't exist
+	imagesDir := filepath.Join(".", "images")
+	if err := os.MkdirAll(imagesDir, 0o755); err != nil {
+		http.Error(
+			w,
+			"Failed to create images directory: "+err.Error(),
+			http.StatusInternalServerError,
+		)
+		return
+	}
+
+	// Use original filename (or create unique if needed)
+	destFilename := handler.Filename
+	destPath := filepath.Join(imagesDir, destFilename)
+
+	// Check if file already exists, add timestamp if it does
+	if _, err := os.Stat(destPath); err == nil {
+		timestamp := time.Now().Format("20060102_150405")
+		destFilename = fmt.Sprintf("%s_%s", timestamp, handler.Filename)
+		destPath = filepath.Join(imagesDir, destFilename)
+	}
+
+	// Create destination file
+	destFile, err := os.Create(destPath)
+	if err != nil {
+		http.Error(w, "Failed to create file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer destFile.Close()
+
+	// Copy the uploaded file to destination
+	_, err = io.Copy(destFile, file)
+	if err != nil {
+		http.Error(w, "Failed to save file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Return success response
+	response := map[string]interface{}{
+		"status":        "success",
+		"filename":      destFilename,
+		"path":          destPath,
+		"relative_path": "images/" + destFilename,
+		"size":          handler.Size,
+		"message":       "Image uploaded to ./images/ directory for img2img processing",
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
 
 // getImages scans the output directory for images
@@ -173,7 +374,6 @@ func (s *Server) getImages() ([]ImageInfo, error) {
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -185,427 +385,3 @@ func (s *Server) getImages() ([]ImageInfo, error) {
 
 	return images, nil
 }
-
-// galleryHTML is the embedded HTML template
-const galleryHTML = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{.Title}}</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        header {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            margin-bottom: 30px;
-        }
-
-        h1 {
-            color: #667eea;
-            font-size: 2.5em;
-            margin-bottom: 10px;
-        }
-
-        .stats {
-            display: flex;
-            gap: 20px;
-            margin-top: 15px;
-            flex-wrap: wrap;
-        }
-
-        .stat-item {
-            background: #f7f7f7;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 0.9em;
-            color: #666;
-        }
-
-        .stat-item strong {
-            color: #667eea;
-        }
-
-        .controls {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .search-box {
-            flex: 1;
-            min-width: 250px;
-            padding: 12px 20px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 1em;
-            transition: border-color 0.3s;
-        }
-
-        .search-box:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1em;
-            transition: all 0.3s;
-            font-weight: 500;
-        }
-
-        .btn-primary {
-            background: #667eea;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .gallery {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 25px;
-            margin-top: 20px;
-        }
-
-        .image-card {
-            background: white;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            transition: transform 0.3s, box-shadow 0.3s;
-            cursor: pointer;
-        }
-
-        .image-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
-        }
-
-        .image-wrapper {
-            position: relative;
-            width: 100%;
-            padding-bottom: 100%; /* 1:1 Aspect Ratio */
-            overflow: hidden;
-            background: #f0f0f0;
-        }
-
-        .image-wrapper img {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .image-info {
-            padding: 15px;
-        }
-
-        .image-name {
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 8px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .image-meta {
-            font-size: 0.85em;
-            color: #666;
-            margin-bottom: 12px;
-        }
-
-        .image-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn-small {
-            flex: 1;
-            padding: 8px 16px;
-            font-size: 0.9em;
-        }
-
-        .btn-danger {
-            background: #e74c3c;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #c0392b;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 60px;
-            color: white;
-            font-size: 1.2em;
-        }
-
-        .empty-state {
-            background: white;
-            padding: 60px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-
-        .empty-state h2 {
-            color: #667eea;
-            margin-bottom: 10px;
-        }
-
-        .empty-state p {
-            color: #666;
-        }
-
-        /* Modal styles */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.9);
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            max-width: 90%;
-            max-height: 90%;
-            object-fit: contain;
-        }
-
-        .close-modal {
-            position: absolute;
-            top: 30px;
-            right: 40px;
-            color: white;
-            font-size: 40px;
-            font-weight: bold;
-            cursor: pointer;
-            z-index: 1001;
-        }
-
-        .close-modal:hover {
-            color: #ccc;
-        }
-
-        @media (max-width: 768px) {
-            .gallery {
-                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-                gap: 15px;
-            }
-
-            h1 {
-                font-size: 1.8em;
-            }
-
-            .controls {
-                flex-direction: column;
-            }
-
-            .search-box {
-                width: 100%;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <header>
-            <h1>🎨 {{.Title}}</h1>
-            <div class="stats">
-                <div class="stat-item">
-                    <strong id="total-images">0</strong> images
-                </div>
-                <div class="stat-item">
-                    Output: <strong>{{.OutputDir}}</strong>
-                </div>
-            </div>
-        </header>
-
-        <div class="controls">
-            <input type="text" id="search" class="search-box" placeholder="🔍 Search images...">
-            <button class="btn btn-primary" onclick="refreshGallery()">🔄 Refresh</button>
-            <button class="btn btn-primary" onclick="downloadAll()">⬇️ Download All</button>
-        </div>
-
-        <div id="gallery" class="gallery">
-            <div class="loading">Loading images...</div>
-        </div>
-    </div>
-
-    <!-- Modal for full-size image view -->
-    <div id="imageModal" class="modal" onclick="closeModal()">
-        <span class="close-modal">&times;</span>
-        <img class="modal-content" id="modalImage">
-    </div>
-
-    <script>
-        let allImages = [];
-
-        async function loadImages() {
-            try {
-                const response = await fetch('/api/images');
-                allImages = await response.json();
-                displayImages(allImages);
-                document.getElementById('total-images').textContent = allImages.length;
-            } catch (error) {
-                console.error('Error loading images:', error);
-                document.getElementById('gallery').innerHTML = 
-                    '<div class="empty-state"><h2>Error</h2><p>Failed to load images</p></div>';
-            }
-        }
-
-        function displayImages(images) {
-            const gallery = document.getElementById('gallery');
-            
-            if (images.length === 0) {
-                gallery.innerHTML = 
-                    '<div class="empty-state"><h2>No images yet</h2><p>Generated images will appear here</p></div>';
-                return;
-            }
-
-            gallery.innerHTML = images.map(img => {
-                const size = (img.size / 1024 / 1024).toFixed(2);
-                const date = new Date(img.mod_time).toLocaleString();
-                
-                return ` + "`" + `
-                    <div class="image-card">
-                        <div class="image-wrapper" onclick="openModal('${img.path}')">
-                            <img src="${img.path}" alt="${img.filename}" loading="lazy">
-                        </div>
-                        <div class="image-info">
-                            <div class="image-name" title="${img.filename}">${img.filename}</div>
-                            <div class="image-meta">
-                                ${size} MB • ${date}
-                            </div>
-                            <div class="image-actions">
-                                <a href="${img.download_url}" class="btn btn-primary btn-small" download>
-                                    ⬇️ Download
-                                </a>
-                                <button class="btn btn-danger btn-small" onclick="deleteImage('${img.filename}', event)">
-                                    🗑️ Delete
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                ` + "`" + `;
-            }).join('');
-        }
-
-        function openModal(imagePath) {
-            const modal = document.getElementById('imageModal');
-            const modalImg = document.getElementById('modalImage');
-            modal.classList.add('active');
-            modalImg.src = imagePath;
-        }
-
-        function closeModal() {
-            document.getElementById('imageModal').classList.remove('active');
-        }
-
-        async function deleteImage(filename, event) {
-            event.stopPropagation();
-            
-            if (!confirm(` + "`" + `Delete ${filename}?` + "`" + `)) {
-                return;
-            }
-
-            try {
-                const response = await fetch(` + "`" + `/api/delete/${filename}` + "`" + `, {
-                    method: 'DELETE'
-                });
-
-                if (response.ok) {
-                    refreshGallery();
-                } else {
-                    alert('Failed to delete image');
-                }
-            } catch (error) {
-                console.error('Error deleting image:', error);
-                alert('Error deleting image');
-            }
-        }
-
-        function refreshGallery() {
-            loadImages();
-        }
-
-        function downloadAll() {
-            allImages.forEach(img => {
-                const a = document.createElement('a');
-                a.href = img.download_url;
-                a.download = img.filename;
-                a.click();
-            });
-        }
-
-        // Search functionality
-        document.getElementById('search').addEventListener('input', (e) => {
-            const searchTerm = e.target.value.toLowerCase();
-            const filtered = allImages.filter(img => 
-                img.filename.toLowerCase().includes(searchTerm)
-            );
-            displayImages(filtered);
-        });
-
-        // Close modal with Escape key
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeModal();
-            }
-        });
-
-        // Load images on page load
-        loadImages();
-
-        // Auto-refresh every 5 seconds
-        setInterval(loadImages, 5000);
-    </script>
-</body>
-</html>
-`

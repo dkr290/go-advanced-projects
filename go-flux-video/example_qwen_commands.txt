@@ -1,0 +1,119 @@
+# Example Commands for Qwen-Image-Edit Integration
+
+## 1. Basic Image-to-Image Transformation
+# Transform images in ./images directory using Qwen-Image-Edit
+./gfluxgo \
+  --config config.json \
+  --hf-model "Qwen/Qwen-Image-Edit" \
+  --use-qwen \
+  --img2img \
+  --strength 0.8 \
+  --output ./qwen_results \
+  --seed 12345
+
+## 2. Text-to-Image Generation with Custom Settings
+# Generate new images from text prompts
+./gfluxgo \
+  --config config.json \
+  --hf-model "Qwen/Qwen-Image-Edit" \
+  --use-qwen \
+  --output ./qwen_generated \
+  --seed 42 \
+  --resolution 1024x1024 \
+  --steps 30 \
+  --guidence_scale 4.0
+
+## 3. Low VRAM Mode (for 8GB GPUs)
+# Use CPU offload and attention slicing
+./gfluxgo \
+  --config config.json \
+  --hf-model "Qwen/Qwen-Image-Edit" \
+  --use-qwen \
+  --img2img \
+  --low-vram \
+  --strength 0.6 \
+  --output ./qwen_lowvram
+
+## 4. With LoRA Weights
+# Apply custom style using LoRA
+./gfluxgo \
+  --config config.json \
+  --hf-model "Qwen/Qwen-Image-Edit" \
+  --use-qwen \
+  --img2img \
+  --lora-url "https://huggingface.co/username/style-lora" \
+  --strength 0.75 \
+  --output ./qwen_lora
+
+## 5. High Quality Settings
+# Maximum quality with more steps
+./gfluxgo \
+  --config config.json \
+  --hf-model "Qwen/Qwen-Image-Edit" \
+  --use-qwen \
+  --img2img \
+  --strength 0.7 \
+  --steps 50 \
+  --guidence_scale 7.0 \
+  --output ./qwen_hq
+
+## 6. Quick Test (Lower Resolution)
+# Faster generation for testing
+./gfluxgo \
+  --config config.json \
+  --hf-model "Qwen/Qwen-Image-Edit" \
+  --use-qwen \
+  --img2img \
+  --strength 0.5 \
+  --resolution 512x512 \
+  --steps 20 \
+  --output ./qwen_test
+
+## 7. Environment Variables Example
+# Set configuration via environment variables
+export HF_MODEL="Qwen/Qwen-Image-Edit"
+export USE_QWEN="true"
+export IMG2IMG="true"
+export STRENGTH="0.7"
+export OUTPUT="./qwen_env_output"
+export SEED="999"
+export RESOLUTION="768x768"
+export STEPS="25"
+export GUIDANCE_SCALE="3.5"
+
+./gfluxgo --config config.json
+
+## 8. Direct Python Script Usage
+# Run the Python script directly for debugging
+python3 scripts/qwen_img2img.py \
+  --model "Qwen/Qwen-Image-Edit" \
+  --prompts-data '[{"prompt": "make it look like a painting", "filename": "painting.png", "seed": 42, "input_image": "input.jpg"}]' \
+  --output-dir ./direct_output \
+  --width 1024 \
+  --height 1024 \
+  --steps 28 \
+  --guidance-scale 3.5 \
+  --strength 0.75 \
+  --seed 42 \
+  --low-vram
+
+## Configuration File Example (config.json):
+"""
+{
+  "style_suffix": "professional photography, 8k, highly detailed",
+  "negative_prompt": "blurry, low quality, distorted, watermark, text",
+  "prompts": [
+    "transform into a watercolor painting",
+    "make it look like an oil painting",
+    "convert to sketch style",
+    "apply vintage film effect"
+  ]
+}
+"""
+
+## Notes:
+# 1. For img2img mode, place input images in ./images directory
+# 2. The model will be downloaded on first run (~15GB)
+# 3. Use --low-vram flag if you have GPU memory issues
+# 4. Adjust --strength between 0.1 (subtle) and 0.9 (dramatic)
+# 5. Higher --steps values give better quality but take longer

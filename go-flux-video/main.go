@@ -22,7 +22,41 @@ func main() {
 	cmdConf.GetFlags()
 	llogger := logging.Init(cmdConf.Debug)
 
-	// --- Configuration Loading ---
+	// --- Web Server Only Mode ---
+	// If only web server is requested, we don't need config file
+	if cmdConf.WebServer && cmdConf.ConfigPath == "" {
+		// Web-only mode: just start the server
+		fmt.Println("🚀 Starting web server only mode...")
+		fmt.Println("📤 Upload images to ./images/ directory for later img2img processing")
+		fmt.Println("📁 Serving existing images from:", cmdConf.OutputDir)
+
+		server := webserver.NewServer(cmdConf.OutputDir, cmdConf.WebPort)
+
+		// Handle graceful shutdown
+		sigChan := make(chan os.Signal, 1)
+		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+
+		go func() {
+			<-sigChan
+			fmt.Println("\n👋 Shutting down web server...")
+			os.Exit(0)
+		}()
+
+		if err := server.Start(); err != nil {
+			llogger.Logging.Errorf("Web server failed: %v", err)
+			os.Exit(1)
+		}
+		return
+	}
+
+	// --- Configuration Loading (for image generation) ---
+	if cmdConf.ConfigPath == "" {
+		fmt.Println("Error: Configuration file is required for image generation")
+		fmt.Println("Usage for web-only mode: ./gfluxgo --web --output ./your_output_dir")
+		fmt.Println("Usage for image generation: ./gfluxgo --config config.json [other flags]")
+		os.Exit(1)
+	}
+
 	data, err := os.ReadFile(cmdConf.ConfigPath)
 	if err != nil {
 		fmt.Printf("Error reading config file '%s': %v\n", cmdConf.ConfigPath, err)
@@ -61,10 +95,16 @@ func main() {
 		llogger.Logging.Infof("Starting Image to image mode ")
 		inputImagesDir := "./images"
 
-		// Choose SD or FLUX script
+		// Choose between SD, Qwen, or FLUX script
 		if cmdConf.UseSD {
 			if err := generate.GenerateImg2ImgWithPythonSD(cmdConf, promptConf, modelPath, loraDir, inputImagesDir); err != nil {
 				llogger.Logging.Errorf("SD image to image generation failed: %v", err)
+				os.Exit(1)
+			}
+		} else if cmdConf.UseQwen {
+			llogger.Logging.Infof("Starting Qwen-Image-Edit model initialization")
+			if err := generate.GenerateImg2ImgWithPythonQwen(cmdConf, promptConf, modelPath, loraDir, inputImagesDir); err != nil {
+				llogger.Logging.Errorf("Qwen image to image generation failed: %v", err)
 				os.Exit(1)
 			}
 		} else {
@@ -76,11 +116,17 @@ func main() {
 		fmt.Println("\n✅ Image-to-Image Generation Complete!")
 
 	} else {
-		// Choose SD or FLUX script
+		// Choose between SD, Qwen, or FLUX script
 		if cmdConf.UseSD {
 			llogger.Logging.Infof("Starting Stable Diffusion model initialization")
 			if err := generate.GenerateWithPythonSD(cmdConf, promptConf, modelPath, loraDir); err != nil {
 				llogger.Logging.Errorf("SD generate images failed %v", err)
+				os.Exit(1)
+			}
+		} else if cmdConf.UseQwen {
+			llogger.Logging.Infof("Starting Qwen-Image-Edit model initialization")
+			if err := generate.GenerateWithPythonQwen(cmdConf, promptConf, modelPath, loraDir); err != nil {
+				llogger.Logging.Errorf("Qwen generate images failed %v", err)
 				os.Exit(1)
 			}
 		} else {

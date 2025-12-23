@@ -1,0 +1,10 @@
+{
+  "style_suffix": "professional photography, 8k, highly detailed",
+  "negative_prompt": "blurry, low quality, distorted, watermark, text",
+  "prompts": [
+    "a beautiful sunset over mountains",
+    "a futuristic city at night",
+    "a serene lake with autumn trees",
+    "a magical forest with glowing mushrooms"
+  ]
+}
