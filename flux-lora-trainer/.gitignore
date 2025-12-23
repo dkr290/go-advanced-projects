@@ -1,0 +1,76 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+
+# Model downloads and cache
+cache/
+models/
+*.safetensors
+*.ckpt
+*.pth
+*.pt
+*.bin
+
+# Training outputs
+outputs/
+runs/
+logs/
+wandb/
+tensorboard/
+*.log
+
+# Dataset (comment out if you want to track your dataset)
+dataset/
+!dataset/.gitkeep
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Generated configs
+config_*.yaml
+!config.yaml
+!config_simple.yaml
+
+# Test outputs
+test_*.png
+output*.png
+generated_*.png
+
+# System
+.DS_Store
+Thumbs.db

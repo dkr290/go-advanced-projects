@@ -1,0 +1,218 @@
+# Flux LoRA Training Configuration
+# Comprehensive configuration file for training custom LoRA models
+
+# ============================================================================
+# PROJECT SETTINGS
+# ============================================================================
+project_name: "my_flux_lora"  # Name for your LoRA project
+trigger_word: "MYSUBJECT"     # Unique identifier used in training prompts
+                              # Use UPPERCASE, single word or acronym
+                              # Examples: "SKSDOG", "MYFACE", "ARTXYZ"
+
+# ============================================================================
+# MODEL SETTINGS
+# ============================================================================
+model_name: "black-forest-labs/FLUX.1-dev"  
+# Options:
+#   - "black-forest-labs/FLUX.1-dev" (higher quality, slower, non-commercial)
+#   - "black-forest-labs/FLUX.1-schnell" (faster, lower quality, commercial ok)
+
+pretrained_model_name_or_path: null  # Override model_name if using local path
+
+# ============================================================================
+# DATASET SETTINGS
+# ============================================================================
+dataset_path: "dataset/my_subject"  # Path to your training images
+output_dir: "outputs/my_flux_lora"  # Where to save trained LoRA
+cache_dir: "cache"                  # Cache for downloaded models
+
+# Image preprocessing
+resolution: 1024            # Training resolution (512, 768, 1024)
+center_crop: false         # Whether to center crop images
+random_flip: false         # Randomly flip images horizontally (use for variety)
+
+# ============================================================================
+# LORA SETTINGS
+# ============================================================================
+lora_rank: 16              # LoRA rank (4, 8, 16, 32, 64)
+                          # Higher = more capacity but slower & more VRAM
+                          # Recommended: 16 for most cases
+
+lora_alpha: 16            # LoRA alpha (usually same as rank)
+                          # Controls LoRA scaling, typically rank or 2*rank
+
+lora_dropout: 0.0         # Dropout rate (0.0 - 0.2)
+                          # Use 0.1 to reduce overfitting
+
+target_modules:           # Which modules to apply LoRA to
+  - "to_q"               # Query projection
+  - "to_k"               # Key projection  
+  - "to_v"               # Value projection
+  - "to_out.0"           # Output projection
+  # Add more for stronger effect: "ff.net.0.proj", "ff.net.2"
+
+# ============================================================================
+# TRAINING HYPERPARAMETERS
+# ============================================================================
+# Training steps
+max_train_steps: 1000     # Total training steps
+                          # Rule of thumb: 50-100 steps per training image
+                          # 10 images → 500-1000 steps
+                          # 30 images → 1500-3000 steps
+
+num_train_epochs: null    # Alternative to max_train_steps (leave null if using steps)
+
+# Learning rate
+learning_rate: 1.0e-4     # Base learning rate (CRITICAL PARAMETER)
+                          # Start: 1e-4 (0.0001)
+                          # Too high: unstable, artifacts
+                          # Too low: slow learning
+                          # Range: 5e-5 to 5e-4
+
+lr_scheduler: "constant"  # Learning rate schedule
+# Options:
+#   - "constant" - no change (recommended for LoRA)
+#   - "linear" - linear decay
+#   - "cosine" - cosine decay
+#   - "cosine_with_restarts" - cosine with warm restarts
+#   - "polynomial" - polynomial decay
+
+lr_warmup_steps: 0        # Warmup steps (0 = no warmup)
+                          # Use 100-500 for large datasets
+
+# Batch size
+train_batch_size: 1       # Batch size per GPU
+                          # 12GB VRAM: 1
+                          # 16GB VRAM: 1-2
+                          # 24GB VRAM: 2-4
+
+gradient_accumulation_steps: 4  # Accumulate gradients
+                                # Effective batch = train_batch_size * gradient_accumulation_steps
+                                # Use to simulate larger batches
+
+# ============================================================================
+# OPTIMIZATION
+# ============================================================================
+# Optimizer
+optimizer: "adamw"        # Optimizer type
+# Options: "adamw", "adamw8bit", "sgd"
+
+use_8bit_adam: true      # Use 8-bit Adam (saves VRAM, slightly slower)
+                          # Highly recommended for <24GB VRAM
+
+adam_beta1: 0.9          # Adam beta1
+adam_beta2: 0.999        # Adam beta2
+adam_weight_decay: 0.01  # Weight decay (L2 regularization)
+adam_epsilon: 1.0e-8     # Adam epsilon
+
+max_grad_norm: 1.0       # Gradient clipping (prevents exploding gradients)
+
+# ============================================================================
+# MEMORY OPTIMIZATION
+# ============================================================================
+mixed_precision: "bf16"   # Mixed precision training
+# Options:
+#   - "no" - full fp32 (slow, high VRAM)
+#   - "fp16" - half precision (faster, less VRAM, older GPUs)
+#   - "bf16" - bfloat16 (recommended for Ampere/newer, better stability)
+
+gradient_checkpointing: true  # Enable gradient checkpointing
+                              # Saves VRAM at cost of ~20% speed
+                              # Essential for <24GB VRAM
+
+# ============================================================================
+# LOGGING & CHECKPOINTING
+# ============================================================================
+# Checkpointing
+save_steps: 200           # Save checkpoint every N steps
+save_total_limit: 5       # Keep only N latest checkpoints (null = keep all)
+
+# Logging
+logging_steps: 50         # Log metrics every N steps
+report_to: "tensorboard"  # Logging backend
+# Options: "tensorboard", "wandb", "none"
+
+# Weights & Biases (if using wandb)
+wandb_project: null       # W&B project name
+wandb_entity: null        # W&B entity (username/org)
+
+# ============================================================================
+# VALIDATION & TESTING
+# ============================================================================
+validation_prompt: null   # Prompt to generate validation images
+                          # Example: "a photo of MYSUBJECT in a forest"
+                          # Set to enable validation image generation
+
+validation_epochs: null   # Generate validation images every N epochs
+validation_steps: null    # Generate validation images every N steps (overrides epochs)
+
+num_validation_images: 4  # Number of validation images to generate
+
+# ============================================================================
+# ADVANCED SETTINGS
+# ============================================================================
+# Data loading
+dataloader_num_workers: 2  # Number of data loading workers (0-4)
+                           # More = faster loading but more RAM
+
+# Random seed
+seed: 42                   # Random seed for reproducibility
+                           # Change for different random initialization
+
+# Noise schedule
+noise_scheduler_type: "ddpm"  # Type of noise scheduler
+# Options: "ddpm", "ddim", "pndm", "euler"
+
+snr_gamma: null            # SNR weighting gamma (null = disabled, 5.0 = common value)
+                           # Helps with training stability
+
+# Text encoder
+train_text_encoder: false  # Whether to train text encoder
+                           # Usually false for LoRA, true for full fine-tuning
+                           # Requires significantly more VRAM
+
+# Prior preservation (advanced)
+with_prior_preservation: false  # Enable prior preservation loss
+prior_loss_weight: 1.0          # Weight for prior preservation
+class_data_dir: null            # Directory for class images
+num_class_images: 100           # Number of class images to generate
+
+# ============================================================================
+# CAPTION SETTINGS (for caption_images.py)
+# ============================================================================
+caption_model: "blip-base"  # Model for auto-captioning
+# Options:
+#   - "blip-base" - BLIP (fast, good quality)
+#   - "blip-large" - BLIP Large (slower, better quality)
+#   - "git-large" - GIT (alternative)
+
+caption_prefix: ""         # Prefix to add to all captions
+                          # Example: "a photo of"
+
+caption_suffix: ""        # Suffix to add to all captions
+
+append_trigger_word: true  # Automatically add trigger word to captions
+
+# ============================================================================
+# INFERENCE SETTINGS (for test_lora.py)
+# ============================================================================
+inference:
+  num_inference_steps: 30     # Number of denoising steps (20-50)
+                              # More = better quality but slower
+  
+  guidance_scale: 7.5         # Classifier-free guidance scale
+                              # Higher = follows prompt more closely
+                              # Range: 3.0-15.0, typical: 7.5
+  
+  lora_scale: 1.0            # LoRA strength
+                              # 0.0 = no LoRA, 1.0 = full LoRA
+                              # Try 0.6-0.8 if effect is too strong
+  
+  negative_prompt: "blurry, low quality, distorted, ugly, bad anatomy"
+                              # What to avoid in generation
+  
+  width: 1024                # Output width
+  height: 1024               # Output height
+  
+  scheduler: "euler"         # Sampling scheduler
+  # Options: "euler", "ddim", "pndm", "dpm", "euler_a"

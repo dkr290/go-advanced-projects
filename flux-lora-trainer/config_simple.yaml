@@ -1,0 +1,43 @@
+# Example Training Configuration
+# This is a simplified config for quick start
+
+project_name: "my_first_lora"
+trigger_word: "SKSDOG"
+
+# Model
+model_name: "black-forest-labs/FLUX.1-dev"
+
+# Dataset
+dataset_path: "dataset/my_dog"
+output_dir: "outputs/dog_lora"
+
+# Simple training settings (good for 20 images)
+max_train_steps: 1000
+learning_rate: 1.0e-4
+train_batch_size: 1
+gradient_accumulation_steps: 4
+
+# LoRA settings
+lora_rank: 16
+lora_alpha: 16
+
+# Memory optimization (for 12GB GPU)
+mixed_precision: "bf16"
+gradient_checkpointing: true
+use_8bit_adam: true
+
+# Checkpoints
+save_steps: 200
+save_total_limit: 3
+
+# Logging
+logging_steps: 50
+report_to: "tensorboard"
+
+# Resolution
+resolution: 1024
+center_crop: false
+random_flip: false
+
+# Seed for reproducibility
+seed: 42
