@@ -34,6 +34,19 @@ type CmdConf struct {
 	LowVRAM           bool
 	HfModelID         string
 	Debug             bool
+	ImageToImage      bool    // Enable img2img mode
+	Strength          float32 // Transformation strength for img2img
+	WebServer         bool    // Enable web server mode
+	WebPort           int     // Web server port
+	SdCmd
+}
+
+type SdCmd struct {
+	UseSD             bool   // Use Stable Diffusion scripts instead of FLUX
+	SafetensorsPath   string // Path to safetensors file (Civitai models)
+	SequentialOffload bool   // Ultra low VRAM mode
+	CompileModel      bool   // Torch compile for speed
+	DisableSafety     bool   // Disable safety checker
 }
 
 func LoadConfig() *Config {
@@ -118,7 +131,76 @@ func (c *Config) GetFlags() {
 		"Enable CPU offload for low VRAM GPUs (slower on high VRAM GPUs)",
 	)
 
+	// Image-to-Image flags
+	flag.BoolVar(
+		&c.ImageToImage,
+		"img2img",
+		false,
+		"Enable image-to-image mode instead of text-to-image",
+	)
+
+	var strength float64
+	flag.Float64Var(
+		&strength,
+		"strength",
+		0.75,
+		"Transformation strength for img2img (0.0-1.0). Higher = more creative, lower = closer to input",
+	)
+
+	// Web server flags
+	flag.BoolVar(
+		&c.WebServer,
+		"web",
+		false,
+		"Enable web server mode to view images in browser",
+	)
+
+	flag.IntVar(
+		&c.WebPort,
+		"web-port",
+		8080,
+		"Web server port (default: 8080)",
+	)
+
+	// flags fro SD models
+
+	flag.BoolVar(
+		&c.UseSD,
+		"use-sd",
+		false,
+		"Use Stable Diffusion models instead of FLUX (SD 1.5/2.1/SDXL/SD3)",
+	)
+
+	flag.StringVar(
+		&c.SafetensorsPath,
+		"safetensors",
+		"",
+		"Path to safetensors model file (for Civitai models)",
+	)
+
+	flag.BoolVar(
+		&c.SequentialOffload,
+		"sequential-offload",
+		false,
+		"Enable sequential CPU offload for ultra low VRAM (4GB)",
+	)
+	flag.BoolVar(
+		&c.CompileModel,
+		"compile",
+		false,
+		"Compile model for 2x faster inference (requires PyTorch 2.0+)",
+	)
+	flag.BoolVar(
+		&c.DisableSafety,
+		"disable-safety",
+		true,
+		"Disable safety checker (allows NSFW content)",
+	)
+
 	flag.Parse()
+
+	// Set strength after parsing
+	c.Strength = float32(strength)
 
 	if c.ConfigPath == "" {
 		fmt.Println("Need the configuration file")
@@ -156,6 +238,15 @@ func (c *Config) GetFlags() {
 		}
 		c.Steps = int(steps)
 
+	}
+
+	// Strength - environment variable takes precedence
+	if str := getEnv("STRENGTH"); str != "" {
+		if s, err := strconv.ParseFloat(str, 64); err == nil {
+			c.Strength = float32(s)
+		} else {
+			log.Fatalf("cannot parse STRENGTH from env: %v", err)
+		}
 	}
 
 	if resolution := getEnv("RESOLUTION"); resolution != "" {

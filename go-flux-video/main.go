@@ -3,12 +3,16 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"os/signal"
+	"path/filepath"
+	"syscall"
+
 	"gfluxgo/pkg/config"
 	"gfluxgo/pkg/generate"
 	"gfluxgo/pkg/logging"
 	"gfluxgo/pkg/utils"
-	"os"
-	"path/filepath"
+	"gfluxgo/pkg/webserver"
 )
 
 func main() {
@@ -53,15 +57,63 @@ func main() {
 		os.Exit(1)
 	}
 
-	llogger.Logging.Infof(
-		"Starting %s model initialization",
-		utils.GetFilenameFromURL(cmdConf.ModelURL),
-	)
+	if cmdConf.ImageToImage {
+		llogger.Logging.Infof("Starting Image to image mode ")
+		inputImagesDir := "./images"
 
-	if err := generate.GenerateWithPython(cmdConf, promptConf, modelPath, loraDir); err != nil {
-		llogger.Logging.Errorf("Generate images failed %v", err)
-		os.Exit(1)
+		// Choose SD or FLUX script
+		if cmdConf.UseSD {
+			if err := generate.GenerateImg2ImgWithPythonSD(cmdConf, promptConf, modelPath, loraDir, inputImagesDir); err != nil {
+				llogger.Logging.Errorf("SD image to image generation failed: %v", err)
+				os.Exit(1)
+			}
+		} else {
+			if err := generate.GenerateImg2ImgWithPython(cmdConf, promptConf, modelPath, loraDir, inputImagesDir); err != nil {
+				llogger.Logging.Errorf("Image to image generation failed: %v", err)
+				os.Exit(1)
+			}
+		}
+		fmt.Println("\n✅ Image-to-Image Generation Complete!")
+
+	} else {
+		// Choose SD or FLUX script
+		if cmdConf.UseSD {
+			llogger.Logging.Infof("Starting Stable Diffusion model initialization")
+			if err := generate.GenerateWithPythonSD(cmdConf, promptConf, modelPath, loraDir); err != nil {
+				llogger.Logging.Errorf("SD generate images failed %v", err)
+				os.Exit(1)
+			}
+		} else {
+			llogger.Logging.Infof(
+				"Starting %s model initialization",
+				utils.GetFilenameFromURL(cmdConf.ModelURL),
+			)
+			if err := generate.GenerateWithPython(cmdConf, promptConf, modelPath, loraDir); err != nil {
+				llogger.Logging.Errorf("Generate images failed %v", err)
+				os.Exit(1)
+			}
+		}
+
+		fmt.Println("\n✅ Go image Generation Complete!")
 	}
+	// Start web server if enabled
+	if cmdConf.WebServer {
+		fmt.Println("\n🚀 Starting web server...")
+		server := webserver.NewServer(cmdConf.OutputDir, cmdConf.WebPort)
 
-	fmt.Println("\n✅ Go image Generation Complete!")
+		// Handle graceful shutdown
+		sigChan := make(chan os.Signal, 1)
+		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+
+		go func() {
+			<-sigChan
+			fmt.Println("\n\n👋 Shutting down web server...")
+			os.Exit(0)
+		}()
+
+		if err := server.Start(); err != nil {
+			llogger.Logging.Errorf("Web server failed: %v", err)
+			os.Exit(1)
+		}
+	}
 }
