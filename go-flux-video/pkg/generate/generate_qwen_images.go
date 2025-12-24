@@ -1,4 +1,3 @@
-// Package generate - is where the actual image generation happened
 package generate
 
 import (
@@ -17,51 +16,25 @@ import (
 	"gfluxgo/pkg/utils"
 )
 
-type PromptData struct {
-	Prompt     string `json:"prompt"`
-	Filename   string `json:"filename"`
-	Seed       int    `json:"seed"`
-	InputImage string `json:"input_image,omitempty"`
-}
-
-type PythonGenerationResult struct {
-	Status      string `json:"status"`
-	Output      string `json:"output"`
-	PromptIndex int    `json:"prompt_index"`
-}
-
-// PythonOverallResult represents the overall JSON output from the Python script
-type PythonOverallResult struct {
-	OverallStatus string                   `json:"all_status"`
-	Generations   []PythonGenerationResult `json:"generations"`
-	Error         string                   `json:"error,omitempty"`
-}
-
-// GenerateWithPython calls Python for FLUX GGUF generation
-func GenerateWithPython(
+// GenerateWithPythonQwen calls Python for Qwen-Image-Edit text-to-image generation
+func GenerateWithPythonQwen(
 	cmdConf config.Config,
 	promptConf config.PromptConfig,
 	modelPath, loraDir string,
 ) error {
-	scriptPath := filepath.Join("scripts", "python_generate.py")
+	scriptPath := filepath.Join("scripts", "qwen_img2img.py")
 
 	// Check if script exists
 	if _, err := os.Stat(scriptPath); os.IsNotExist(err) {
-		return fmt.Errorf("python script not found at %s", scriptPath)
+		return fmt.Errorf("qwen python script not found at %s", scriptPath)
 	}
 
 	if err := os.MkdirAll(cmdConf.OutputDir, 0o755); err != nil {
 		return fmt.Errorf("failed to create output dir: %w", err)
 	}
 
-	// Determine if modelPath is GGUF or HuggingFace ID
-	var hfModel, ggufPath string
-	if strings.HasSuffix(strings.ToLower(modelPath), ".gguf") {
-		ggufPath = modelPath
-		hfModel = cmdConf.HfModelID
-	} else {
-		hfModel = cmdConf.HfModelID
-	}
+	// Use HuggingFace model ID directly for Qwen
+	hfModel := cmdConf.HfModelID
 
 	// Find LoRA file if loraDir is provided
 	var loraFilePath string
@@ -77,7 +50,7 @@ func GenerateWithPython(
 		}
 	}
 
-	fmt.Printf("\nStarting FLUX generation for %d images...\n", len(promptConf.Prompts))
+	fmt.Printf("\nStarting Qwen-Image-Edit generation for %d images...\n", len(promptConf.Prompts))
 
 	var promptsData []PromptData
 	for i, p := range promptConf.Prompts {
@@ -103,18 +76,17 @@ func GenerateWithPython(
 		"--height", strconv.Itoa(cmdConf.Resolution[1]),
 		"--steps", strconv.Itoa(cmdConf.Steps),
 		"--guidance-scale", fmt.Sprintf("%.2f", cmdConf.GuidanceScale),
+		"--strength", fmt.Sprintf("%.2f", cmdConf.Strength),
 		"--output-dir", cmdConf.OutputDir,
 		"--prompts-data", string(promptsDataJSON),
+		"--num-images", strconv.Itoa(cmdConf.QwenNumImages),
 	}
 
-	if ggufPath != "" {
-		args = append(args, "--gguf", ggufPath)
-	}
-
-	// Pass both LoRA repo ID and file path
-	if cmdConf.LoraURL != "" && loraFilePath != "" {
+	// Add LoRA if found
+	if loraFilePath != "" {
 		args = append(args, "--lora-file", loraFilePath)
 	}
+
 	// Add low VRAM flag if enabled
 	if cmdConf.LowVRAM {
 		args = append(args, "--low-vram")
@@ -129,7 +101,6 @@ func GenerateWithPython(
 		return fmt.Errorf("failed to create stdout pipe: %w", err)
 	}
 
-	// Stream stderr directly to terminal for progress
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Start(); err != nil {
@@ -137,7 +108,6 @@ func GenerateWithPython(
 	}
 
 	var stdoutBuffer bytes.Buffer
-	// MultiWriter writes to both buffer and terminal
 	stdoutMulti := io.MultiWriter(&stdoutBuffer, os.Stdout)
 	if _, err := io.Copy(stdoutMulti, stdoutPipe); err != nil {
 		return fmt.Errorf("failed to read python output: %w", err)
@@ -158,14 +128,14 @@ func GenerateWithPython(
 
 	for _, res := range overallResult.Generations {
 		if res.Status != "success" {
-			// You might want to handle individual generation failures differently
 			fmt.Printf("⚠ Generation for prompt index %d failed: %s\n", res.PromptIndex, res.Output)
 		} else {
 			fmt.Printf("    ✓ Saved to %s (Prompt %d) in %s\n", filepath.Base(res.Output), res.PromptIndex+1, time.Since(start))
 		}
 	}
+
 	fmt.Printf(
-		"\nTotal generation time for %d images: %s\n",
+		"\nTotal Qwen generation time for %d images: %s\n",
 		len(promptConf.Prompts),
 		time.Since(start),
 	)
@@ -173,31 +143,26 @@ func GenerateWithPython(
 	return nil
 }
 
-func GenerateImg2ImgWithPython(
+// GenerateImg2ImgWithPythonQwen calls Python for Qwen-Image-Edit image-to-image generation
+func GenerateImg2ImgWithPythonQwen(
 	cmdConf config.Config,
 	promptConf config.PromptConfig,
 	modelPath, loraDir string,
 	inputImagesDir string, // Directory containing input images
 ) error {
-	scriptPath := filepath.Join("scripts", "python_img2img.py")
+	scriptPath := filepath.Join("scripts", "qwen_img2img.py")
 
 	// Check if script exists
 	if _, err := os.Stat(scriptPath); os.IsNotExist(err) {
-		return fmt.Errorf("python img2img script not found at %s", scriptPath)
+		return fmt.Errorf("qwen python img2img script not found at %s", scriptPath)
 	}
 
 	if err := os.MkdirAll(cmdConf.OutputDir, 0o755); err != nil {
 		return fmt.Errorf("failed to create output dir: %w", err)
 	}
 
-	// Determine if modelPath is GGUF or HuggingFace ID
-	var hfModel, ggufPath string
-	if strings.HasSuffix(strings.ToLower(modelPath), ".gguf") {
-		ggufPath = modelPath
-		hfModel = cmdConf.HfModelID
-	} else {
-		hfModel = cmdConf.HfModelID
-	}
+	// Use HuggingFace model ID directly for Qwen
+	hfModel := cmdConf.HfModelID
 
 	// Find LoRA file if loraDir is provided
 	var loraFilePath string
@@ -213,7 +178,10 @@ func GenerateImg2ImgWithPython(
 		}
 	}
 
-	fmt.Printf("\nStarting FLUX img2img generation for %d images...\n", len(promptConf.Prompts))
+	fmt.Printf(
+		"\nStarting Qwen-Image-Edit img2img generation for %d images...\n",
+		len(promptConf.Prompts),
+	)
 
 	// Read input images from directory
 	inputImages, err := os.ReadDir(inputImagesDir)
@@ -224,7 +192,7 @@ func GenerateImg2ImgWithPython(
 	var promptsData []PromptData
 	imageIdx := 0
 	for i, p := range promptConf.Prompts {
-		// Match prompt with input image (you can customize this logic)
+		// Match prompt with input image
 		var inputImagePath string
 		if imageIdx < len(inputImages) && !inputImages[imageIdx].IsDir() {
 			inputImagePath = filepath.Join(inputImagesDir, inputImages[imageIdx].Name())
@@ -259,16 +227,15 @@ func GenerateImg2ImgWithPython(
 		"--strength", fmt.Sprintf("%.2f", cmdConf.Strength),
 		"--output-dir", cmdConf.OutputDir,
 		"--prompts-data", string(promptsDataJSON),
+		"--num-images", strconv.Itoa(cmdConf.QwenNumImages),
 	}
 
-	if ggufPath != "" {
-		args = append(args, "--gguf", ggufPath)
-	}
-
-	if cmdConf.LoraURL != "" && loraFilePath != "" {
+	// Add LoRA if found
+	if loraFilePath != "" {
 		args = append(args, "--lora-file", loraFilePath)
 	}
 
+	// Add low VRAM flag if enabled
 	if cmdConf.LowVRAM {
 		args = append(args, "--low-vram")
 	}
@@ -316,7 +283,7 @@ func GenerateImg2ImgWithPython(
 	}
 
 	fmt.Printf(
-		"\nTotal img2img generation time for %d images: %s\n",
+		"\nTotal Qwen img2img generation time for %d images: %s\n",
 		len(promptConf.Prompts),
 		time.Since(start),
 	)

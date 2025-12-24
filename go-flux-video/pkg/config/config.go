@@ -39,6 +39,7 @@ type CmdConf struct {
 	WebServer         bool    // Enable web server mode
 	WebPort           int     // Web server port
 	UseQwen           bool    // Use Qwen-Image-Edit model
+	QwenNumImages     int
 	SdCmd
 }
 
@@ -204,6 +205,12 @@ func (c *Config) GetFlags() {
 		"use-qwen",
 		false,
 		"Use Qwen-Image-Edit model for image editing tasks",
+	)
+	flag.IntVar(
+		&c.QwenNumImages,
+		"qwen-num-images",
+		1,
+		"Qwen model number of image per prompt",
 	)
 
 	flag.Parse()

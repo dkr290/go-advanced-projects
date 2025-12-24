@@ -5,12 +5,7 @@ import sys
 import time
 
 import torch
-from diffusers import (
-    AutoPipelineForImage2Image,
-    FluxPipeline,
-    FluxTransformer2DModel,
-    GGUFQuantizationConfig,
-)
+from diffusers import AutoPipelineForImage2Image
 from diffusers.utils import logging as diffusers_logging
 from PIL import Image
 
@@ -29,20 +24,20 @@ def load_image(image_path: str) -> Image.Image:
     """Load and prepare input image for img2img."""
     if not os.path.exists(image_path):
         raise FileNotFoundError(f"Input image not found: {image_path}")
-    
+
     image = Image.open(image_path)
     # Convert to RGB if needed (removes alpha channel, converts grayscale, etc.)
     if image.mode != "RGB":
         image = image.convert("RGB")
-    
+
     return image
 
 
 def load_pipeline(args):
     """Load Qwen-Image-Edit pipeline with optional optimizations."""
-    
+
     print(f"Loading Qwen-Image-Edit model: {args.model}", file=sys.stderr, flush=True)
-    
+
     start = time.time()
     diffusers_logging.set_verbosity_error()
 
@@ -53,22 +48,9 @@ def load_pipeline(args):
         args.model,
         torch_dtype=torch.bfloat16 if torch.cuda.is_available() else torch.float32,
     )
-
+    pipe.set_progress_bar_config(disable=None)
     print(f"✓ Loaded Qwen-Image-Edit model: {args.model}", file=sys.stderr, flush=True)
 
-    # Qwen models have specific tokenizer requirements
-    if hasattr(pipe, "tokenizer"):
-        # Qwen models typically use 2048 token limit, but we'll check
-        if hasattr(pipe.tokenizer, "model_max_length"):
-            current_max_length = pipe.tokenizer.model_max_length
-            print(f"✓ Tokenizer max length: {current_max_length}", file=sys.stderr)
-        
-        # Check for Qwen-specific tokenizer settings
-        if hasattr(pipe.tokenizer, "add_prefix_space"):
-            if pipe.tokenizer.add_prefix_space:
-                pipe.tokenizer.add_prefix_space = False
-                print("✓ Disabled 'add_prefix_space' to avoid warnings.", file=sys.stderr)
-    
     # Memory optimizations
     if args.low_vram:
         pipe.enable_model_cpu_offload()
@@ -120,22 +102,51 @@ def main():
         print(f"CUDA device count: {torch.cuda.device_count()}", file=sys.stderr)
         for i in range(torch.cuda.device_count()):
             print(f"  Device {i}: {torch.cuda.get_device_name(i)}", file=sys.stderr)
-    
-    parser = argparse.ArgumentParser(description="Qwen-Image-Edit image-to-image generation")
-    parser.add_argument("--model", required=True, help="HuggingFace model ID (e.g., Qwen/Qwen-Image-Edit)")
-    parser.add_argument("--negative-prompt", default="", help="Negative prompt for generation")
+
+    parser = argparse.ArgumentParser(
+        description="Qwen-Image-Edit image-to-image generation"
+    )
+    parser.add_argument(
+        "--model",
+        required=True,
+        help="HuggingFace model ID (e.g., Qwen/Qwen-Image-Edit)",
+    )
+    parser.add_argument(
+        "--negative-prompt", default="", help="Negative prompt for generation"
+    )
     parser.add_argument("--width", type=int, default=1024, help="Output image width")
     parser.add_argument("--height", type=int, default=1024, help="Output image height")
-    parser.add_argument("--steps", type=int, default=28, help="Number of inference steps")
-    parser.add_argument("--guidance-scale", type=float, default=3.5, help="Guidance scale (CFG)")
-    parser.add_argument("--strength", type=float, default=0.75, help="Transformation strength (0.0-1.0). Higher = more creative, lower = closer to input")
+    parser.add_argument(
+        "--steps", type=int, default=40, help="Number of inference steps"
+    )
+    parser.add_argument(
+        "--guidance-scale", type=float, default=1.0, help="Guidance scale (CFG)"
+    )
+    parser.add_argument(
+        "--strength",
+        type=float,
+        default=0.75,
+        help="Transformation strength (0.0-1.0). Higher = more creative, lower = closer to input",
+    )
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
-    parser.add_argument("--output-dir", required=True, help="Output directory for generated images")
-    parser.add_argument("--lora-file", default="", help="Path to LoRA safetensors file (optional)")
-    
+    parser.add_argument(
+        "--output-dir", required=True, help="Output directory for generated images"
+    )
+    parser.add_argument(
+        "--lora-file", default="", help="Path to LoRA safetensors file (optional)"
+    )
+    parser.add_argument(
+        "--num-images", default=1, type=int, help="Number of images per prompt"
+    )
+
     # New argument for Qwen-specific settings
-    parser.add_argument("--max-tokens", type=int, default=2048, help="Maximum tokens for Qwen model (default: 2048)")
-    
+    parser.add_argument(
+        "--max-tokens",
+        type=int,
+        default=2048,
+        help="Maximum tokens for Qwen model (default: 2048)",
+    )
+
     # New argument to accept multiple prompts and their data for img2img
     parser.add_argument(
         "--prompts-data",
@@ -151,7 +162,7 @@ def main():
     )
 
     args = parser.parse_args()
-    
+
     try:
         pipe = load_pipeline(args)
 
@@ -164,19 +175,26 @@ def main():
             filename = p_data["filename"]
             seed = p_data["seed"]
             input_image_path = p_data["input_image"]
-            
+
             # Load input image
             try:
                 input_image = load_image(input_image_path)
             except Exception as e:
-                print(f"✗ Failed to load input image {input_image_path}: {e}", file=sys.stderr)
+                print(
+                    f"✗ Failed to load input image {input_image_path}: {e}",
+                    file=sys.stderr,
+                )
                 all_results.append(
-                    {"status": "error", "error": f"Failed to load input image: {str(e)}", "prompt_index": i}
+                    {
+                        "status": "error",
+                        "error": f"Failed to load input image: {str(e)}",
+                        "prompt_index": i,
+                    }
                 )
                 continue
-            
+
             output_path = os.path.join(args.output_dir, filename)
-            
+
             # Generate with Qwen-Image-Edit
             generator = torch.Generator().manual_seed(seed)
 
@@ -196,8 +214,10 @@ def main():
                 height=args.height,
                 num_inference_steps=args.steps,
                 guidance_scale=args.guidance_scale,
+                true_cfg_scale=4.0,
                 strength=args.strength,
                 generator=generator,
+                num_images_per_prompt=1,
                 # Qwen-specific parameters if needed
                 # max_length=args.max_tokens,
             )
@@ -222,3 +242,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
