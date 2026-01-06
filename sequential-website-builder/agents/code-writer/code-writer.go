@@ -22,11 +22,11 @@ func CodeWriterAgent(APIKey string) (agent.Agent, error) {
 		return nil, fmt.Errorf("failed to create model: %v", err)
 	}
 
-	desc, err := utils.LoadInstructionsFile("./description.txt")
+	desc, err := utils.LoadInstructionsFile("./agents/code-writer/description.txt")
 	if err != nil {
 		return nil, err
 	}
-	instr, err := utils.LoadInstructionsFile("./instructions.txt")
+	instr, err := utils.LoadInstructionsFile("./agents/code-writer/instructions.txt")
 	if err != nil {
 		return nil, err
 	}

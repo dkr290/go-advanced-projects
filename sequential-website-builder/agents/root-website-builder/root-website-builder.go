@@ -12,17 +12,17 @@ import (
 	"google.golang.org/adk/agent/workflowagents/sequentialagent"
 )
 
-func SequentialAgent() (agent.Agent, error) {
-	codeWriterAgent, err := codewriter.CodeWriterAgent("APIKEY")
+func SequentialAgent(apiKey string) (agent.Agent, error) {
+	codeWriterAgent, err := codewriter.CodeWriterAgent(apiKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create code writer agent: %v", err)
 	}
 
-	designerAgent, err := designer.Designer("APIKEY")
+	designerAgent, err := designer.Designer(apiKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create code writer agent: %v", err)
 	}
-	requrenmentsWriterAgent, err := requirementswriter.Writer("apikey")
+	requrenmentsWriterAgent, err := requirementswriter.Writer(apiKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create code writer agent: %v", err)
 	}
