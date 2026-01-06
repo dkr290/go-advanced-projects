@@ -5,60 +5,72 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"google.golang.org/adk/tool"
+	"google.golang.org/adk/tool/functiontool"
 )
 
-// FileWriterResult represents the response structure of the tool
-type FileWriterResult struct {
-	Status string `json:"status"`
-	File   string `json:"file"`
-}
-type FileWriteTool struct{}
-
-func (FileWriteTool) Name() string {
-	return "file_write"
+// FileWriteArgs defines the input parameters for the file write tool
+type FileWriteArgs struct {
+	Content string `json:"content" description:"The HTML content to write to a file"`
 }
 
-func (FileWriteTool) Description() string {
-	return "Writes content to a file and returns the path"
+// FileWriteResult defines the output of the file write tool
+type FileWriteResult struct {
+	Status string `json:"status" description:"Status of the operation (success or error)"`
+	File   string `json:"file"   description:"Path to the created file"`
 }
 
-func (FileWriteTool) IsLongRunning() bool {
-	return false
-}
+// NewFileWriteTool creates a new file write tool using functiontool
+func NewFileWriteTool() (tool.Tool, error) {
+	handler := func(ctx tool.Context, input FileWriteArgs) (FileWriteResult, error) {
+		fmt.Printf("[DEBUG] FileWriteTool called with content length: %d\n", len(input.Content))
+		root, err := os.Getwd()
+		if err != nil {
+			fmt.Printf("[DEBUG] Failed to get working directory: %v\n", err)
+			return FileWriteResult{
+					Status: "error",
+				}, fmt.Errorf(
+					"failed to get working directory: %w",
+					err,
+				)
+		}
+		fmt.Printf("[DEBUG] Current working directory: %s\n", root)
 
-func (w *FileWriteTool) FileWriteTool(
-	content string,
-) (FileWriterResult, error) {
-	root, err := os.Getwd()
-	if err != nil {
-		return FileWriterResult{Status: "error"}, err
+		outputDir := filepath.Join(root, "output")
+		fmt.Printf("[DEBUG] Output directory: %s\n", outputDir)
+		err = os.MkdirAll(outputDir, 0o755)
+		if err != nil {
+			fmt.Printf("[DEBUG] Failed to create output directory: %v\n", err)
+			return FileWriteResult{
+					Status: "error",
+				}, fmt.Errorf(
+					"failed to create output directory: %w",
+					err,
+				)
+		}
+
+		timestamp := time.Now().Format("060102_150405")
+		filename := fmt.Sprintf("%s_generated_page.html", timestamp)
+		filePath := filepath.Join(outputDir, filename)
+
+		fmt.Printf("[DEBUG] Writing file: %s\n", filePath)
+		fmt.Printf("[DEBUG] Content preview (first 100 chars): %.100s\n", input.Content)
+
+		err = os.WriteFile(filePath, []byte(input.Content), 0o644)
+		if err != nil {
+			fmt.Printf("[DEBUG] Failed to write file: %v\n", err)
+			return FileWriteResult{Status: "error"}, fmt.Errorf("failed to write file: %w", err)
+		}
+		fmt.Printf("[DEBUG] File written successfully: %s\n", filePath)
+		return FileWriteResult{
+			Status: "success",
+			File:   filePath,
+		}, nil
 	}
 
-	outputDir := filepath.Join(root, "output")
-
-	// Ensure the "output" directory exists.
-	// 0755 is standard permissions (drwxr-xr-x)
-	err = os.MkdirAll(outputDir, 0o755)
-	if err != nil {
-		return FileWriterResult{Status: "error"}, fmt.Errorf("failed to create directory: %w", err)
-	}
-
-	// Get current time formatted as YYMMDD_HHMMSS
-	timestamp := time.Now().Format("060102_150405")
-
-	// Construct the filename
-	filename := fmt.Sprintf("%s_generated_page.html", timestamp)
-	filePath := filepath.Join(outputDir, filename)
-
-	// Write the content to the file.
-	// 0644 gives read/write to owner and read-only to others.
-	err = os.WriteFile(filePath, []byte(content), 0o644)
-	if err != nil {
-		return FileWriterResult{Status: "error"}, fmt.Errorf("failed to write file: %w", err)
-	}
-
-	return FileWriterResult{
-		Status: "success",
-		File:   filePath,
-	}, nil
+	return functiontool.New(functiontool.Config{
+		Name:        "file_write",
+		Description: "Writes HTML content to a file in the output directory and returns the file path",
+	}, handler)
 }

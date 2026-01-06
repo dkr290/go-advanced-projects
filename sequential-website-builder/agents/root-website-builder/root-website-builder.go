@@ -20,14 +20,14 @@ func SequentialAgent(apiKey string) (agent.Agent, error) {
 
 	designerAgent, err := designer.Designer(apiKey)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create code writer agent: %v", err)
+		return nil, fmt.Errorf("failed to create designer writer agent: %v", err)
 	}
-	requrenmentsWriterAgent, err := requirementswriter.Writer(apiKey)
+	requirenmentsWriterAgent, err := requirementswriter.Writer(apiKey)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create code writer agent: %v", err)
+		return nil, fmt.Errorf("failed to create requirements writer agent: %v", err)
 	}
 
-	desc, err := utils.LoadInstructionsFile("./description.txt")
+	desc, err := utils.LoadInstructionsFile("./agents/root-website-builder/description.txt")
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +37,7 @@ func SequentialAgent(apiKey string) (agent.Agent, error) {
 			Name:        "root_website_builder_agent",
 			Description: desc,
 			SubAgents: []agent.Agent{
-				requrenmentsWriterAgent,
+				requirenmentsWriterAgent,
 				designerAgent,
 				codeWriterAgent,
 			},

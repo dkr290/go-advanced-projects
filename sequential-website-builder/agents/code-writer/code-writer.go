@@ -30,6 +30,10 @@ func CodeWriterAgent(APIKey string) (agent.Agent, error) {
 	if err != nil {
 		return nil, err
 	}
+	fileWriteTool, err := tools.NewFileWriteTool()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create file write tool: %v", err)
+	}
 
 	agent, err := llmagent.New(llmagent.Config{
 		Name:        "code_writer_agent",
@@ -37,7 +41,7 @@ func CodeWriterAgent(APIKey string) (agent.Agent, error) {
 		Description: desc,
 		Instruction: instr,
 		Tools: []tool.Tool{
-			tools.FileWriteTool{}, // The actual Go function
+			fileWriteTool,
 		},
 		// instruction and tools will be added next
 	})

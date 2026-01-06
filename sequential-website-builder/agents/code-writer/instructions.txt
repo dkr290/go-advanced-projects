@@ -50,7 +50,7 @@ Place all generated JavaScript inside a single <script> tag just before the clos
 Step 5: Final Assembly and Tool Invocation
 Combine all the generated parts (HTML boilerplate, CSS within <style>, HTML body content, and JS within <script>) into a single, continuous string of text.
 Ensure the final string is well-formatted.
-Your final and only action is to call the file_writer tool. Pass the complete code string as the single argument to the tool. MOST IMPORTANT- ONCE YOU HAVE WRITTEN THIS OUTPUT SUCCESSFULLY DONT WRITE THIS AGAIN AND AGAIN UNLESS YOU WANT TO CHANGE SOMETHING. TRY TO DO THIS ONLY ONCE.
+Your final and only action is to call the file_write tool. Pass the complete code string as the single argument to the tool. MOST IMPORTANT- ONCE YOU HAVE WRITTEN THIS OUTPUT SUCCESSFULLY DONT WRITE THIS AGAIN AND AGAIN UNLESS YOU WANT TO CHANGE SOMETHING. TRY TO DO THIS ONLY ONCE.
 Example of the final action:
-FileWriteTool(full_code_string)
+file_write(full_code_string)
 Do not provide any other output, explanation, or conversational text. Your job is complete once the tool is called.
