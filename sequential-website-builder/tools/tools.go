@@ -12,13 +12,13 @@ import (
 
 // FileWriteArgs defines the input parameters for the file write tool
 type FileWriteArgs struct {
-	Content string `json:"content" description:"The HTML content to write to a file"`
+	Content string `json:"content"` // The HTML content to write to a file
 }
 
 // FileWriteResult defines the output of the file write tool
 type FileWriteResult struct {
-	Status string `json:"status" description:"Status of the operation (success or error)"`
-	File   string `json:"file"   description:"Path to the created file"`
+	Status string `json:"status"` // Status of the operation (success or error)
+	File   string `json:"file"`   // Path to the created file
 }
 
 // fileWriteHandler handles the file writing logic
@@ -50,7 +50,11 @@ func fileWriteHandler(ctx tool.Context, input FileWriteArgs) (FileWriteResult, e
 	filePath := filepath.Join(outputDir, filename)
 
 	fmt.Printf("[DEBUG] Writing file: %s\n", filePath)
-	fmt.Printf("[DEBUG] Content preview (first 100 chars): %.100s\n", input.Content)
+	if len(input.Content) > 100 {
+		fmt.Printf("[DEBUG] Content preview (first 100 chars): %.100s\n", input.Content)
+	} else {
+		fmt.Printf("[DEBUG] Content: %s\n", input.Content)
+	}
 
 	err = os.WriteFile(filePath, []byte(input.Content), 0o644)
 	if err != nil {
@@ -65,9 +69,16 @@ func fileWriteHandler(ctx tool.Context, input FileWriteArgs) (FileWriteResult, e
 	}, nil
 }
 
+// NewFileWriteTool creates a new file write tool using functiontool
 func NewFileWriteTool() (tool.Tool, error) {
-	return functiontool.New(functiontool.Config{
+	tool, err := functiontool.New(functiontool.Config{
 		Name:        "file_write",
-		Description: "Writes HTML content to a file in the output directory and returns the file path",
+		Description: "Writes HTML content to a file in the output directory and returns the file path. Call this tool with the complete HTML code as a string.",
 	}, fileWriteHandler)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create file_write tool: %w", err)
+	}
+
+	fmt.Println("[DEBUG] file_write tool created successfully")
+	return tool, nil
 }
