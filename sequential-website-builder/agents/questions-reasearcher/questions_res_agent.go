@@ -1,0 +1,149 @@
+package questionsreasearcher
+
+import (
+	"context"
+	"fmt"
+
+	"seq-website-builder/conf"
+	"seq-website-builder/utils"
+
+	"google.golang.org/adk/agent"
+	"google.golang.org/adk/agent/llmagent"
+	"google.golang.org/adk/agent/workflowagents/parallelagent"
+	"google.golang.org/adk/model/gemini"
+	"google.golang.org/adk/tool"
+	"google.golang.org/adk/tool/geminitool"
+	"google.golang.org/genai"
+)
+
+func QuestionResearcher(c conf.Config, mdl string) (agent.Agent, error) {
+	model, err := gemini.NewModel(context.Background(), mdl, &genai.ClientConfig{
+		APIKey: c.APIKey,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create model: %v", err)
+	}
+
+	desc, err := utils.LoadInstructionsFile("./agents/designer/description.txt")
+	if err != nil {
+		return nil, err
+	}
+	instr, err := utils.LoadInstructionsFile("./agents/designer/instructions.txt")
+	if err != nil {
+		return nil, err
+	}
+
+	researcher1, err := llmagent.New(llmagent.Config{
+		Name:  "QuestionResearcher1",
+		Model: model,
+		Instruction: fmt.Sprintf(
+			"You are assigned to answer QUESTION NUMBER 1 only\n\n%s",
+			instr,
+		),
+		Description: fmt.Sprintf(
+			"%s This agent specifically handles question #1.",
+			desc,
+		),
+		OutputKey: "question1_research_output",
+		Tools: []tool.Tool{
+			geminitool.GoogleSearch{},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	researcher2, err := llmagent.New(llmagent.Config{
+		Name:  "QuestionResearcher2",
+		Model: model,
+		Instruction: fmt.Sprintf(
+			"You are assigned to answer QUESTION NUMBER 2 only\n\n%s",
+			instr,
+		),
+		Description: fmt.Sprintf(
+			"%s This agent specifically handles question #2.",
+			desc,
+		),
+		OutputKey: "question2_research_output",
+		Tools: []tool.Tool{
+			geminitool.GoogleSearch{},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	researcher3, err := llmagent.New(llmagent.Config{
+		Name:  "QuestionResearcher3",
+		Model: model,
+		Instruction: fmt.Sprintf(
+			"You are assigned to answer QUESTION NUMBER 3 only\n\n%s",
+			instr,
+		),
+		Description: fmt.Sprintf(
+			"%s This agent specifically handles question #3.",
+			desc,
+		),
+		OutputKey: "questionr3_research_output",
+		Tools: []tool.Tool{
+			geminitool.GoogleSearch{},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	researcher4, err := llmagent.New(llmagent.Config{
+		Name:  "QuestionResearcher4",
+		Model: model,
+		Instruction: fmt.Sprintf(
+			"You are assigned to answer QUESTION NUMBER 4 only\n\n%s",
+			instr,
+		),
+		Description: fmt.Sprintf(
+			"%s This agent specifically handles question #4.",
+			desc,
+		),
+		OutputKey: "question4_research_output",
+		Tools: []tool.Tool{
+			geminitool.GoogleSearch{},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	researcher5, err := llmagent.New(llmagent.Config{
+		Name:  "QuestionResearcher5",
+		Model: model,
+		Instruction: fmt.Sprintf(
+			"You are assigned to answer QUESTION NUMBER 5 only\n\n%s",
+			instr,
+		),
+		Description: fmt.Sprintf(
+			"%s This agent specifically handles question #5.",
+			desc,
+		),
+		OutputKey: "question5_research_output",
+		Tools: []tool.Tool{
+			geminitool.GoogleSearch{},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	parallelResearchAgent, err := parallelagent.New(parallelagent.Config{
+		AgentConfig: agent.Config{
+			Name:        "ParallelQuestionsResearchAgent",
+			Description: "Runs five question research agents in parallel to research and answer all five questions simultaneously.",
+			SubAgents: []agent.Agent{
+				researcher1,
+				researcher2,
+				researcher3,
+				researcher4,
+				researcher5,
+			},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create parallel agent: %v", err)
+	}
+	return parallelResearchAgent, nil
+}
