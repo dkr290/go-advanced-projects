@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 
+	"seq-website-builder/conf"
 	"seq-website-builder/utils"
 
 	"google.golang.org/adk/agent"
@@ -13,9 +14,9 @@ import (
 	"google.golang.org/genai"
 )
 
-func Designer(APIKey string) (agent.Agent, error) {
-	model, err := gemini.NewModel(context.Background(), "gemini-2.5-flash", &genai.ClientConfig{
-		APIKey: APIKey,
+func Designer(c conf.Config, mdl string) (agent.Agent, error) {
+	model, err := gemini.NewModel(context.Background(), mdl, &genai.ClientConfig{
+		APIKey: c.APIKey,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create model: %v", err)

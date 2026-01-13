@@ -15,7 +15,8 @@ import (
 
 func main() {
 	conf := conf.LoadConfig()
-	rootAgent, err := rootwebsitebuilder.SequentialAgent(conf.APIKey)
+	wb := rootwebsitebuilder.NewBuilderAgent(*conf)
+	rootAgent, err := wb.SequentialAgent()
 	if err != nil {
 		log.Fatalf("Agent failed %v", err)
 	}

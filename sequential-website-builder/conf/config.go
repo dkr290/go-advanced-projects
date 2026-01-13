@@ -4,10 +4,12 @@ package conf
 import (
 	"log"
 	"os"
+	"strings"
 )
 
 type Config struct {
 	APIKey string
+	Models []string
 }
 
 func LoadConfig() *Config {
@@ -23,6 +25,10 @@ func (c *Config) GetFlags() {
 	if c.APIKey == "" {
 		log.Fatalln("API_KEY is missing and needs to be set as env")
 	}
+	c.Models = getModels()
+	if len(c.Models) == 0 {
+		log.Fatalln("MODELS is missing and needs to be set as env")
+	}
 }
 
 func getEnv(key string) string {
@@ -30,4 +36,16 @@ func getEnv(key string) string {
 		return value
 	}
 	return ""
+}
+
+func getModels() []string {
+	val := os.Getenv("MODELS")
+	if val == "" {
+		return []string{"gemini-2.0-flash"}
+	}
+	models := strings.Split(val, ",")
+	for i := range models {
+		models[i] = strings.TrimSpace(models[i])
+	}
+	return models
 }
