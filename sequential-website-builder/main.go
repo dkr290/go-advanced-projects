@@ -4,9 +4,11 @@ import (
 	"context"
 	"log"
 	"os"
+	"strconv"
 
 	rootwebsitebuilder "seq-website-builder/agents/root-website-builder"
 	"seq-website-builder/conf"
+	"seq-website-builder/utils"
 
 	"google.golang.org/adk/agent"
 	"google.golang.org/adk/cmd/launcher"
@@ -15,7 +17,14 @@ import (
 
 func main() {
 	conf := conf.LoadConfig()
-	wb := rootwebsitebuilder.NewBuilderAgent(*conf)
+
+	b, err := strconv.ParseBool(conf.Debug)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	llogger := utils.Init(b)
+	wb := rootwebsitebuilder.NewBuilderAgent(*conf, *llogger)
 	rootAgent, err := wb.SequentialAgent()
 	if err != nil {
 		log.Fatalf("Agent failed %v", err)

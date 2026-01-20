@@ -3,6 +3,7 @@ module seq-website-builder
 go 1.25.5
 
 require (
+	github.com/sirupsen/logrus v1.9.4
 	google.golang.org/adk v0.3.0
 	google.golang.org/genai v1.40.0
 )

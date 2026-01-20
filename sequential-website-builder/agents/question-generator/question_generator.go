@@ -16,22 +16,26 @@ import (
 	"google.golang.org/genai"
 )
 
-func QuestionGenerator(c conf.Config, mdl string) (agent.Agent, error) {
+func QuestionGenerator(c conf.Config, mdl string, l utils.Logger) (agent.Agent, error) {
 	model, err := gemini.NewModel(context.Background(), mdl, &genai.ClientConfig{
 		APIKey: c.APIKey,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create model: %v", err)
 	}
+	l.Logging.Debugf("Using model %s", mdl)
 
-	desc, err := utils.LoadInstructionsFile("./agents/designer/description.txt")
+	desc, err := utils.LoadInstructionsFile("./agents/question-generator/description.txt")
 	if err != nil {
 		return nil, err
 	}
-	instr, err := utils.LoadInstructionsFile("./agents/designer/instructions.txt")
+	l.Logging.Debug("Loading description")
+
+	instr, err := utils.LoadInstructionsFile("./agents/question-generator/instructions.txt")
 	if err != nil {
 		return nil, err
 	}
+	l.Logging.Debug("Loading instructions")
 
 	agent, err := llmagent.New(llmagent.Config{
 		Name:        "questions_generator_agent",
@@ -44,7 +48,7 @@ func QuestionGenerator(c conf.Config, mdl string) (agent.Agent, error) {
 		},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error constructing the designer agent %v", err)
+		return nil, fmt.Errorf("error constructing the question generator %v", err)
 	}
 
 	return agent, nil

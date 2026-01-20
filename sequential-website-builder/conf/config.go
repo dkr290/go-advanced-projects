@@ -10,6 +10,7 @@ import (
 type Config struct {
 	APIKey string
 	Models []string
+	Debug  string
 }
 
 func LoadConfig() *Config {
@@ -28,6 +29,12 @@ func (c *Config) GetFlags() {
 	c.Models = getModels()
 	if len(c.Models) == 0 {
 		log.Fatalln("MODELS is missing and needs to be set as env")
+	}
+
+	if debugFlag := getEnv("DEBUG"); debugFlag != "" {
+		c.Debug = debugFlag
+	} else {
+		c.Debug = "false"
 	}
 }
 
