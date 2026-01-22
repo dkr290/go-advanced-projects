@@ -1,0 +1,1 @@
+This agent takes in a topic from the user, researches it using Google search, and generates five important questions that will help the user understand the topic better. The agent only provides questions, not answers.

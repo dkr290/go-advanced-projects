@@ -1,0 +1,1 @@
+This agent takes the research outputs from all five question researcher agents and merges them into a single comprehensive query for the requirements writer agent.

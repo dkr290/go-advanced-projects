@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 
-	"seq-website-builder/conf"
 	"seq-website-builder/utils"
 
 	"google.golang.org/adk/agent"
@@ -14,15 +13,12 @@ import (
 	"google.golang.org/genai"
 )
 
-func Writer(c conf.Config, mdl string) (agent.Agent, error) {
-	model, err := gemini.NewModel(context.Background(), mdl, &genai.ClientConfig{
-		APIKey: c.APIKey,
+func Writer(APIKey string) (agent.Agent, error) {
+	model, err := gemini.NewModel(context.Background(), "gemini-2.5-flash", &genai.ClientConfig{
+		APIKey: APIKey,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create model: %v", err)
-	}
-	if model == nil {
-		return nil, fmt.Errorf("gemini.NewModel returned nil model without error (mdl=%q)", mdl)
 	}
 
 	desc, err := utils.LoadInstructionsFile("./agents/requirements-writer/description.txt")
@@ -44,9 +40,6 @@ func Writer(c conf.Config, mdl string) (agent.Agent, error) {
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error constructing the agent %v", err)
-	}
-	if agent == nil {
-		return nil, fmt.Errorf("llmagent.New returned nil agent without error")
 	}
 
 	return agent, nil
