@@ -71,63 +71,6 @@ func QuestionResearcher(APIKey string) (agent.Agent, error) {
 	if err != nil {
 		return nil, err
 	}
-	researcher3, err := llmagent.New(llmagent.Config{
-		Name:  "QuestionResearcher3",
-		Model: model,
-		Instruction: fmt.Sprintf(
-			"You are assigned to answer QUESTION NUMBER 3 only\n\n%s",
-			instr,
-		),
-		Description: fmt.Sprintf(
-			"%s This agent specifically handles question #3.",
-			desc,
-		),
-		OutputKey: "question_3_research_output",
-		Tools: []tool.Tool{
-			geminitool.GoogleSearch{},
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-	researcher4, err := llmagent.New(llmagent.Config{
-		Name:  "QuestionResearcher4",
-		Model: model,
-		Instruction: fmt.Sprintf(
-			"You are assigned to answer QUESTION NUMBER 4 only\n\n%s",
-			instr,
-		),
-		Description: fmt.Sprintf(
-			"%s This agent specifically handles question #4.",
-			desc,
-		),
-		OutputKey: "question_4_research_output",
-		Tools: []tool.Tool{
-			geminitool.GoogleSearch{},
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-	researcher5, err := llmagent.New(llmagent.Config{
-		Name:  "QuestionResearcher5",
-		Model: model,
-		Instruction: fmt.Sprintf(
-			"You are assigned to answer QUESTION NUMBER 5 only\n\n%s",
-			instr,
-		),
-		Description: fmt.Sprintf(
-			"%s This agent specifically handles question #5.",
-			desc,
-		),
-		OutputKey: "question_5_research_output",
-		Tools: []tool.Tool{
-			geminitool.GoogleSearch{},
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
 
 	parallelResearchAgent, err := parallelagent.New(parallelagent.Config{
 		AgentConfig: agent.Config{
@@ -136,9 +79,6 @@ func QuestionResearcher(APIKey string) (agent.Agent, error) {
 			SubAgents: []agent.Agent{
 				researcher1,
 				researcher2,
-				researcher3,
-				researcher4,
-				researcher5,
 			},
 		},
 	})

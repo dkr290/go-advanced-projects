@@ -59,8 +59,5 @@ Your response should be formatted as:
 
 1. [First question]
 2. [Second question]
-3. [Third question]
-4. [Fourth question]
-5. [Fifth question]
 
 Remember: Provide only the five questions. Do not include any introductory text, explanations, or additional commentary.
