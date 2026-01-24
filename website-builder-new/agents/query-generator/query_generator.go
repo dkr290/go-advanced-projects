@@ -13,7 +13,7 @@ import (
 )
 
 func QueryGenerator(APIKey string) (agent.Agent, error) {
-	model, err := gemini.NewModel(context.Background(), "gemini-2.5-flash", &genai.ClientConfig{
+	model, err := gemini.NewModel(context.Background(), "gemini-3-pro-preview", &genai.ClientConfig{
 		APIKey: APIKey,
 	})
 	if err != nil {

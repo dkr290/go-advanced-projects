@@ -6,5 +6,5 @@ if [ -z "$API_KEY" ]; then
 fi
 
 export API_KEY
-go run main.go web api -sse-write-timeout=10m a2a webui
+go run main.go web api webui
  

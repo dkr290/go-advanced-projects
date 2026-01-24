@@ -37,14 +37,14 @@ func QuestionResearcher(APIKey string) (agent.Agent, error) {
 		Name:  "QuestionResearcher1",
 		Model: model,
 		Instruction: fmt.Sprintf(
-			"You are assigned to answer QUESTION NUMBER 1 only\n\n%s",
+			"You are assigned to answer QUESTION NUMBER 1 only.\n\n%s",
 			instr,
 		),
 		Description: fmt.Sprintf(
 			"%s This agent specifically handles question #1.",
 			desc,
 		),
-		OutputKey: "question1_research_output",
+		OutputKey: "question_1_research_output",
 		Tools: []tool.Tool{
 			geminitool.GoogleSearch{},
 		},
@@ -56,14 +56,14 @@ func QuestionResearcher(APIKey string) (agent.Agent, error) {
 		Name:  "QuestionResearcher2",
 		Model: model,
 		Instruction: fmt.Sprintf(
-			"You are assigned to answer QUESTION NUMBER 2 only\n\n%s",
+			"You are assigned to answer QUESTION NUMBER 2 only.\n\n%s",
 			instr,
 		),
 		Description: fmt.Sprintf(
 			"%s This agent specifically handles question #2.",
 			desc,
 		),
-		OutputKey: "question2_research_output",
+		OutputKey: "question_2_research_output",
 		Tools: []tool.Tool{
 			geminitool.GoogleSearch{},
 		},
@@ -82,7 +82,7 @@ func QuestionResearcher(APIKey string) (agent.Agent, error) {
 			"%s This agent specifically handles question #3.",
 			desc,
 		),
-		OutputKey: "questionr3_research_output",
+		OutputKey: "question_3_research_output",
 		Tools: []tool.Tool{
 			geminitool.GoogleSearch{},
 		},
@@ -101,7 +101,7 @@ func QuestionResearcher(APIKey string) (agent.Agent, error) {
 			"%s This agent specifically handles question #4.",
 			desc,
 		),
-		OutputKey: "question4_research_output",
+		OutputKey: "question_4_research_output",
 		Tools: []tool.Tool{
 			geminitool.GoogleSearch{},
 		},
@@ -120,7 +120,7 @@ func QuestionResearcher(APIKey string) (agent.Agent, error) {
 			"%s This agent specifically handles question #5.",
 			desc,
 		),
-		OutputKey: "question5_research_output",
+		OutputKey: "question_5_research_output",
 		Tools: []tool.Tool{
 			geminitool.GoogleSearch{},
 		},
