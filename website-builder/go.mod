@@ -1,4 +1,4 @@
-module seq-website-builder
+module website-builder
 
 go 1.25.5
 

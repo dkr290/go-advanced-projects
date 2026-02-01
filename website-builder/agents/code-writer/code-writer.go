@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"seq-website-builder/tools"
-	"seq-website-builder/utils"
+	"website-builder/tools"
+	"website-builder/utils"
 
 	"google.golang.org/adk/agent"
 	"google.golang.org/adk/agent/llmagent"
@@ -14,8 +14,8 @@ import (
 	"google.golang.org/genai"
 )
 
-func CodeWriterAgent(APIKey string) (agent.Agent, error) {
-	model, err := gemini.NewModel(context.Background(), "gemini-2.5-flash", &genai.ClientConfig{
+func CodeWriterAgent(APIKey, m string) (agent.Agent, error) {
+	model, err := gemini.NewModel(context.Background(), m, &genai.ClientConfig{
 		APIKey: APIKey,
 	})
 	if err != nil {

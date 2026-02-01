@@ -5,8 +5,8 @@ import (
 	"log"
 	"os"
 
-	rootwebsitebuilder "seq-website-builder/agents/root-website-builder"
-	"seq-website-builder/conf"
+	rootwebsitebuilder "website-builder/agents/root-website-builder"
+	"website-builder/conf"
 
 	"google.golang.org/adk/agent"
 	"google.golang.org/adk/cmd/launcher"
@@ -15,7 +15,11 @@ import (
 
 func main() {
 	conf := conf.LoadConfig()
-	rootAgent, err := rootwebsitebuilder.SequentialAgent(conf.APIKey)
+	rootWebsiteBuilder, err := rootwebsitebuilder.NewRootBulder(*conf)
+	if err != nil {
+		log.Fatalf("Unable to call root website buidler %v", err)
+	}
+	rootAgent, err := rootWebsiteBuilder.SequentialAgent()
 	if err != nil {
 		log.Fatalf("Agent failed %v", err)
 	}
