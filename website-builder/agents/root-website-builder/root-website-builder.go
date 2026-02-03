@@ -6,6 +6,7 @@ import (
 
 	"website-builder/agents/designer"
 	"website-builder/conf"
+	"website-builder/logs"
 	"website-builder/utils"
 
 	codewriter "website-builder/agents/code-writer"
@@ -62,16 +63,18 @@ func tryModel(apiKey, model string) error {
 }
 
 func (r *RootWebsite) SequentialAgent() (agent.Agent, error) {
-	codeWriterAgent, err := codewriter.CodeWriterAgent(r.conf.APIKey, r.model)
+	llogger := logs.Init(r.conf.Debug)
+
+	codeWriterAgent, err := codewriter.CodeWriterAgent(r.conf.APIKey, r.model, llogger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create code writer agent: %v", err)
 	}
 
-	designerAgent, err := designer.Designer(r.conf.APIKey, r.model)
+	designerAgent, err := designer.Designer(r.conf.APIKey, r.model, llogger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create designer writer agent: %v", err)
 	}
-	requirenmentsWriterAgent, err := requirementswriter.Writer(r.conf.APIKey, r.model)
+	requirenmentsWriterAgent, err := requirementswriter.Writer(r.conf.APIKey, r.model, llogger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create requirements writer agent: %v", err)
 	}

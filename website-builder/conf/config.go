@@ -4,12 +4,14 @@ package conf
 import (
 	"log"
 	"os"
+	"strconv"
 	"strings"
 )
 
 type Config struct {
 	APIKey string
 	Models []string
+	Debug  bool
 }
 
 func LoadConfig() *Config {
@@ -31,6 +33,14 @@ func (c *Config) GetFlags() {
 		log.Fatalln("Need models like gemini-2.5-flash in comma separate list for failback")
 	}
 	c.Models = strings.Split(models, ",")
+
+	if debugFl := getEnv("DEBUG"); debugFl != "" {
+		if debug, err := strconv.ParseBool(debugFl); err == nil {
+			c.Debug = debug
+		}
+	} else {
+		c.Debug = false
+	}
 }
 
 func getEnv(key string) string {

@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 
+	"website-builder/logs"
 	"website-builder/utils"
 
 	"google.golang.org/adk/agent"
@@ -13,7 +14,7 @@ import (
 	"google.golang.org/genai"
 )
 
-func Designer(APIKey, m string) (agent.Agent, error) {
+func Designer(APIKey, m string, lloger *logs.Logger) (agent.Agent, error) {
 	model, err := gemini.NewModel(context.Background(), m, &genai.ClientConfig{
 		APIKey: APIKey,
 	})
