@@ -21,15 +21,22 @@ func Designer(APIKey, m string, lloger *logs.Logger) (agent.Agent, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create model: %v", err)
 	}
+	lloger.Logging.Debugf("Loaded the model %s", model.Name())
+
+	lloger.Logging.Debugln("Loading the description file")
 
 	desc, err := utils.LoadInstructionsFile("./agents/designer/description.txt")
 	if err != nil {
 		return nil, err
 	}
+
+	lloger.Logging.Debugln("Loading the instruction file")
+
 	instr, err := utils.LoadInstructionsFile("./agents/designer/instructions.txt")
 	if err != nil {
 		return nil, err
 	}
+	lloger.Logging.Debugln("Running the designer agent")
 
 	agent, err := llmagent.New(llmagent.Config{
 		Name:        "designer_agent",

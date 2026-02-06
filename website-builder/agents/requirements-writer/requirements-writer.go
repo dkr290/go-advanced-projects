@@ -21,15 +21,23 @@ func Writer(APIKey, m string, lloger *logs.Logger) (agent.Agent, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create model: %v", err)
 	}
+	lloger.Logging.Debugf("Loaded the model %s", model.Name())
+
+	lloger.Logging.Debugln("Loading the description file")
 
 	desc, err := utils.LoadInstructionsFile("./agents/requirements-writer/description.txt")
 	if err != nil {
 		return nil, err
 	}
+
+	lloger.Logging.Debugln("Loading the instruction file")
+
 	instr, err := utils.LoadInstructionsFile("./agents/requirements-writer/instructions.txt")
 	if err != nil {
 		return nil, err
 	}
+
+	lloger.Logging.Debugln("Running the requirements agent")
 
 	agent, err := llmagent.New(llmagent.Config{
 		Name:        "requirements_writer_agent",

@@ -22,7 +22,7 @@ func CodeWriterAgent(APIKey, m string, lloger *logs.Logger) (agent.Agent, error)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create model: %v", err)
 	}
-	lloger.Logging.Debugf("Loading the model %s", model.Name())
+	lloger.Logging.Debugf("Loaded the model %s", model.Name())
 
 	lloger.Logging.Debugln("Loading the description file")
 	desc, err := utils.LoadInstructionsFile("./agents/code-writer/description.txt")
