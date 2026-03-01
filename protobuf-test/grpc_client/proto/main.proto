@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package calculator;
+
+import "greeter.proto";
+
+option go_package = "/proto/gen;mainpipb";
+
+service CalculateService {
+  rpc Add(AddRequest) returns (AddResponse);
+}
+
+service GreeterService {
+  rpc Greet(GreetRequest) returns (GreetResponse);
+}
+
+message AddRequest {
+  int32 a = 1;
+  int32 b = 2;
+}
+
+message AddResponse {
+  int32 sim = 1;
+}
