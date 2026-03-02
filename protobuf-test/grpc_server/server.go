@@ -26,6 +26,23 @@ func (s *server) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, 
 	}, nil
 }
 
+func (s *server) Greet(ctx context.Context, req *pb.GreetRequest) (*pb.GreetResponse, error) {
+	log.Println("Received greet request")
+	return &pb.GreetResponse{
+		Message: fmt.Sprintf("Hello %s.", req.Name),
+	}, nil
+}
+
+func (s *server) BidGoodBye(
+	ctx context.Context,
+	req *fwpb.BidGoodByeRequest,
+) (*fwpb.BidGoodByeResponse, error) {
+	log.Println("Received bidgoodbye request")
+	return &fwpb.BidGoodByeResponse{
+		Message: fmt.Sprintf("%s.", req.Name),
+	}, nil
+}
+
 func main() {
 	port := ":50051"
 	cert := "cert.pem"

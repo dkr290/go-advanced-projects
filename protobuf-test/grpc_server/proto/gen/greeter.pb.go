@@ -21,6 +21,94 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type BidGoodByeRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BidGoodByeRequest) Reset() {
+	*x = BidGoodByeRequest{}
+	mi := &file_greeter_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BidGoodByeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BidGoodByeRequest) ProtoMessage() {}
+
+func (x *BidGoodByeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_greeter_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BidGoodByeRequest.ProtoReflect.Descriptor instead.
+func (*BidGoodByeRequest) Descriptor() ([]byte, []int) {
+	return file_greeter_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *BidGoodByeRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type BidGoodByeResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BidGoodByeResponse) Reset() {
+	*x = BidGoodByeResponse{}
+	mi := &file_greeter_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BidGoodByeResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BidGoodByeResponse) ProtoMessage() {}
+
+func (x *BidGoodByeResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_greeter_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BidGoodByeResponse.ProtoReflect.Descriptor instead.
+func (*BidGoodByeResponse) Descriptor() ([]byte, []int) {
+	return file_greeter_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *BidGoodByeResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
 type GreetRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
@@ -30,7 +118,7 @@ type GreetRequest struct {
 
 func (x *GreetRequest) Reset() {
 	*x = GreetRequest{}
-	mi := &file_greeter_proto_msgTypes[0]
+	mi := &file_greeter_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -42,7 +130,7 @@ func (x *GreetRequest) String() string {
 func (*GreetRequest) ProtoMessage() {}
 
 func (x *GreetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_greeter_proto_msgTypes[0]
+	mi := &file_greeter_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -55,7 +143,7 @@ func (x *GreetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GreetRequest.ProtoReflect.Descriptor instead.
 func (*GreetRequest) Descriptor() ([]byte, []int) {
-	return file_greeter_proto_rawDescGZIP(), []int{0}
+	return file_greeter_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GreetRequest) GetName() string {
@@ -74,7 +162,7 @@ type GreetResponse struct {
 
 func (x *GreetResponse) Reset() {
 	*x = GreetResponse{}
-	mi := &file_greeter_proto_msgTypes[1]
+	mi := &file_greeter_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -86,7 +174,7 @@ func (x *GreetResponse) String() string {
 func (*GreetResponse) ProtoMessage() {}
 
 func (x *GreetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_greeter_proto_msgTypes[1]
+	mi := &file_greeter_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -99,7 +187,7 @@ func (x *GreetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GreetResponse.ProtoReflect.Descriptor instead.
 func (*GreetResponse) Descriptor() ([]byte, []int) {
-	return file_greeter_proto_rawDescGZIP(), []int{1}
+	return file_greeter_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GreetResponse) GetMessage() string {
@@ -114,11 +202,18 @@ var File_greeter_proto protoreflect.FileDescriptor
 const file_greeter_proto_rawDesc = "" +
 	"\n" +
 	"\rgreeter.proto\x12\n" +
-	"calculator\"\"\n" +
+	"calculator\"'\n" +
+	"\x11BidGoodByeRequest\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\".\n" +
+	"\x12BidGoodByeResponse\x12\x18\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage\"\"\n" +
 	"\fGreetRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\")\n" +
 	"\rGreetResponse\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessageB\x15Z\x13/proto/gen;mainpipbb\x06proto3"
+	"\amessage\x18\x01 \x01(\tR\amessage2]\n" +
+	"\x0eAufwiedersehen\x12K\n" +
+	"\n" +
+	"BidGoodBye\x12\x1d.calculator.BidGoodByeRequest\x1a\x1e.calculator.BidGoodByeResponseB\x15Z\x13/proto/gen;mainpipbb\x06proto3"
 
 var (
 	file_greeter_proto_rawDescOnce sync.Once
@@ -132,14 +227,18 @@ func file_greeter_proto_rawDescGZIP() []byte {
 	return file_greeter_proto_rawDescData
 }
 
-var file_greeter_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_greeter_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_greeter_proto_goTypes = []any{
-	(*GreetRequest)(nil),  // 0: calculator.GreetRequest
-	(*GreetResponse)(nil), // 1: calculator.GreetResponse
+	(*BidGoodByeRequest)(nil),  // 0: calculator.BidGoodByeRequest
+	(*BidGoodByeResponse)(nil), // 1: calculator.BidGoodByeResponse
+	(*GreetRequest)(nil),       // 2: calculator.GreetRequest
+	(*GreetResponse)(nil),      // 3: calculator.GreetResponse
 }
 var file_greeter_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
+	0, // 0: calculator.Aufwiedersehen.BidGoodBye:input_type -> calculator.BidGoodByeRequest
+	1, // 1: calculator.Aufwiedersehen.BidGoodBye:output_type -> calculator.BidGoodByeResponse
+	1, // [1:2] is the sub-list for method output_type
+	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -156,9 +255,9 @@ func file_greeter_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_greeter_proto_rawDesc), len(file_greeter_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   4,
 			NumExtensions: 0,
-			NumServices:   0,
+			NumServices:   1,
 		},
 		GoTypes:           file_greeter_proto_goTypes,
 		DependencyIndexes: file_greeter_proto_depIdxs,

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	mainpipb "grpc_client/proto/gen"
+	firewellpb "grpc_client/proto/gen/firewell"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -33,6 +34,8 @@ func main() {
 
 	greeterClient := mainpipb.NewGreeterServiceClient(conn)
 
+	firewClient := firewellpb.NewAufwiedersehenClient(conn)
+
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
@@ -53,9 +56,19 @@ func main() {
 		log.Fatal("Inavalid greet resp", err)
 	}
 
+	goodByeReq := firewellpb.BidGoodByeRequest{
+		Name: "Auf Wiedersehen",
+	}
+
+	goodByeResp, err := firewClient.BidGoodBye(ctx, &goodByeReq)
+	if err != nil {
+		log.Fatal("Cannot say goodbye:", err)
+	}
+
 	log.Println("The sum is:", resp.GetSim())
 
 	log.Println("The greet message is", greetResp.GetMessage())
+	log.Println("Goodbye message is", goodByeResp.GetMessage())
 	state := conn.GetState()
 	log.Println("Connaction state:", state)
 }
