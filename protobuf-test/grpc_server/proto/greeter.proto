@@ -4,17 +4,17 @@ package calculator;
 
 option go_package = "/proto/gen;mainpipb";
 
-service Aufwiedersehen {
-  rpc BidGoodBye(BidGoodByeRequest) returns (BidGoodByeResponse);
-}
-
-message BidGoodByeRequest {
-  string name = 1;
-}
-
-message BidGoodByeResponse {
-  string message = 1;
-}
+// service Aufwiedersehen {
+//   rpc BidGoodBye(BidGoodByeRequest) returns (BidGoodByeResponse);
+// }
+//
+// message BidGoodByeRequest {
+//   string name = 1;
+// }
+//
+// message BidGoodByeResponse {
+//   string message = 1;
+// }
 
 message GreetRequest {
   string name = 1;

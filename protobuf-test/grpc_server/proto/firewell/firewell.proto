@@ -2,9 +2,9 @@ syntax = "proto3";
 
 option go_package = "/proto/gen/firewell;firewellpb";
 
-service Aufwiedersehen {
-  rpc BidGoodBye(BidGoodByeRequest) returns (BidGoodByeResponse);
-}
+// service Aufwiedersehen {
+//   rpc BidGoodBye(BidGoodByeRequest) returns (BidGoodByeResponse);
+// }
 
 message BidGoodByeRequest {
   string name = 1;

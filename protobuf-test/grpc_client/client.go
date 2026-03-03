@@ -34,7 +34,8 @@ func main() {
 
 	greeterClient := mainpipb.NewGreeterServiceClient(conn)
 
-	firewClient := firewellpb.NewAufwiedersehenClient(conn)
+	// firewClient := firewellpb.NewAufwiedersehenClient(conn)
+	firewClient := mainpipb.NewBidFirewellServiceClient(conn)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
@@ -57,7 +58,7 @@ func main() {
 	}
 
 	goodByeReq := firewellpb.BidGoodByeRequest{
-		Name: "Auf Wiedersehen",
+		Name: "Jane",
 	}
 
 	goodByeResp, err := firewClient.BidGoodBye(ctx, &goodByeReq)

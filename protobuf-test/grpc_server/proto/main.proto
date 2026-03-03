@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package calculator;
 
+import "firewell/firewell.proto";
 import "greeter.proto";
 
 option go_package = "/proto/gen;mainpipb";
@@ -12,6 +13,10 @@ service CalculateService {
 
 service GreeterService {
   rpc Greet(GreetRequest) returns (GreetResponse);
+}
+
+service BidFirewellService {
+  rpc BidGoodBye(BidGoodByeRequest) returns (BidGoodByeResponse);
 }
 
 message AddRequest {

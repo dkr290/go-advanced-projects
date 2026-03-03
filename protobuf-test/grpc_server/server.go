@@ -16,7 +16,8 @@ import (
 type server struct {
 	pb.UnimplementedCalculateServiceServer
 	pb.UnimplementedGreeterServiceServer
-	fwpb.UnimplementedAufwiedersehenServer
+	//	fwpb.UnimplementedAufwiedersehenServer
+	pb.UnimplementedBidFirewellServiceServer
 }
 
 func (s *server) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
@@ -61,7 +62,8 @@ func main() {
 	// skipping somehting here
 	pb.RegisterCalculateServiceServer(grpcServer, &server{})
 	pb.RegisterGreeterServiceServer(grpcServer, &server{})
-	fwpb.RegisterAufwiedersehenServer(grpcServer, &server{})
+	// fwpb.RegisterAufwiedersehenServer(grpcServer, &server{})
+	pb.RegisterBidFirewellServiceServer(grpcServer, &server{})
 	fmt.Println("Starting the server on port", port)
 	err = grpcServer.Serve(listen)
 	if err != nil {
