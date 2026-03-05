@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package calculator;
+
+option go_package = "/proto/gen;mainpb";
+
+service CalculatorService {
+  rpc Add(AddRequest) returns (AddResponse);
+  rpc GenerateFibunacci(GenerateFibunacciRequest) returns (stream GenerateFibunacciResponse);
+}
+
+message AddRequest {
+  int32 a = 1;
+  int32 b = 2;
+}
+
+message AddResponse {
+  int32 sum = 1;
+}
+
+message GenerateFibunacciRequest {
+  int32 n = 1;
+}
+
+message GenerateFibunacciResponse {
+  int32 number = 1;
+}
