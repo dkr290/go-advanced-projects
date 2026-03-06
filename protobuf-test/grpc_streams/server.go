@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io"
 	"log"
 	"net"
 	"time"
@@ -27,19 +28,39 @@ func (s *server) GenerateFibunacci(
 		if err != nil {
 			return err
 		}
-		a, b := b, a+b
+		log.Println("send number: ", a)
+		a, b = b, a+b
 		time.Sleep(time.Second)
 	}
 	return nil
 }
 
+func (s *server) SendNumbers(stream mainpb.CalculatorService_SendNumbersServer) error {
+	var sum int32
+	for {
+
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return stream.SendAndClose(&mainpb.SendNumbersResponse{
+				Sum: sum,
+			})
+		}
+		if err != nil {
+			return err
+		}
+		log.Println("Number:", req.GetNumber())
+		sum += req.GetNumber()
+	}
+}
+
 func main() {
-	lis, err := net.Listen("tcp", "50051")
+	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		log.Fatalln(err)
 	}
 	grpcServer := grpc.NewServer()
 	mainpb.RegisterCalculatorServiceServer(grpcServer, &server{})
+	log.Println("The server started")
 	err = grpcServer.Serve(lis)
 	if err != nil {
 		log.Fatalln(err)
