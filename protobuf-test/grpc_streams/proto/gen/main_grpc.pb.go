@@ -22,6 +22,7 @@ const (
 	CalculatorService_Add_FullMethodName               = "/calculator.CalculatorService/Add"
 	CalculatorService_GenerateFibunacci_FullMethodName = "/calculator.CalculatorService/GenerateFibunacci"
 	CalculatorService_SendNumbers_FullMethodName       = "/calculator.CalculatorService/SendNumbers"
+	CalculatorService_Chat_FullMethodName              = "/calculator.CalculatorService/Chat"
 )
 
 // CalculatorServiceClient is the client API for CalculatorService service.
@@ -31,6 +32,7 @@ type CalculatorServiceClient interface {
 	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
 	GenerateFibunacci(ctx context.Context, in *GenerateFibunacciRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[GenerateFibunacciResponse], error)
 	SendNumbers(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[SendNumbersRequest, SendNumbersResponse], error)
+	Chat(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ChatRequest, ChatResponse], error)
 }
 
 type calculatorServiceClient struct {
@@ -83,6 +85,19 @@ func (c *calculatorServiceClient) SendNumbers(ctx context.Context, opts ...grpc.
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type CalculatorService_SendNumbersClient = grpc.ClientStreamingClient[SendNumbersRequest, SendNumbersResponse]
 
+func (c *calculatorServiceClient) Chat(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ChatRequest, ChatResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &CalculatorService_ServiceDesc.Streams[2], CalculatorService_Chat_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[ChatRequest, ChatResponse]{ClientStream: stream}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type CalculatorService_ChatClient = grpc.BidiStreamingClient[ChatRequest, ChatResponse]
+
 // CalculatorServiceServer is the server API for CalculatorService service.
 // All implementations must embed UnimplementedCalculatorServiceServer
 // for forward compatibility.
@@ -90,6 +105,7 @@ type CalculatorServiceServer interface {
 	Add(context.Context, *AddRequest) (*AddResponse, error)
 	GenerateFibunacci(*GenerateFibunacciRequest, grpc.ServerStreamingServer[GenerateFibunacciResponse]) error
 	SendNumbers(grpc.ClientStreamingServer[SendNumbersRequest, SendNumbersResponse]) error
+	Chat(grpc.BidiStreamingServer[ChatRequest, ChatResponse]) error
 	mustEmbedUnimplementedCalculatorServiceServer()
 }
 
@@ -108,6 +124,9 @@ func (UnimplementedCalculatorServiceServer) GenerateFibunacci(*GenerateFibunacci
 }
 func (UnimplementedCalculatorServiceServer) SendNumbers(grpc.ClientStreamingServer[SendNumbersRequest, SendNumbersResponse]) error {
 	return status.Error(codes.Unimplemented, "method SendNumbers not implemented")
+}
+func (UnimplementedCalculatorServiceServer) Chat(grpc.BidiStreamingServer[ChatRequest, ChatResponse]) error {
+	return status.Error(codes.Unimplemented, "method Chat not implemented")
 }
 func (UnimplementedCalculatorServiceServer) mustEmbedUnimplementedCalculatorServiceServer() {}
 func (UnimplementedCalculatorServiceServer) testEmbeddedByValue()                           {}
@@ -166,6 +185,13 @@ func _CalculatorService_SendNumbers_Handler(srv interface{}, stream grpc.ServerS
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type CalculatorService_SendNumbersServer = grpc.ClientStreamingServer[SendNumbersRequest, SendNumbersResponse]
 
+func _CalculatorService_Chat_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(CalculatorServiceServer).Chat(&grpc.GenericServerStream[ChatRequest, ChatResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type CalculatorService_ChatServer = grpc.BidiStreamingServer[ChatRequest, ChatResponse]
+
 // CalculatorService_ServiceDesc is the grpc.ServiceDesc for CalculatorService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -187,6 +213,12 @@ var CalculatorService_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "SendNumbers",
 			Handler:       _CalculatorService_SendNumbers_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "Chat",
+			Handler:       _CalculatorService_Chat_Handler,
+			ServerStreams: true,
 			ClientStreams: true,
 		},
 	},

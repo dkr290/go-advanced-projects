@@ -68,4 +68,40 @@ func main() {
 		log.Println(err)
 	}
 	fmt.Println(resp.Sum)
+
+	chatClient, err := client.Chat(ctx)
+	if err != nil {
+		log.Fatalf("Error creasting chat stream %v\n", err)
+	}
+	waitc := make(chan struct{})
+
+	// send message
+
+	go func() {
+		message := []string{"Hello", "How are you ?", "GoodBye"}
+		for _, mes := range message {
+			log.Println("Sending message", message)
+			err := chatClient.Send(&mainpb.ChatRequest{Message: mes})
+			if err != nil {
+				log.Fatal(err)
+			}
+			time.Sleep(3 * time.Second)
+		}
+		chatClient.CloseSend()
+	}()
+
+	go func() {
+		for {
+			res, err := chatClient.Recv()
+			if err != io.EOF {
+				break
+			}
+			if err != nil {
+				log.Fatalf("Error receiving data %v", err)
+			}
+			log.Printf("Received response %v", res.GetMessage())
+		}
+		close(waitc)
+	}()
+	<-waitc
 }

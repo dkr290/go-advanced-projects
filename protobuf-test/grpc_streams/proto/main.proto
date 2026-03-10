@@ -8,6 +8,7 @@ service CalculatorService {
   rpc Add(AddRequest) returns (AddResponse);
   rpc GenerateFibunacci(GenerateFibunacciRequest) returns (stream GenerateFibunacciResponse);
   rpc SendNumbers(stream SendNumbersRequest) returns (SendNumbersResponse);
+  rpc Chat(stream ChatRequest) returns (stream ChatResponse);
 }
 
 message SendNumbersRequest {
@@ -33,4 +34,11 @@ message SendNumbersResponse {
 
 message GenerateFibunacciResponse {
   int32 number = 1;
+}
+
+message ChatRequest {
+  string message = 1;
+}
+message ChatResponse {
+  string message = 1;
 }

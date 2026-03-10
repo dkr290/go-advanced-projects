@@ -293,6 +293,94 @@ func (x *GenerateFibunacciResponse) GetNumber() int32 {
 	return 0
 }
 
+type ChatRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ChatRequest) Reset() {
+	*x = ChatRequest{}
+	mi := &file_main_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ChatRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChatRequest) ProtoMessage() {}
+
+func (x *ChatRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_main_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChatRequest.ProtoReflect.Descriptor instead.
+func (*ChatRequest) Descriptor() ([]byte, []int) {
+	return file_main_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *ChatRequest) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+type ChatResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ChatResponse) Reset() {
+	*x = ChatResponse{}
+	mi := &file_main_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ChatResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChatResponse) ProtoMessage() {}
+
+func (x *ChatResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_main_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChatResponse.ProtoReflect.Descriptor instead.
+func (*ChatResponse) Descriptor() ([]byte, []int) {
+	return file_main_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *ChatResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
 var File_main_proto protoreflect.FileDescriptor
 
 const file_main_proto_rawDesc = "" +
@@ -313,11 +401,16 @@ const file_main_proto_rawDesc = "" +
 	"\x13SendNumbersResponse\x12\x10\n" +
 	"\x03sum\x18\x01 \x01(\x05R\x03sum\"3\n" +
 	"\x19GenerateFibunacciResponse\x12\x16\n" +
-	"\x06number\x18\x01 \x01(\x05R\x06number2\x81\x02\n" +
+	"\x06number\x18\x01 \x01(\x05R\x06number\"'\n" +
+	"\vChatRequest\x12\x18\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage\"(\n" +
+	"\fChatResponse\x12\x18\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage2\xc0\x02\n" +
 	"\x11CalculatorService\x126\n" +
 	"\x03Add\x12\x16.calculator.AddRequest\x1a\x17.calculator.AddResponse\x12b\n" +
 	"\x11GenerateFibunacci\x12$.calculator.GenerateFibunacciRequest\x1a%.calculator.GenerateFibunacciResponse0\x01\x12P\n" +
-	"\vSendNumbers\x12\x1e.calculator.SendNumbersRequest\x1a\x1f.calculator.SendNumbersResponse(\x01B\x13Z\x11/proto/gen;mainpbb\x06proto3"
+	"\vSendNumbers\x12\x1e.calculator.SendNumbersRequest\x1a\x1f.calculator.SendNumbersResponse(\x01\x12=\n" +
+	"\x04Chat\x12\x17.calculator.ChatRequest\x1a\x18.calculator.ChatResponse(\x010\x01B\x13Z\x11/proto/gen;mainpbb\x06proto3"
 
 var (
 	file_main_proto_rawDescOnce sync.Once
@@ -331,7 +424,7 @@ func file_main_proto_rawDescGZIP() []byte {
 	return file_main_proto_rawDescData
 }
 
-var file_main_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_main_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_main_proto_goTypes = []any{
 	(*SendNumbersRequest)(nil),        // 0: calculator.SendNumbersRequest
 	(*AddRequest)(nil),                // 1: calculator.AddRequest
@@ -339,16 +432,20 @@ var file_main_proto_goTypes = []any{
 	(*GenerateFibunacciRequest)(nil),  // 3: calculator.GenerateFibunacciRequest
 	(*SendNumbersResponse)(nil),       // 4: calculator.SendNumbersResponse
 	(*GenerateFibunacciResponse)(nil), // 5: calculator.GenerateFibunacciResponse
+	(*ChatRequest)(nil),               // 6: calculator.ChatRequest
+	(*ChatResponse)(nil),              // 7: calculator.ChatResponse
 }
 var file_main_proto_depIdxs = []int32{
 	1, // 0: calculator.CalculatorService.Add:input_type -> calculator.AddRequest
 	3, // 1: calculator.CalculatorService.GenerateFibunacci:input_type -> calculator.GenerateFibunacciRequest
 	0, // 2: calculator.CalculatorService.SendNumbers:input_type -> calculator.SendNumbersRequest
-	2, // 3: calculator.CalculatorService.Add:output_type -> calculator.AddResponse
-	5, // 4: calculator.CalculatorService.GenerateFibunacci:output_type -> calculator.GenerateFibunacciResponse
-	4, // 5: calculator.CalculatorService.SendNumbers:output_type -> calculator.SendNumbersResponse
-	3, // [3:6] is the sub-list for method output_type
-	0, // [0:3] is the sub-list for method input_type
+	6, // 3: calculator.CalculatorService.Chat:input_type -> calculator.ChatRequest
+	2, // 4: calculator.CalculatorService.Add:output_type -> calculator.AddResponse
+	5, // 5: calculator.CalculatorService.GenerateFibunacci:output_type -> calculator.GenerateFibunacciResponse
+	4, // 6: calculator.CalculatorService.SendNumbers:output_type -> calculator.SendNumbersResponse
+	7, // 7: calculator.CalculatorService.Chat:output_type -> calculator.ChatResponse
+	4, // [4:8] is the sub-list for method output_type
+	0, // [0:4] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -365,7 +462,7 @@ func file_main_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_main_proto_rawDesc), len(file_main_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
