@@ -10,6 +10,8 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/encoding/gzip"
+	"google.golang.org/grpc/metadata"
 )
 
 func main() {
@@ -23,6 +25,7 @@ func main() {
 	conn, err := grpc.NewClient(
 		"localhost:50051",
 		grpc.WithTransportCredentials(creds),
+		grpc.WithDefaultCallOptions(grpc.UseCompressor(gzip.Name)),
 	)
 	if err != nil {
 		log.Fatalln("Did not connect", err)
@@ -44,6 +47,8 @@ func main() {
 		A: 10,
 		B: 20,
 	}
+	md := metadata.Pairs("authorization", "Bearer=password", "test", "testing")
+	ctx = metadata.NewOutgoingContext(ctx, md)
 	resp, err := client.Add(ctx, &re)
 	if err != nil {
 		log.Fatal("Inavalid request", err)

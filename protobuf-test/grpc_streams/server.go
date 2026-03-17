@@ -13,6 +13,7 @@ import (
 	mainpb "grpc_stream/proto/gen"
 
 	"google.golang.org/grpc"
+	_ "google.golang.org/grpc/encoding/gzip"
 )
 
 type server struct {

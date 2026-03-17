@@ -11,6 +11,8 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	_ "google.golang.org/grpc/encoding/gzip"
+	"google.golang.org/grpc/metadata"
 )
 
 type server struct {
@@ -22,6 +24,18 @@ type server struct {
 
 func (s *server) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
 	log.Println("Received request")
+	meta, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		log.Println("no metadata received")
+	}
+	log.Println("The meta is:", meta)
+
+	val, ok := meta["authorization"]
+	if !ok {
+		log.Println("no value with auth key in metadata")
+	}
+	log.Println("Authorization", val)
+
 	return &pb.AddResponse{
 		Sim: req.A + req.B,
 	}, nil
