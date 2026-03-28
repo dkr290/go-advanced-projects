@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package calculate;
+
+option go_package = "sumgrps/proto";
+
+service CalculateService {
+  rpc Calculate(CalculateRequest) returns (CalculateResponse);
+}
+
+message CalculateRequest {
+  int32 x = 1;
+  int32 y = 2;
+}
+
+message CalculateResponse {
+  int32 sum = 1;
+}
