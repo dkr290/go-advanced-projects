@@ -45,4 +45,5 @@ func main() {
 	}
 
 	log.Printf("The sum is %d", resp.Sum)
+	doPrimes(c)
 }

@@ -28,15 +28,22 @@ run-greet-client: ## Run greet client
 
 .PHONY: run generate calculate
 gen-calculate: ## Run generate of calculator pb go files
-	protoc --go_out=. --go_opt=paths=source_relative \
-		     --go-grpc_out=. --go-grpc_opt=paths=source_relative \
-		     calculator/proto/calculate.proto
+	protoc  -Icalculator/proto \
+		  --go_out=. --go_opt=module=github.com/dkr290-go-advanced-projects/grpc-go-course \
+			--go-grpc_out=. --go-grpc_opt=module=github.com/dkr290-go-advanced-projects/grpc-go-course \
+		     calculator/proto/calculate.proto \
+	       calculator/proto/primes.proto
 	go mod tidy
-
+ 
 
 .PHONY: run calculator server
-run-calculate-server: ## Run calculator server 
-	go run calculator/server/*.go 
+run-calculate-server: ## Run calculator server
+	go run calculator/server/*.go
 
 run-calculate-client: ## Run the calculator server with optional ARGS="..."
 	go run calculator/client/*.go  $(ARGS)
+
+.PHONY: run generate calculate clean-proto
+clean-calculator-proto: ## Clean calculator go files 
+	rm -f calculator/proto/*.pb.go calculator/proto/*_grpc.pb.go
+

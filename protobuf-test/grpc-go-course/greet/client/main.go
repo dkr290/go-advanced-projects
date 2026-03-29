@@ -30,5 +30,7 @@ func main() {
 		log.Fatalf("Error calling greet %v", err)
 	}
 
-	fmt.Printf("Greeting: %s\n", doGreet.GetResult())
+	fmt.Printf("Greeting: %s\n", doGreet.GetResult())	
+
+	doGreetManyTimes(client)
 }

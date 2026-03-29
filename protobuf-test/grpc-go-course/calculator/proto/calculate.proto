@@ -2,10 +2,13 @@ syntax = "proto3";
 
 package calculate;
 
-option go_package = "sumgrps/proto";
+option go_package =  "github.com/dkr290-go-advanced-projects/grpc-go-course/calculator/proto";
+
+import "primes.proto";
 
 service CalculateService {
   rpc Calculate(CalculateRequest) returns (CalculateResponse);
+  rpc Prime(PrimeRequest) returns (stream PrimeResponse);
 }
 
 message CalculateRequest {
