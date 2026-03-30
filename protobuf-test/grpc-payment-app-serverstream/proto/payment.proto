@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+
+package payments;
+
+option go_package = "github.com/dkr290/go-advanced-projects/protobuf-test/grpc-payment-app-serverstream/proto";
+
+
+service PamentService {
+  rpc Payment(PaymentRequest) returns (stream PaymentResponse);
+}
+
+
+message PaymentRequest {
+  string user_id = 1;
+}
+
+message PaymentResponse {
+  string payment_id = 1;
+  double amount=2;
+  string currency = 3;
+  string status = 4;
+  int64 timestamp = 5;
+}
