@@ -46,4 +46,7 @@ func main() {
 
 	log.Printf("The sum is %d", resp.Sum)
 	doPrimes(c)
+
+	avgClient := proto.NewAvgServiceClient(conn)
+  doAvgNumbers(avgClient)	
 }

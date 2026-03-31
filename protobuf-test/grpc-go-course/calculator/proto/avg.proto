@@ -11,9 +11,9 @@ service AvgService {
 }
 
 message AvgRequest {
-  repeated int32 numbers = 1; 
+  int32 number = 1; 
 }
 
 message AvgResponse {
-  float avg = 1;
+  double result  = 1;
 }

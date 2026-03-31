@@ -17,21 +17,14 @@ func (s *Server) Avg(stream grpc.ClientStreamingServer[pb.AvgRequest, pb.AvgResp
 	for {
 		request, err := stream.Recv()
 		if err == io.EOF {
-			var avg float32
-			if count > 0 {
-				avg = float32(sum) / float32(count)
-			}
 			return stream.SendAndClose(&pb.AvgResponse{
-				Avg: avg,
+				Result: float64(sum) / float64(count),
 			})
 		}
 		if err != nil {
 			log.Fatalf("Error while reading client stream %v\n", err)
 		}
-		log.Println("Receiving", request)
-		for _, num := range request.Numbers {
-			sum += num
-			count++
-		}
+		sum += request.Number
+		count++
 	}
-} 
+}
