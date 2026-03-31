@@ -33,4 +33,6 @@ func main() {
 	fmt.Printf("Greeting: %s\n", doGreet.GetResult())	
 
 	doGreetManyTimes(client)
+
+	doLongGreet(client)
 }

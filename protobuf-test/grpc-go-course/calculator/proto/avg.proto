@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+
+package calculate;
+
+option go_package =  "github.com/dkr290-go-advanced-projects/grpc-go-course/calculator/proto";
+
+
+service AvgService {
+  rpc Avg(stream AvgRequest) returns (AvgResponse);
+}
+
+message AvgRequest {
+  repeated int32 numbers = 1; 
+}
+
+message AvgResponse {
+  float avg = 1;
+}

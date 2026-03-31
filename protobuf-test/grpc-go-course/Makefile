@@ -32,7 +32,8 @@ gen-calculate: ## Run generate of calculator pb go files
 		  --go_out=. --go_opt=module=github.com/dkr290-go-advanced-projects/grpc-go-course \
 			--go-grpc_out=. --go-grpc_opt=module=github.com/dkr290-go-advanced-projects/grpc-go-course \
 		     calculator/proto/calculate.proto \
-	       calculator/proto/primes.proto
+	       calculator/proto/primes.proto \
+	       calculator/proto/avg.proto 
 	go mod tidy
  
 
