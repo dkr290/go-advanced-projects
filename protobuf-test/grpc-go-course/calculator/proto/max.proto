@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package calculate;
+
+option go_package = "github.com/dkr290-go-advanced-projects/grpc-go-course/calculator/proto";
+
+service MaxService {
+  rpc Max(stream MaxRequest) returns (stream MaxResponse);
+}
+
+message MaxRequest {
+  int32 number = 1;
+}
+
+message MaxResponse {
+  int32 result = 1;
+}
