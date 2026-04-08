@@ -14,7 +14,8 @@ var addr string = "0.0.0.0:50051"
 type Server struct {
 	proto.UnimplementedCalculateServiceServer
 	proto.UnimplementedAvgServiceServer
-	proto.UnsafeMaxServiceServer
+	proto.UnimplementedMaxServiceServer
+	proto.UnimplementedSqrtServiceServer
 }
 
 func (s *Server) Calculate(
@@ -47,6 +48,7 @@ func main() {
 	proto.RegisterCalculateServiceServer(grpcSerer, &Server{})
 	proto.RegisterAvgServiceServer(grpcSerer, &Server{})
 	proto.RegisterMaxServiceServer(grpcSerer, &Server{})
+	proto.RegisterSqrtServiceServer(grpcSerer, &Server{})
 	if err := grpcSerer.Serve(lis); err != nil {
 		log.Fatalf("Failed to server: %c\n", err)
 	}

@@ -34,7 +34,8 @@ gen-calculate: ## Run generate of calculator pb go files
 		     calculator/proto/calculate.proto \
 	       calculator/proto/primes.proto \
 	       calculator/proto/avg.proto \
-				 calculator/proto/max.proto
+				 calculator/proto/max.proto \
+				 calculator/proto/sqrt.proto
 	go mod tidy
  
 

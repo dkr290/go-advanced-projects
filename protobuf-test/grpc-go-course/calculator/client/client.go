@@ -49,6 +49,8 @@ func main() {
 	//
 	// avgClient := proto.NewAvgServiceClient(conn)
 	//  doAvgNumbers(avgClient)
-	maxClient := proto.NewMaxServiceClient(conn)
-	doMax(maxClient)
+	// maxClient := proto.NewMaxServiceClient(conn)
+	// doMax(maxClient)
+	sqrtClient := proto.NewSqrtServiceClient(conn)
+	doSqrt(sqrtClient, -2)
 }
