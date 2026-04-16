@@ -7,13 +7,29 @@ import (
 
 	"github.com/dkr290-go-advanced-projects/grpc-go-course/greet/proto"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/credentials"
 )
 
-var addr = "localhost:50051"
+var (
+	addr = "localhost:50051"
+	tls  = true
+)
 
 func main() {
-	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	opts := []grpc.DialOption{}
+
+	if tls {
+		certfile := "ssl/ca.crt"
+		creds, err := credentials.NewClientTLSFromFile(certfile, "localhost")
+		if err != nil {
+			log.Fatalf("Failed loading certificates %v", err)
+		}
+		opts = []grpc.DialOption{
+			grpc.WithTransportCredentials(creds),
+		}
+	}
+
+	conn, err := grpc.NewClient(addr, opts...)
 	if err != nil {
 		log.Fatalf("Failed to connect to the server %v", err)
 	}
@@ -30,7 +46,7 @@ func main() {
 		log.Fatalf("Error calling greet %v", err)
 	}
 
-	fmt.Printf("Greeting: %s\n", doGreet.GetResult())	
+	fmt.Printf("Greeting: %s\n", doGreet.GetResult())
 
 	// doGreetManyTimes(client)
 	//
