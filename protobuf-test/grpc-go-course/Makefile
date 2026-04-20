@@ -18,6 +18,14 @@ gen-greet: ## Generate greet pb go files
 		     greet/proto/greet.proto
 	go mod tidy
 
+.PHONY: generate blog
+gen-blog: ## Generate blog pb go files 
+	protoc --go_out=. --go_opt=paths=source_relative \
+		     --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+		     blog/proto/blog.proto
+	go mod tidy
+
+
 .PHONY: run greet server
 run-greet-server: ## Run greet server
 	go run greet/server/*.go
