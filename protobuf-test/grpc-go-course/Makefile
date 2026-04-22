@@ -30,6 +30,11 @@ gen-blog: ## Generate blog pb go files
 run-greet-server: ## Run greet server
 	go run greet/server/*.go
 
+.PHONY: run blog server
+run-blog-server: ## Run blog server
+	go run blog/server/*.go
+
+
 .PHONY: run greet client
 run-greet-client: ## Run greet client 
 	go run greet/client/*.go
