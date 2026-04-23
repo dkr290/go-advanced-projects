@@ -19,7 +19,7 @@ gen-greet: ## Generate greet pb go files
 	go mod tidy
 
 .PHONY: generate blog
-gen-blog: ## Generate blog pb go files 
+gen-blog: ## Generate blog pb go files
 	protoc --go_out=. --go_opt=paths=source_relative \
 		     --go-grpc_out=. --go-grpc_opt=paths=source_relative \
 		     blog/proto/blog.proto
@@ -36,8 +36,13 @@ run-blog-server: ## Run blog server
 
 
 .PHONY: run greet client
-run-greet-client: ## Run greet client 
+run-greet-client: ## Run greet client
 	go run greet/client/*.go
+
+.PHONY: run greet client
+run-blog-client: ## Run blog client
+	go run blog/client/*.go
+
 
 .PHONY: run generate calculate
 gen-calculate: ## Run generate of calculator pb go files
@@ -50,7 +55,7 @@ gen-calculate: ## Run generate of calculator pb go files
 				 calculator/proto/max.proto \
 				 calculator/proto/sqrt.proto
 	go mod tidy
- 
+
 
 .PHONY: run calculator server
 run-calculate-server: ## Run calculator server
@@ -60,7 +65,7 @@ run-calculate-client: ## Run the calculator server with optional ARGS="..."
 	go run calculator/client/*.go  $(ARGS)
 
 .PHONY: run generate calculate clean-proto
-clean-calculator-proto: ## Clean calculator go files 
+clean-calculator-proto: ## Clean calculator go files
 	rm -f calculator/proto/*.pb.go calculator/proto/*_grpc.pb.go
 
 
@@ -98,6 +103,6 @@ certs: $(SSL_DIR)
 $(SSL_DIR):
 	mkdir -p $(SSL_DIR)
 
-clean-certs:  ## Clean certificates 
+clean-certs:  ## Clean certificates
 	rm -rf $(SSL_DIR)
 

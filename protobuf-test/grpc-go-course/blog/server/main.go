@@ -11,21 +11,20 @@ import (
 	"google.golang.org/grpc"
 )
 
-
 var (
-
-	addr string = "0.0.0.0:50051"
-  collection *mongo.Collection
+	addr       string = "0.0.0.0:50051"
+	collection *mongo.Collection
 )
 
 type Server struct {
 	proto.UnimplementedBlogServiceServer
-	}
+}
 
-
-
-func connectMongo() *mongo.Client{
-	client , err := mongo.Connect(context.Background(),options.Client().ApplyURI("mongodb://root:root@localhost:27017/")) 
+func connectMongo() *mongo.Client {
+	client, err := mongo.Connect(
+		context.Background(),
+		options.Client().ApplyURI("mongodb://mongoadmin:mongoadmin@localhost:27017/"),
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -33,14 +32,9 @@ func connectMongo() *mongo.Client{
 	return client
 }
 
-
-
 func main() {
-
-
-//	mongoCl := connectMongo()
-//	collection := mongoCl.Database("blogdb").Collection("blog")
-
+	mongoCl := connectMongo()
+	collection = mongoCl.Database("blogdb").Collection("blog")
 
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
