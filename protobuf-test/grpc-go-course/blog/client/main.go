@@ -41,5 +41,7 @@ func main() {
 
 	client := proto.NewBlogServiceClient(conn)
 
-	createBlog(context.Background(), client)
+	id := createBlog(context.Background(), client)
+	ReadBlog(client, id) 
+	ReadBlog(client, "nonExistingID")
 	}
