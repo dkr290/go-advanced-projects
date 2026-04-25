@@ -16,7 +16,7 @@ var (
 )
 
 func main() {
-	 var opts []grpc.DialOption
+	var opts []grpc.DialOption
 
 	if tls {
 		certfile := "ssl/ca.crt"
@@ -42,6 +42,11 @@ func main() {
 	client := proto.NewBlogServiceClient(conn)
 
 	id := createBlog(context.Background(), client)
-	ReadBlog(client, id) 
+	ReadBlog(client, id)
 	ReadBlog(client, "nonExistingID")
+	err = updateBlogClient(client, id)
+	if err != nil {
+		log.Fatalf("errror %v\n", err)
 	}
+	doList(client)
+}
