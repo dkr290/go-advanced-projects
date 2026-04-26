@@ -49,4 +49,5 @@ func main() {
 		log.Fatalf("errror %v\n", err)
 	}
 	doList(client)
+	deleteBlog(client, id)
 }
