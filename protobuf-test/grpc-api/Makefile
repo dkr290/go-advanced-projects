@@ -1,5 +1,5 @@
 
-.PHONY: help run-calculator-server build clean
+.PHONY: help run-server build clean
 help:
 	@echo "Available targets:"
 	@grep -E '^[a-zA-Z0-9_-]+:.*?##' Makefile | \

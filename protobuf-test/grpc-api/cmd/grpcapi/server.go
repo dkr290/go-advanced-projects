@@ -7,11 +7,16 @@ import (
 
 	"github.com/dkr290-go-advanced-projects/protobuf-test/grpc-api/internals/api/handlers"
 	pb "github.com/dkr290-go-advanced-projects/protobuf-test/grpc-api/proto/gen"
+	"github.com/dkr290-go-advanced-projects/protobuf-test/grpc-api/repositories/mongodb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
 func main() {
+	_ ,err := mongodb.CreateMongoClient()
+	if err != nil {
+		log.Fatalf("Error mongodb connection %v\n", err)
+	}
 	cfg, err := LoadConfig()
 	if err != nil {
 		log.Fatalf("failed to load config: %v", err)
