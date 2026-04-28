@@ -1,4 +1,4 @@
-package main
+package config 
 
 import (
 	"fmt"
@@ -6,9 +6,9 @@ import (
 	"strconv"
 )
 
-
 type Config struct {
 	ServerPort int
+	DebugFlag  bool
 }
 
 // LoadConfig reads environment variables with sensible defaults.
@@ -16,6 +16,7 @@ type Config struct {
 func LoadConfig() (*Config, error) {
 	cfg := &Config{
 		ServerPort: 50051, // default gRPC port
+		DebugFlag:  false,
 	}
 
 	if v := os.Getenv("SERVER_PORT"); v != "" {
@@ -25,7 +26,13 @@ func LoadConfig() (*Config, error) {
 		}
 		cfg.ServerPort = port
 	}
+	if v := os.Getenv("DEBUG_FLAG"); v != "" {
+		debug, err := strconv.ParseBool(v)
+		if err != nil {
+			return nil, fmt.Errorf("invalid DEBUG_FLAG %q: %w", v, err)
+		}
+		cfg.DebugFlag = debug
+	}
 
 	return cfg, nil
 }
-

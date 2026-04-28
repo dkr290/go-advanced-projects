@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 
 	"github.com/dkr290-go-advanced-projects/protobuf-test/grpc-api/internals/api/handlers"
+	"github.com/dkr290-go-advanced-projects/protobuf-test/grpc-api/pkg/config"
+	"github.com/dkr290-go-advanced-projects/protobuf-test/grpc-api/pkg/utils"
 	pb "github.com/dkr290-go-advanced-projects/protobuf-test/grpc-api/proto/gen"
 	"github.com/dkr290-go-advanced-projects/protobuf-test/grpc-api/repositories/mongodb"
 	"google.golang.org/grpc"
@@ -13,27 +16,38 @@ import (
 )
 
 func main() {
-	_ ,err := mongodb.CreateMongoClient()
-	if err != nil {
-		log.Fatalf("Error mongodb connection %v\n", err)
-	}
-	cfg, err := LoadConfig()
+	cfg, err := config.LoadConfig()
 	if err != nil {
 		log.Fatalf("failed to load config: %v", err)
 	}
 
+	log := utils.New(cfg.DebugFlag)
+
+	_, err = mongodb.CreateMongoClient(log)
+	if err != nil {
+		log.Error(fmt.Sprintf("Error mongodb connection %v\n", err))
+		return
+	}
+	srv := &handlers.Server{
+		Log: log,
+		Cfg: cfg,
+	}
+
 	s := grpc.NewServer()
-	pb.RegisterStudentsServiceServer(s, &handlers.Server{})
-	pb.RegisterExecsServiceServer(s, &handlers.Server{})
-	pb.RegisterTeachersServiceServer(s, &handlers.Server{})
+	pb.RegisterStudentsServiceServer(s, srv)
+	pb.RegisterExecsServiceServer(s, srv)
+	pb.RegisterTeachersServiceServer(s, srv)
 
 	reflection.Register(s)
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.ServerPort))
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		log.Error(fmt.Sprintf("Failed to Listen %v", err))
+		os.Exit(1)
+		log.Error(fmt.Sprintf("failed to listen: %v", err))
+		return
 	}
-	log.Printf("server listening on port %d", cfg.ServerPort)
+	log.Info(fmt.Sprintf("server listening on port %d", cfg.ServerPort))
 	if err := s.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+		log.Error(fmt.Sprintf("failed to serve: %v", err))
 	}
 }
