@@ -1,0 +1,14 @@
+GRPC localhost:50051/grpc_api.TeachersService/AddTeachers
+Content-Type: application/grpc
+
+{
+  "teachers": [
+    {
+      "firstName": "John",
+      "lastName": "Doe",
+      "email": "john@example.com",
+      "class": "10A",
+      "subject": "Math"
+    }
+  ]
+}
