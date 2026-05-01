@@ -4,6 +4,7 @@ go 1.26.2
 
 require (
 	github.com/rs/zerolog v1.35.1
+	go.mongodb.org/mongo-driver v1.17.9
 	go.mongodb.org/mongo-driver/v2 v2.5.1
 	google.golang.org/grpc v1.80.0
 	google.golang.org/protobuf v1.36.11

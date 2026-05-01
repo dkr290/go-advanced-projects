@@ -1,13 +1,18 @@
-GRPC localhost:50051/grpc_api.TeachersService/AddTeachers
-Content-Type: application/grpc
+### Shared
+# @grpc-plaintext
+# @grpc-import-path ../proto
+# @grpc-proto main.proto
+
+GRPC localhost:50051 main.TeachersService/AddTeachers 
+Content-Type: application/json
 
 {
   "teachers": [
     {
+      "class": "10A",
+      "email": "john@example.com",
       "firstName": "John",
       "lastName": "Doe",
-      "email": "john@example.com",
-      "class": "10A",
       "subject": "Math"
     }
   ]
