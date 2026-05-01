@@ -39,7 +39,7 @@ func (s *Server) AddTeachers(ctx context.Context, req *pb.Teachers) (*pb.Teacher
 		// Insert the teacher document; MongoDB generates an ObjectID
 		result, err := client.Database("school").Collection("teachers").InsertOne(ctx, teacher)
 		if err != nil {
-			return nil, s.Log.Errorf("Error inserting teachers: %v", err)
+			return nil, s.Log.Errorf("Error inserting teachers %v", err)
 		}
 		// Extract the MongoDB ObjectID from the insertion result
 		objectID, ok := result.InsertedID.(bson.ObjectID)
@@ -48,7 +48,7 @@ func (s *Server) AddTeachers(ctx context.Context, req *pb.Teachers) (*pb.Teacher
 		}
 
 		// Store the generated ID back into the teacher model (optional, for later use)
-		teacher.ID = objectID.Hex()
+		teacher.ID = objectID
 		// Build the protobuf response teacher with all fields including the new ID
 		insertedTeachers = append(insertedTeachers, &pb.Teacher{
 			Id:        objectID.Hex(),

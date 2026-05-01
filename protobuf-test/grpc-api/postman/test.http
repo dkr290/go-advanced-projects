@@ -6,6 +6,7 @@
 GRPC localhost:50051 main.TeachersService/AddTeachers 
 Content-Type: application/json
 
+
 {
   "teachers": [
     {
@@ -14,6 +15,140 @@ Content-Type: application/json
       "firstName": "John",
       "lastName": "Doe",
       "subject": "Math"
+    },
+    {
+      "class": "9B",
+      "email": "sarah.wilson@example.com",
+      "firstName": "Sarah",
+      "lastName": "Wilson",
+      "subject": "English"
+    },
+    {
+      "class": "11C",
+      "email": "michael.brown@example.com",
+      "firstName": "Michael",
+      "lastName": "Brown",
+      "subject": "Physics"
+    },
+    {
+      "class": "8A",
+      "email": "emma.jones@example.com",
+      "firstName": "Emma",
+      "lastName": "Jones",
+      "subject": "Biology"
+    },
+    {
+      "class": "12B",
+      "email": "david.miller@example.com",
+      "firstName": "David",
+      "lastName": "Miller",
+      "subject": "Chemistry"
+    },
+    {
+      "class": "7C",
+      "email": "olivia.davis@example.com",
+      "firstName": "Olivia",
+      "lastName": "Davis",
+      "subject": "History"
+    },
+    {
+      "class": "10C",
+      "email": "liam.moore@example.com",
+      "firstName": "Liam",
+      "lastName": "Moore",
+      "subject": "Geography"
+    },
+    {
+      "class": "9A",
+      "email": "ava.taylor@example.com",
+      "firstName": "Ava",
+      "lastName": "Taylor",
+      "subject": "Math"
+    },
+    {
+      "class": "11A",
+      "email": "noah.anderson@example.com",
+      "firstName": "Noah",
+      "lastName": "Anderson",
+      "subject": "Computer Science"
+    },
+    {
+      "class": "8B",
+      "email": "mia.thomas@example.com",
+      "firstName": "Mia",
+      "lastName": "Thomas",
+      "subject": "Art"
+    },
+    {
+      "class": "12A",
+      "email": "lucas.jackson@example.com",
+      "firstName": "Lucas",
+      "lastName": "Jackson",
+      "subject": "Economics"
+    },
+    {
+      "class": "7A",
+      "email": "isabella.white@example.com",
+      "firstName": "Isabella",
+      "lastName": "White",
+      "subject": "Music"
+    },
+    {
+      "class": "10B",
+      "email": "ethan.harris@example.com",
+      "firstName": "Ethan",
+      "lastName": "Harris",
+      "subject": "Physics"
+    },
+    {
+      "class": "9C",
+      "email": "sophia.martin@example.com",
+      "firstName": "Sophia",
+      "lastName": "Martin",
+      "subject": "Chemistry"
+    },
+    {
+      "class": "11B",
+      "email": "james.thompson@example.com",
+      "firstName": "James",
+      "lastName": "Thompson",
+      "subject": "Math"
+    },
+    {
+      "class": "8C",
+      "email": "charlotte.garcia@example.com",
+      "firstName": "Charlotte",
+      "lastName": "Garcia",
+      "subject": "English"
+    },
+    {
+      "class": "12C",
+      "email": "benjamin.martinez@example.com",
+      "firstName": "Benjamin",
+      "lastName": "Martinez",
+      "subject": "Biology"
+    },
+    {
+      "class": "7B",
+      "email": "amelia.robinson@example.com",
+      "firstName": "Amelia",
+      "lastName": "Robinson",
+      "subject": "History"
+    },
+    {
+      "class": "10D",
+      "email": "henry.clark@example.com",
+      "firstName": "Henry",
+      "lastName": "Clark",
+      "subject": "Geography"
+    },
+    {
+      "class": "9D",
+      "email": "ella.rodriguez@example.com",
+      "firstName": "Ella",
+      "lastName": "Rodriguez",
+      "subject": "Computer Science"
     }
   ]
 }
+

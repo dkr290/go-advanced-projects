@@ -1,0 +1,15 @@
+### Shared
+# @grpc-plaintext
+# @grpc-import-path ../proto
+# @grpc-proto main.proto
+
+GRPC localhost:50051 main.TeachersService/GetTeachers 
+Content-Type: application/json
+
+{
+  "teacher": {
+    "class": "8C",
+    "subject": "English"
+  }
+}
+
