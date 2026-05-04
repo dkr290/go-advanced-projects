@@ -7,6 +7,7 @@ import (
 	pb "github.com/dkr290-go-advanced-projects/protobuf-test/grpc-api/proto/gen"
 	"github.com/dkr290-go-advanced-projects/protobuf-test/grpc-api/repositories/mongodb"
 	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -24,15 +25,18 @@ func (s *Server) GetTeachers(
 
 	// filtering , getting the filters from the request
 	filter := dynamicFilter(req)
-	// Build Dynamic Filter from non empty request fields
+  opts := buildSortOptions(req.SortBy)	
+// Build Dynamic Filter from non empty request fields
 
-	cur, err := client.Database("school").Collection("teachers").Find(ctx, filter)
+
+
+	cur, err := client.Database("school").Collection("teachers").Find(ctx, filter,opts)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unknown internal error %v\n", err)
 	}
 	defer cur.Close(context.Background())
 	var teachers []*pb.Teacher
-//Decode the data from mongodb and rthen populate fields in protobuf
+	// Decode the data from mongodb and rthen populate fields in protobuf
 	for cur.Next(ctx) {
 		data := &models.Teacher{}
 		err := cur.Decode(data)
@@ -61,8 +65,6 @@ func (s *Server) GetTeachers(
 	}
 	s.Log.Info("Teachers fetched from mongodb")
 	return &pb.Teachers{Teachers: teachers}, nil
-
-
 }
 
 func dynamicFilter(req *pb.GetTeachersRequest) bson.M {
@@ -86,4 +88,20 @@ func dynamicFilter(req *pb.GetTeachersRequest) bson.M {
 	}
 
 	return filter
+}
+
+func buildSortOptions(sortFields []*pb.SortField) *options.FindOptionsBuilder {
+	var sortOptions bson.D
+	if len(sortFields) == 0 {
+		return nil
+	}
+	for _, sf := range sortFields {
+		order := 1
+		if sf.GetOrder() == pb.Order_ORDER_DESC {
+			order = -1
+		}
+		sortOptions = append(sortOptions, bson.E{Key: sf.Field, Value: order})
+
+	}
+	return options.Find().SetSort(sortOptions)
 }
