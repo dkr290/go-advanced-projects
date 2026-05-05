@@ -25,16 +25,14 @@ func (s *Server) GetTeachers(
 
 	// filtering , getting the filters from the request
 	filter := dynamicFilter(req)
-  opts := buildSortOptions(req.SortBy)	
-// Build Dynamic Filter from non empty request fields
+	opts := buildSortOptions(req.SortBy)
+	// Build Dynamic Filter from non empty request fields
 
-
-
-	cur, err := client.Database("school").Collection("teachers").Find(ctx, filter,opts)
+	cur, err := client.Database("school").Collection("teachers").Find(ctx, filter, opts)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unknown internal error %v\n", err)
 	}
-	defer cur.Close(context.Background())
+	defer cur.Close(ctx)
 	var teachers []*pb.Teacher
 	// Decode the data from mongodb and rthen populate fields in protobuf
 	for cur.Next(ctx) {
