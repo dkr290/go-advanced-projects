@@ -1,0 +1,24 @@
+### Shared
+# @grpc-plaintext
+# @grpc-import-path ../proto
+# @grpc-proto main.proto
+
+GRPC localhost:50051 main.TeachersService/GetTeachers 
+Content-Type: application/json
+
+{
+  "teacher": {
+    "class": "8C"
+  },
+  "sort_by": [
+    {
+      "field": "last_name",
+      "order": "ORDER_ASC_UNSPECIFIED"
+    },
+    {
+      "field": "subject",
+      "order": "ORDER_DESC"
+    }
+  ]
+}
+

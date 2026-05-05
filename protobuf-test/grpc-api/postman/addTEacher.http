@@ -1,0 +1,20 @@
+### Shared
+
+# @grpc-import-path ../proto
+# @grpc-plaintext
+# @grpc-proto main.proto
+
+GRPC localhost:50051 main.TeachersService/AddTeachers 
+Content-Type: application/json
+
+{
+  "teachers": [
+    {
+      "class": "8C",
+      "email": "kf@example.com",
+      "firstName": "Kristina",
+      "lastName": "Florina",
+      "subject": "English"
+    }
+  ]
+}

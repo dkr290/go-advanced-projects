@@ -33,34 +33,52 @@ func (s *Server) GetTeachers(
 		return nil, status.Errorf(codes.Internal, "Unknown internal error %v\n", err)
 	}
 	defer cur.Close(ctx)
-	var teachers []*pb.Teacher
-	// Decode the data from mongodb and rthen populate fields in protobuf
-	for cur.Next(ctx) {
-		data := &models.Teacher{}
-		err := cur.Decode(data)
-		if err != nil {
-			return nil, status.Errorf(
-				codes.Internal,
-				"Error While decoding data from the string %v\n",
-				err,
-			)
-		}
-		teachers = append(teachers, &pb.Teacher{
-			Id:        data.ID.Hex(),
-			FirstName: data.FirstName,
-			LastName:  data.LastName,
-			Email:     data.Email,
-			Class:     data.Class,
-			Subject:   data.Subject,
-		})
+
+	teacherMapper := func (data *models.Teacher) *pb.Teacher  {
+		  return &pb.Teacher{
+           Id: data.ID.Hex(),
+					 FirstName: data.FirstName,
+					 LastName: data.LastName,
+					 Email: data.Email,
+					 Class: data.Class,
+					 Subject: data.Subject,
+			}
+
 	}
-	if err := cur.Err(); err != nil {
-		return nil, status.Errorf(codes.Internal, "Cursor error: %v", err)
+  teachers ,err := DecodeCursorToProto(ctx, cur, teacherMapper)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Decodecursor to proto error %v\n", err)
 	}
-	// Return empty slice instead of nil for proper serialization
-	if teachers == nil {
-		teachers = []*pb.Teacher{}
-	}
+
+
+	// var teachers []*pb.Teacher
+	// // Decode the data from mongodb and rthen populate fields in protobuf
+	// for cur.Next(ctx) {
+	// 	data := &models.Teacher{}
+	// 	err := cur.Decode(data)
+	// 	if err != nil {
+	// 		return nil, status.Errorf(
+	// 			codes.Internal,
+	// 			"Error While decoding data from the string %v\n",
+	// 			err,
+	// 		)
+	// 	}
+	// 	teachers = append(teachers, &pb.Teacher{
+	// 		Id:        data.ID.Hex(),
+	// 		FirstName: data.FirstName,
+	// 		LastName:  data.LastName,
+	// 		Email:     data.Email,
+	// 		Class:     data.Class,
+	// 		Subject:   data.Subject,
+	// 	})
+	// }
+	// if err := cur.Err(); err != nil {
+	// 	return nil, status.Errorf(codes.Internal, "Cursor error: %v", err)
+	// }
+	// // Return empty slice instead of nil for proper serialization
+	// if teachers == nil {
+	// 	teachers = []*pb.Teacher{}
+	// }
 	s.Log.Info("Teachers fetched from mongodb")
 	return &pb.Teachers{Teachers: teachers}, nil
 }
