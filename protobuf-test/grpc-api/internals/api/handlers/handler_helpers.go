@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// Generic function to decode MongoDB cursor to any protobuf type
+// DecodeCursorToProto function to decode MongoDB cursor to any protobuf type
 func DecodeCursorToProto[T any, P any](ctx context.Context,	cur *mongo.Cursor,	mapper func(*T) *P) ([]*P, error) {
 	var results []*P
 
@@ -36,3 +36,13 @@ func DecodeCursorToProto[T any, P any](ctx context.Context,	cur *mongo.Cursor,	m
 
 	return results, nil
 }
+
+// MapModelToPbModel converts any slice of model T to slice of proto U
+func MapModelToPbModel[T, U any](items []T, fn func(T) U) []U {
+	result := make([]U, len(items))
+	for i, item := range items {
+		result[i] = fn(item)
+	}
+	return result
+}
+
