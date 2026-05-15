@@ -1,0 +1,4 @@
+## Append samples of your project ##
+resources:
+- bcredis_v1alpha1_bcredis.yaml
+# +kubebuilder:scaffold:manifestskustomizesamples
