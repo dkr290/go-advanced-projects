@@ -8,6 +8,7 @@ import (
 
 	"github.com/dkr290/peridot-app/grpc-docker-registry/config"
 	"github.com/dkr290/peridot-app/grpc-docker-registry/internal/services"
+	"github.com/dkr290/peridot-app/grpc-docker-registry/internal/storage"
 	pb "github.com/dkr290/peridot-app/grpc-docker-registry/proto/gen"
 	"github.com/dkr290/peridot-app/grpc-docker-registry/utils"
 	"google.golang.org/grpc"
@@ -26,11 +27,12 @@ func main() {
 		log.Error(fmt.Sprintf("Failed to listen: %v", err))
 		return
 	}
+	store := storage.NewFileStorage(cfg.StoragePath)
 
 	srv := &services.ImageService{
 		Log:    log,
 		Cfg:    cfg,
-		Images: make(map[string][]string),
+		Images: store,
 	}
 
 	s := grpc.NewServer()

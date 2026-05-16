@@ -6,18 +6,19 @@ import (
 	"strconv"
 )
 
-
 type Config struct {
-	ServerPort int
-	DebugFlag  bool
+	ServerPort  int
+	DebugFlag   bool
+	StoragePath string
 }
 
 // LoadConfig reads environment variables with sensible defaults.
 // Designed for Docker/K8s — no .env file required.
 func LoadConfig() (*Config, error) {
 	cfg := &Config{
-		ServerPort: 50051, // default gRPC port
-		DebugFlag:  false,
+		ServerPort:  50051, // default gRPC port
+		DebugFlag:   false,
+		StoragePath: "/data",
 	}
 
 	if v := os.Getenv("SERVER_PORT"); v != "" {
@@ -33,6 +34,9 @@ func LoadConfig() (*Config, error) {
 			return nil, fmt.Errorf("invalid DEBUG_FLAG %q: %w", v, err)
 		}
 		cfg.DebugFlag = debug
+	}
+	if v := os.Getenv("STORAGE_PATH"); v != "" {
+		cfg.StoragePath = v
 	}
 
 	return cfg, nil
