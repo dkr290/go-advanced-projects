@@ -1,0 +1,61 @@
+// protos/registry.proto
+syntax = "proto3";
+
+option go_package = "github.com/dkr290/peridot-app/grpc-docker-registry/proto/gen";
+
+package registry;
+
+service ImageRegistryService {
+    rpc PushImage (PushImageRequest) returns (PushImageResponse);
+    rpc PullImage (PullImageRequest) returns (PullImageResponse);
+    rpc ListImages (ListImagesRequest) returns (ListImagesResponse);
+    rpc DeleteImage (DeleteImageRequest) returns (DeleteImageResponse);
+    rpc DeleteImageTag (DeleteImageTagRequest) returns (DeleteImageTagResponse);
+}
+
+message PushImageRequest {
+    string image_name = 1;
+    bytes image_data = 2;
+}
+
+message PushImageResponse {
+    string message = 1;
+}
+
+message PullImageRequest {
+    string image_name = 1;
+}
+
+message PullImageResponse {
+    bytes image_data = 1;
+}
+
+message ListImagesRequest {
+    // No additional fields needed
+}
+
+message ImageInfo {
+    string image_name = 1;
+    repeated string tags = 2;
+}
+
+message ListImagesResponse {
+    repeated ImageInfo images = 1;
+}
+
+message DeleteImageRequest {
+    string image_name = 1;
+}
+
+message DeleteImageResponse {
+    string message = 1;
+}
+
+message DeleteImageTagRequest {
+    string image_name = 1;
+    string tag = 2;
+}
+
+message DeleteImageTagResponse {
+    string message = 1;
+}
