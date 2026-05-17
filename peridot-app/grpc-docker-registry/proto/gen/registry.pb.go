@@ -27,6 +27,7 @@ type PushImageRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ImageName     string                 `protobuf:"bytes,1,opt,name=image_name,json=imageName,proto3" json:"image_name,omitempty"`
 	ImageData     []byte                 `protobuf:"bytes,2,opt,name=image_data,json=imageData,proto3" json:"image_data,omitempty"`
+	Tag           string                 `protobuf:"bytes,3,opt,name=tag,proto3" json:"tag,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -73,6 +74,13 @@ func (x *PushImageRequest) GetImageData() []byte {
 		return x.ImageData
 	}
 	return nil
+}
+
+func (x *PushImageRequest) GetTag() string {
+	if x != nil {
+		return x.Tag
+	}
+	return ""
 }
 
 type PushImageResponse struct {
@@ -527,12 +535,13 @@ var File_registry_proto protoreflect.FileDescriptor
 
 const file_registry_proto_rawDesc = "" +
 	"\n" +
-	"\x0eregistry.proto\x12\bregistry\"P\n" +
+	"\x0eregistry.proto\x12\bregistry\"b\n" +
 	"\x10PushImageRequest\x12\x1d\n" +
 	"\n" +
 	"image_name\x18\x01 \x01(\tR\timageName\x12\x1d\n" +
 	"\n" +
-	"image_data\x18\x02 \x01(\fR\timageData\"-\n" +
+	"image_data\x18\x02 \x01(\fR\timageData\x12\x10\n" +
+	"\x03tag\x18\x03 \x01(\tR\x03tag\"-\n" +
 	"\x11PushImageResponse\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage\"1\n" +
 	"\x10PullImageRequest\x12\x1d\n" +

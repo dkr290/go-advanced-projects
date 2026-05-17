@@ -14,7 +14,6 @@ import (
 
 type ImageService struct {
 	pb.UnimplementedImageRegistryServiceServer
-	Images  storage.Storage
 	Log     utils.Logger
 	Cfg     *config.Config
 	Storage storage.Storage
@@ -26,19 +25,21 @@ func (s *ImageService) PushImage(
 ) (*pb.PushImageResponse, error) {
 	imageName := req.GetImageName()
 	imageData := req.GetImageData()
+	tag := req.GetTag()
 	if imageName == "" {
 		err := status.Errorf(codes.InvalidArgument, "Image name is empty")
 		s.Log.Error(err.Error())
 		return nil, err
 	}
-	err := s.Storage.SaveImage(imageName, imageData)
+	err := s.Storage.SaveImage(imageName, imageData, tag)
 	if err != nil {
 		s.Log.Error(err.Error())
 		return nil, err
 	}
 
-	s.Log.Info(fmt.Sprintf("Image %s pushed", imageName))
+	s.Log.Info(fmt.Sprintf("Image %s pushed with tag %s", imageName, tag))
 	return &pb.PushImageResponse{Message: "Image pushed successfully"}, nil
+
 }
 
 func (s *ImageService) PullImage(

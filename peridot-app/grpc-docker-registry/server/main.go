@@ -32,7 +32,7 @@ func main() {
 	srv := &services.ImageService{
 		Log:    log,
 		Cfg:    cfg,
-		Images: store,
+		Storage: store,
 	}
 
 	s := grpc.NewServer()

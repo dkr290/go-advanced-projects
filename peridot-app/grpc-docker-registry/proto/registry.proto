@@ -16,6 +16,7 @@ service ImageRegistryService {
 message PushImageRequest {
     string image_name = 1;
     bytes image_data = 2;
+    string tag = 3;
 }
 
 message PushImageResponse {
