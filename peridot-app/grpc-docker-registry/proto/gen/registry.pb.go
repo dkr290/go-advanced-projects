@@ -23,18 +23,404 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type PushBlobRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Data          []byte                 `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
+	Digest        string                 `protobuf:"bytes,2,opt,name=digest,proto3" json:"digest,omitempty"` // SHA256 hash (optional, will be computed if empty)
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PushBlobRequest) Reset() {
+	*x = PushBlobRequest{}
+	mi := &file_registry_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PushBlobRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PushBlobRequest) ProtoMessage() {}
+
+func (x *PushBlobRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_registry_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PushBlobRequest.ProtoReflect.Descriptor instead.
+func (*PushBlobRequest) Descriptor() ([]byte, []int) {
+	return file_registry_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *PushBlobRequest) GetData() []byte {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+func (x *PushBlobRequest) GetDigest() string {
+	if x != nil {
+		return x.Digest
+	}
+	return ""
+}
+
+type PushBlobResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Digest        string                 `protobuf:"bytes,1,opt,name=digest,proto3" json:"digest,omitempty"`
+	Size          int64                  `protobuf:"varint,2,opt,name=size,proto3" json:"size,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PushBlobResponse) Reset() {
+	*x = PushBlobResponse{}
+	mi := &file_registry_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PushBlobResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PushBlobResponse) ProtoMessage() {}
+
+func (x *PushBlobResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_registry_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PushBlobResponse.ProtoReflect.Descriptor instead.
+func (*PushBlobResponse) Descriptor() ([]byte, []int) {
+	return file_registry_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *PushBlobResponse) GetDigest() string {
+	if x != nil {
+		return x.Digest
+	}
+	return ""
+}
+
+func (x *PushBlobResponse) GetSize() int64 {
+	if x != nil {
+		return x.Size
+	}
+	return 0
+}
+
+type PullBlobRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Digest        string                 `protobuf:"bytes,1,opt,name=digest,proto3" json:"digest,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PullBlobRequest) Reset() {
+	*x = PullBlobRequest{}
+	mi := &file_registry_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PullBlobRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PullBlobRequest) ProtoMessage() {}
+
+func (x *PullBlobRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_registry_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PullBlobRequest.ProtoReflect.Descriptor instead.
+func (*PullBlobRequest) Descriptor() ([]byte, []int) {
+	return file_registry_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *PullBlobRequest) GetDigest() string {
+	if x != nil {
+		return x.Digest
+	}
+	return ""
+}
+
+type PullBlobResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Data          []byte                 `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PullBlobResponse) Reset() {
+	*x = PullBlobResponse{}
+	mi := &file_registry_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PullBlobResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PullBlobResponse) ProtoMessage() {}
+
+func (x *PullBlobResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_registry_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PullBlobResponse.ProtoReflect.Descriptor instead.
+func (*PullBlobResponse) Descriptor() ([]byte, []int) {
+	return file_registry_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *PullBlobResponse) GetData() []byte {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+type DeleteBlobRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Digest        string                 `protobuf:"bytes,1,opt,name=digest,proto3" json:"digest,omitempty"`
+	Repository    string                 `protobuf:"bytes,2,opt,name=repository,proto3" json:"repository,omitempty"` // optional, for scoped deletion
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteBlobRequest) Reset() {
+	*x = DeleteBlobRequest{}
+	mi := &file_registry_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteBlobRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteBlobRequest) ProtoMessage() {}
+
+func (x *DeleteBlobRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_registry_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteBlobRequest.ProtoReflect.Descriptor instead.
+func (*DeleteBlobRequest) Descriptor() ([]byte, []int) {
+	return file_registry_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *DeleteBlobRequest) GetDigest() string {
+	if x != nil {
+		return x.Digest
+	}
+	return ""
+}
+
+func (x *DeleteBlobRequest) GetRepository() string {
+	if x != nil {
+		return x.Repository
+	}
+	return ""
+}
+
+type DeleteBlobResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteBlobResponse) Reset() {
+	*x = DeleteBlobResponse{}
+	mi := &file_registry_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteBlobResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteBlobResponse) ProtoMessage() {}
+
+func (x *DeleteBlobResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_registry_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteBlobResponse.ProtoReflect.Descriptor instead.
+func (*DeleteBlobResponse) Descriptor() ([]byte, []int) {
+	return file_registry_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *DeleteBlobResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+type ListBlobsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Repository    string                 `protobuf:"bytes,1,opt,name=repository,proto3" json:"repository,omitempty"`                         // optional, for scoped listing
+	DigestPrefix  string                 `protobuf:"bytes,2,opt,name=digest_prefix,json=digestPrefix,proto3" json:"digest_prefix,omitempty"` // optional, for filtering
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListBlobsRequest) Reset() {
+	*x = ListBlobsRequest{}
+	mi := &file_registry_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListBlobsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListBlobsRequest) ProtoMessage() {}
+
+func (x *ListBlobsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_registry_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListBlobsRequest.ProtoReflect.Descriptor instead.
+func (*ListBlobsRequest) Descriptor() ([]byte, []int) {
+	return file_registry_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *ListBlobsRequest) GetRepository() string {
+	if x != nil {
+		return x.Repository
+	}
+	return ""
+}
+
+func (x *ListBlobsRequest) GetDigestPrefix() string {
+	if x != nil {
+		return x.DigestPrefix
+	}
+	return ""
+}
+
+type ListBlobsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Digests       []string               `protobuf:"bytes,1,rep,name=digests,proto3" json:"digests,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListBlobsResponse) Reset() {
+	*x = ListBlobsResponse{}
+	mi := &file_registry_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListBlobsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListBlobsResponse) ProtoMessage() {}
+
+func (x *ListBlobsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_registry_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListBlobsResponse.ProtoReflect.Descriptor instead.
+func (*ListBlobsResponse) Descriptor() ([]byte, []int) {
+	return file_registry_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *ListBlobsResponse) GetDigests() []string {
+	if x != nil {
+		return x.Digests
+	}
+	return nil
+}
+
 type PushImageRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ImageName     string                 `protobuf:"bytes,1,opt,name=image_name,json=imageName,proto3" json:"image_name,omitempty"`
-	ImageData     []byte                 `protobuf:"bytes,2,opt,name=image_data,json=imageData,proto3" json:"image_data,omitempty"`
-	Tag           string                 `protobuf:"bytes,3,opt,name=tag,proto3" json:"tag,omitempty"`
+	Repository    string                 `protobuf:"bytes,1,opt,name=repository,proto3" json:"repository,omitempty"`
+	Tag           string                 `protobuf:"bytes,2,opt,name=tag,proto3" json:"tag,omitempty"`
+	Manifest      []byte                 `protobuf:"bytes,3,opt,name=manifest,proto3" json:"manifest,omitempty"`
+	Config        []byte                 `protobuf:"bytes,4,opt,name=config,proto3" json:"config,omitempty"`
+	LayerDigests  []string               `protobuf:"bytes,5,rep,name=layer_digests,json=layerDigests,proto3" json:"layer_digests,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *PushImageRequest) Reset() {
 	*x = PushImageRequest{}
-	mi := &file_registry_proto_msgTypes[0]
+	mi := &file_registry_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -46,7 +432,7 @@ func (x *PushImageRequest) String() string {
 func (*PushImageRequest) ProtoMessage() {}
 
 func (x *PushImageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_registry_proto_msgTypes[0]
+	mi := &file_registry_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -59,21 +445,14 @@ func (x *PushImageRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PushImageRequest.ProtoReflect.Descriptor instead.
 func (*PushImageRequest) Descriptor() ([]byte, []int) {
-	return file_registry_proto_rawDescGZIP(), []int{0}
+	return file_registry_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *PushImageRequest) GetImageName() string {
+func (x *PushImageRequest) GetRepository() string {
 	if x != nil {
-		return x.ImageName
+		return x.Repository
 	}
 	return ""
-}
-
-func (x *PushImageRequest) GetImageData() []byte {
-	if x != nil {
-		return x.ImageData
-	}
-	return nil
 }
 
 func (x *PushImageRequest) GetTag() string {
@@ -83,16 +462,38 @@ func (x *PushImageRequest) GetTag() string {
 	return ""
 }
 
+func (x *PushImageRequest) GetManifest() []byte {
+	if x != nil {
+		return x.Manifest
+	}
+	return nil
+}
+
+func (x *PushImageRequest) GetConfig() []byte {
+	if x != nil {
+		return x.Config
+	}
+	return nil
+}
+
+func (x *PushImageRequest) GetLayerDigests() []string {
+	if x != nil {
+		return x.LayerDigests
+	}
+	return nil
+}
+
 type PushImageResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Reference      string                 `protobuf:"bytes,1,opt,name=reference,proto3" json:"reference,omitempty"`
+	ManifestDigest string                 `protobuf:"bytes,2,opt,name=manifest_digest,json=manifestDigest,proto3" json:"manifest_digest,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *PushImageResponse) Reset() {
 	*x = PushImageResponse{}
-	mi := &file_registry_proto_msgTypes[1]
+	mi := &file_registry_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -104,7 +505,7 @@ func (x *PushImageResponse) String() string {
 func (*PushImageResponse) ProtoMessage() {}
 
 func (x *PushImageResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_registry_proto_msgTypes[1]
+	mi := &file_registry_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -117,26 +518,34 @@ func (x *PushImageResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PushImageResponse.ProtoReflect.Descriptor instead.
 func (*PushImageResponse) Descriptor() ([]byte, []int) {
-	return file_registry_proto_rawDescGZIP(), []int{1}
+	return file_registry_proto_rawDescGZIP(), []int{9}
 }
 
-func (x *PushImageResponse) GetMessage() string {
+func (x *PushImageResponse) GetReference() string {
 	if x != nil {
-		return x.Message
+		return x.Reference
+	}
+	return ""
+}
+
+func (x *PushImageResponse) GetManifestDigest() string {
+	if x != nil {
+		return x.ManifestDigest
 	}
 	return ""
 }
 
 type PullImageRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ImageName     string                 `protobuf:"bytes,1,opt,name=image_name,json=imageName,proto3" json:"image_name,omitempty"`
+	Repository    string                 `protobuf:"bytes,1,opt,name=repository,proto3" json:"repository,omitempty"`
+	Tag           string                 `protobuf:"bytes,2,opt,name=tag,proto3" json:"tag,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *PullImageRequest) Reset() {
 	*x = PullImageRequest{}
-	mi := &file_registry_proto_msgTypes[2]
+	mi := &file_registry_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -148,7 +557,7 @@ func (x *PullImageRequest) String() string {
 func (*PullImageRequest) ProtoMessage() {}
 
 func (x *PullImageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_registry_proto_msgTypes[2]
+	mi := &file_registry_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -161,26 +570,35 @@ func (x *PullImageRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullImageRequest.ProtoReflect.Descriptor instead.
 func (*PullImageRequest) Descriptor() ([]byte, []int) {
-	return file_registry_proto_rawDescGZIP(), []int{2}
+	return file_registry_proto_rawDescGZIP(), []int{10}
 }
 
-func (x *PullImageRequest) GetImageName() string {
+func (x *PullImageRequest) GetRepository() string {
 	if x != nil {
-		return x.ImageName
+		return x.Repository
+	}
+	return ""
+}
+
+func (x *PullImageRequest) GetTag() string {
+	if x != nil {
+		return x.Tag
 	}
 	return ""
 }
 
 type PullImageResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ImageData     []byte                 `protobuf:"bytes,1,opt,name=image_data,json=imageData,proto3" json:"image_data,omitempty"`
+	Manifest      []byte                 `protobuf:"bytes,1,opt,name=manifest,proto3" json:"manifest,omitempty"`
+	Config        []byte                 `protobuf:"bytes,2,opt,name=config,proto3" json:"config,omitempty"`
+	LayerDigests  []string               `protobuf:"bytes,3,rep,name=layer_digests,json=layerDigests,proto3" json:"layer_digests,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *PullImageResponse) Reset() {
 	*x = PullImageResponse{}
-	mi := &file_registry_proto_msgTypes[3]
+	mi := &file_registry_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -192,7 +610,7 @@ func (x *PullImageResponse) String() string {
 func (*PullImageResponse) ProtoMessage() {}
 
 func (x *PullImageResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_registry_proto_msgTypes[3]
+	mi := &file_registry_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -205,25 +623,40 @@ func (x *PullImageResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullImageResponse.ProtoReflect.Descriptor instead.
 func (*PullImageResponse) Descriptor() ([]byte, []int) {
-	return file_registry_proto_rawDescGZIP(), []int{3}
+	return file_registry_proto_rawDescGZIP(), []int{11}
 }
 
-func (x *PullImageResponse) GetImageData() []byte {
+func (x *PullImageResponse) GetManifest() []byte {
 	if x != nil {
-		return x.ImageData
+		return x.Manifest
+	}
+	return nil
+}
+
+func (x *PullImageResponse) GetConfig() []byte {
+	if x != nil {
+		return x.Config
+	}
+	return nil
+}
+
+func (x *PullImageResponse) GetLayerDigests() []string {
+	if x != nil {
+		return x.LayerDigests
 	}
 	return nil
 }
 
 type ListImagesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Repository    string                 `protobuf:"bytes,1,opt,name=repository,proto3" json:"repository,omitempty"` // optional, for scoped listing
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListImagesRequest) Reset() {
 	*x = ListImagesRequest{}
-	mi := &file_registry_proto_msgTypes[4]
+	mi := &file_registry_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -235,7 +668,7 @@ func (x *ListImagesRequest) String() string {
 func (*ListImagesRequest) ProtoMessage() {}
 
 func (x *ListImagesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_registry_proto_msgTypes[4]
+	mi := &file_registry_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -248,20 +681,28 @@ func (x *ListImagesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListImagesRequest.ProtoReflect.Descriptor instead.
 func (*ListImagesRequest) Descriptor() ([]byte, []int) {
-	return file_registry_proto_rawDescGZIP(), []int{4}
+	return file_registry_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *ListImagesRequest) GetRepository() string {
+	if x != nil {
+		return x.Repository
+	}
+	return ""
 }
 
 type ImageInfo struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ImageName     string                 `protobuf:"bytes,1,opt,name=image_name,json=imageName,proto3" json:"image_name,omitempty"`
-	Tags          []string               `protobuf:"bytes,2,rep,name=tags,proto3" json:"tags,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Repository     string                 `protobuf:"bytes,1,opt,name=repository,proto3" json:"repository,omitempty"`
+	Tag            string                 `protobuf:"bytes,2,opt,name=tag,proto3" json:"tag,omitempty"`
+	ManifestDigest string                 `protobuf:"bytes,3,opt,name=manifest_digest,json=manifestDigest,proto3" json:"manifest_digest,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *ImageInfo) Reset() {
 	*x = ImageInfo{}
-	mi := &file_registry_proto_msgTypes[5]
+	mi := &file_registry_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -273,7 +714,7 @@ func (x *ImageInfo) String() string {
 func (*ImageInfo) ProtoMessage() {}
 
 func (x *ImageInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_registry_proto_msgTypes[5]
+	mi := &file_registry_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -286,21 +727,28 @@ func (x *ImageInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ImageInfo.ProtoReflect.Descriptor instead.
 func (*ImageInfo) Descriptor() ([]byte, []int) {
-	return file_registry_proto_rawDescGZIP(), []int{5}
+	return file_registry_proto_rawDescGZIP(), []int{13}
 }
 
-func (x *ImageInfo) GetImageName() string {
+func (x *ImageInfo) GetRepository() string {
 	if x != nil {
-		return x.ImageName
+		return x.Repository
 	}
 	return ""
 }
 
-func (x *ImageInfo) GetTags() []string {
+func (x *ImageInfo) GetTag() string {
 	if x != nil {
-		return x.Tags
+		return x.Tag
 	}
-	return nil
+	return ""
+}
+
+func (x *ImageInfo) GetManifestDigest() string {
+	if x != nil {
+		return x.ManifestDigest
+	}
+	return ""
 }
 
 type ListImagesResponse struct {
@@ -312,7 +760,7 @@ type ListImagesResponse struct {
 
 func (x *ListImagesResponse) Reset() {
 	*x = ListImagesResponse{}
-	mi := &file_registry_proto_msgTypes[6]
+	mi := &file_registry_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -324,7 +772,7 @@ func (x *ListImagesResponse) String() string {
 func (*ListImagesResponse) ProtoMessage() {}
 
 func (x *ListImagesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_registry_proto_msgTypes[6]
+	mi := &file_registry_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -337,7 +785,7 @@ func (x *ListImagesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListImagesResponse.ProtoReflect.Descriptor instead.
 func (*ListImagesResponse) Descriptor() ([]byte, []int) {
-	return file_registry_proto_rawDescGZIP(), []int{6}
+	return file_registry_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ListImagesResponse) GetImages() []*ImageInfo {
@@ -349,14 +797,15 @@ func (x *ListImagesResponse) GetImages() []*ImageInfo {
 
 type DeleteImageRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ImageName     string                 `protobuf:"bytes,1,opt,name=image_name,json=imageName,proto3" json:"image_name,omitempty"`
+	Repository    string                 `protobuf:"bytes,1,opt,name=repository,proto3" json:"repository,omitempty"`
+	Tag           string                 `protobuf:"bytes,2,opt,name=tag,proto3" json:"tag,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *DeleteImageRequest) Reset() {
 	*x = DeleteImageRequest{}
-	mi := &file_registry_proto_msgTypes[7]
+	mi := &file_registry_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -368,7 +817,7 @@ func (x *DeleteImageRequest) String() string {
 func (*DeleteImageRequest) ProtoMessage() {}
 
 func (x *DeleteImageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_registry_proto_msgTypes[7]
+	mi := &file_registry_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -381,12 +830,19 @@ func (x *DeleteImageRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteImageRequest.ProtoReflect.Descriptor instead.
 func (*DeleteImageRequest) Descriptor() ([]byte, []int) {
-	return file_registry_proto_rawDescGZIP(), []int{7}
+	return file_registry_proto_rawDescGZIP(), []int{15}
 }
 
-func (x *DeleteImageRequest) GetImageName() string {
+func (x *DeleteImageRequest) GetRepository() string {
 	if x != nil {
-		return x.ImageName
+		return x.Repository
+	}
+	return ""
+}
+
+func (x *DeleteImageRequest) GetTag() string {
+	if x != nil {
+		return x.Tag
 	}
 	return ""
 }
@@ -400,7 +856,7 @@ type DeleteImageResponse struct {
 
 func (x *DeleteImageResponse) Reset() {
 	*x = DeleteImageResponse{}
-	mi := &file_registry_proto_msgTypes[8]
+	mi := &file_registry_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -412,7 +868,7 @@ func (x *DeleteImageResponse) String() string {
 func (*DeleteImageResponse) ProtoMessage() {}
 
 func (x *DeleteImageResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_registry_proto_msgTypes[8]
+	mi := &file_registry_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -425,7 +881,7 @@ func (x *DeleteImageResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteImageResponse.ProtoReflect.Descriptor instead.
 func (*DeleteImageResponse) Descriptor() ([]byte, []int) {
-	return file_registry_proto_rawDescGZIP(), []int{8}
+	return file_registry_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *DeleteImageResponse) GetMessage() string {
@@ -435,29 +891,28 @@ func (x *DeleteImageResponse) GetMessage() string {
 	return ""
 }
 
-type DeleteImageTagRequest struct {
+type ListTagsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ImageName     string                 `protobuf:"bytes,1,opt,name=image_name,json=imageName,proto3" json:"image_name,omitempty"`
-	Tag           string                 `protobuf:"bytes,2,opt,name=tag,proto3" json:"tag,omitempty"`
+	Repository    string                 `protobuf:"bytes,1,opt,name=repository,proto3" json:"repository,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *DeleteImageTagRequest) Reset() {
-	*x = DeleteImageTagRequest{}
-	mi := &file_registry_proto_msgTypes[9]
+func (x *ListTagsRequest) Reset() {
+	*x = ListTagsRequest{}
+	mi := &file_registry_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *DeleteImageTagRequest) String() string {
+func (x *ListTagsRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DeleteImageTagRequest) ProtoMessage() {}
+func (*ListTagsRequest) ProtoMessage() {}
 
-func (x *DeleteImageTagRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_registry_proto_msgTypes[9]
+func (x *ListTagsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_registry_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -468,47 +923,136 @@ func (x *DeleteImageTagRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DeleteImageTagRequest.ProtoReflect.Descriptor instead.
-func (*DeleteImageTagRequest) Descriptor() ([]byte, []int) {
-	return file_registry_proto_rawDescGZIP(), []int{9}
+// Deprecated: Use ListTagsRequest.ProtoReflect.Descriptor instead.
+func (*ListTagsRequest) Descriptor() ([]byte, []int) {
+	return file_registry_proto_rawDescGZIP(), []int{17}
 }
 
-func (x *DeleteImageTagRequest) GetImageName() string {
+func (x *ListTagsRequest) GetRepository() string {
 	if x != nil {
-		return x.ImageName
+		return x.Repository
 	}
 	return ""
 }
 
-func (x *DeleteImageTagRequest) GetTag() string {
+type ListTagsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Tags          []string               `protobuf:"bytes,1,rep,name=tags,proto3" json:"tags,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListTagsResponse) Reset() {
+	*x = ListTagsResponse{}
+	mi := &file_registry_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListTagsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListTagsResponse) ProtoMessage() {}
+
+func (x *ListTagsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_registry_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListTagsResponse.ProtoReflect.Descriptor instead.
+func (*ListTagsResponse) Descriptor() ([]byte, []int) {
+	return file_registry_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *ListTagsResponse) GetTags() []string {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+type DeleteTagRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Repository    string                 `protobuf:"bytes,1,opt,name=repository,proto3" json:"repository,omitempty"`
+	Tag           string                 `protobuf:"bytes,2,opt,name=tag,proto3" json:"tag,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteTagRequest) Reset() {
+	*x = DeleteTagRequest{}
+	mi := &file_registry_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteTagRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteTagRequest) ProtoMessage() {}
+
+func (x *DeleteTagRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_registry_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteTagRequest.ProtoReflect.Descriptor instead.
+func (*DeleteTagRequest) Descriptor() ([]byte, []int) {
+	return file_registry_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *DeleteTagRequest) GetRepository() string {
+	if x != nil {
+		return x.Repository
+	}
+	return ""
+}
+
+func (x *DeleteTagRequest) GetTag() string {
 	if x != nil {
 		return x.Tag
 	}
 	return ""
 }
 
-type DeleteImageTagResponse struct {
+type DeleteTagResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *DeleteImageTagResponse) Reset() {
-	*x = DeleteImageTagResponse{}
-	mi := &file_registry_proto_msgTypes[10]
+func (x *DeleteTagResponse) Reset() {
+	*x = DeleteTagResponse{}
+	mi := &file_registry_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *DeleteImageTagResponse) String() string {
+func (x *DeleteTagResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DeleteImageTagResponse) ProtoMessage() {}
+func (*DeleteTagResponse) ProtoMessage() {}
 
-func (x *DeleteImageTagResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_registry_proto_msgTypes[10]
+func (x *DeleteTagResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_registry_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -519,12 +1063,12 @@ func (x *DeleteImageTagResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DeleteImageTagResponse.ProtoReflect.Descriptor instead.
-func (*DeleteImageTagResponse) Descriptor() ([]byte, []int) {
-	return file_registry_proto_rawDescGZIP(), []int{10}
+// Deprecated: Use DeleteTagResponse.ProtoReflect.Descriptor instead.
+func (*DeleteTagResponse) Descriptor() ([]byte, []int) {
+	return file_registry_proto_rawDescGZIP(), []int{20}
 }
 
-func (x *DeleteImageTagResponse) GetMessage() string {
+func (x *DeleteTagResponse) GetMessage() string {
 	if x != nil {
 		return x.Message
 	}
@@ -535,46 +1079,96 @@ var File_registry_proto protoreflect.FileDescriptor
 
 const file_registry_proto_rawDesc = "" +
 	"\n" +
-	"\x0eregistry.proto\x12\bregistry\"b\n" +
-	"\x10PushImageRequest\x12\x1d\n" +
+	"\x0eregistry.proto\x12\bregistry\"=\n" +
+	"\x0fPushBlobRequest\x12\x12\n" +
+	"\x04data\x18\x01 \x01(\fR\x04data\x12\x16\n" +
+	"\x06digest\x18\x02 \x01(\tR\x06digest\">\n" +
+	"\x10PushBlobResponse\x12\x16\n" +
+	"\x06digest\x18\x01 \x01(\tR\x06digest\x12\x12\n" +
+	"\x04size\x18\x02 \x01(\x03R\x04size\")\n" +
+	"\x0fPullBlobRequest\x12\x16\n" +
+	"\x06digest\x18\x01 \x01(\tR\x06digest\"&\n" +
+	"\x10PullBlobResponse\x12\x12\n" +
+	"\x04data\x18\x01 \x01(\fR\x04data\"K\n" +
+	"\x11DeleteBlobRequest\x12\x16\n" +
+	"\x06digest\x18\x01 \x01(\tR\x06digest\x12\x1e\n" +
 	"\n" +
-	"image_name\x18\x01 \x01(\tR\timageName\x12\x1d\n" +
+	"repository\x18\x02 \x01(\tR\n" +
+	"repository\".\n" +
+	"\x12DeleteBlobResponse\x12\x18\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage\"W\n" +
+	"\x10ListBlobsRequest\x12\x1e\n" +
 	"\n" +
-	"image_data\x18\x02 \x01(\fR\timageData\x12\x10\n" +
-	"\x03tag\x18\x03 \x01(\tR\x03tag\"-\n" +
-	"\x11PushImageResponse\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage\"1\n" +
-	"\x10PullImageRequest\x12\x1d\n" +
+	"repository\x18\x01 \x01(\tR\n" +
+	"repository\x12#\n" +
+	"\rdigest_prefix\x18\x02 \x01(\tR\fdigestPrefix\"-\n" +
+	"\x11ListBlobsResponse\x12\x18\n" +
+	"\adigests\x18\x01 \x03(\tR\adigests\"\x9d\x01\n" +
+	"\x10PushImageRequest\x12\x1e\n" +
 	"\n" +
-	"image_name\x18\x01 \x01(\tR\timageName\"2\n" +
-	"\x11PullImageResponse\x12\x1d\n" +
+	"repository\x18\x01 \x01(\tR\n" +
+	"repository\x12\x10\n" +
+	"\x03tag\x18\x02 \x01(\tR\x03tag\x12\x1a\n" +
+	"\bmanifest\x18\x03 \x01(\fR\bmanifest\x12\x16\n" +
+	"\x06config\x18\x04 \x01(\fR\x06config\x12#\n" +
+	"\rlayer_digests\x18\x05 \x03(\tR\flayerDigests\"Z\n" +
+	"\x11PushImageResponse\x12\x1c\n" +
+	"\treference\x18\x01 \x01(\tR\treference\x12'\n" +
+	"\x0fmanifest_digest\x18\x02 \x01(\tR\x0emanifestDigest\"D\n" +
+	"\x10PullImageRequest\x12\x1e\n" +
 	"\n" +
-	"image_data\x18\x01 \x01(\fR\timageData\"\x13\n" +
-	"\x11ListImagesRequest\">\n" +
-	"\tImageInfo\x12\x1d\n" +
+	"repository\x18\x01 \x01(\tR\n" +
+	"repository\x12\x10\n" +
+	"\x03tag\x18\x02 \x01(\tR\x03tag\"l\n" +
+	"\x11PullImageResponse\x12\x1a\n" +
+	"\bmanifest\x18\x01 \x01(\fR\bmanifest\x12\x16\n" +
+	"\x06config\x18\x02 \x01(\fR\x06config\x12#\n" +
+	"\rlayer_digests\x18\x03 \x03(\tR\flayerDigests\"3\n" +
+	"\x11ListImagesRequest\x12\x1e\n" +
 	"\n" +
-	"image_name\x18\x01 \x01(\tR\timageName\x12\x12\n" +
-	"\x04tags\x18\x02 \x03(\tR\x04tags\"A\n" +
+	"repository\x18\x01 \x01(\tR\n" +
+	"repository\"f\n" +
+	"\tImageInfo\x12\x1e\n" +
+	"\n" +
+	"repository\x18\x01 \x01(\tR\n" +
+	"repository\x12\x10\n" +
+	"\x03tag\x18\x02 \x01(\tR\x03tag\x12'\n" +
+	"\x0fmanifest_digest\x18\x03 \x01(\tR\x0emanifestDigest\"A\n" +
 	"\x12ListImagesResponse\x12+\n" +
-	"\x06images\x18\x01 \x03(\v2\x13.registry.ImageInfoR\x06images\"3\n" +
-	"\x12DeleteImageRequest\x12\x1d\n" +
+	"\x06images\x18\x01 \x03(\v2\x13.registry.ImageInfoR\x06images\"F\n" +
+	"\x12DeleteImageRequest\x12\x1e\n" +
 	"\n" +
-	"image_name\x18\x01 \x01(\tR\timageName\"/\n" +
+	"repository\x18\x01 \x01(\tR\n" +
+	"repository\x12\x10\n" +
+	"\x03tag\x18\x02 \x01(\tR\x03tag\"/\n" +
 	"\x13DeleteImageResponse\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage\"H\n" +
-	"\x15DeleteImageTagRequest\x12\x1d\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage\"1\n" +
+	"\x0fListTagsRequest\x12\x1e\n" +
 	"\n" +
-	"image_name\x18\x01 \x01(\tR\timageName\x12\x10\n" +
-	"\x03tag\x18\x02 \x01(\tR\x03tag\"2\n" +
-	"\x16DeleteImageTagResponse\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage2\x8c\x03\n" +
-	"\x14ImageRegistryService\x12D\n" +
+	"repository\x18\x01 \x01(\tR\n" +
+	"repository\"&\n" +
+	"\x10ListTagsResponse\x12\x12\n" +
+	"\x04tags\x18\x01 \x03(\tR\x04tags\"D\n" +
+	"\x10DeleteTagRequest\x12\x1e\n" +
+	"\n" +
+	"repository\x18\x01 \x01(\tR\n" +
+	"repository\x12\x10\n" +
+	"\x03tag\x18\x02 \x01(\tR\x03tag\"-\n" +
+	"\x11DeleteTagResponse\x12\x18\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage2\xd5\x05\n" +
+	"\x14ImageRegistryService\x12A\n" +
+	"\bPushBlob\x12\x19.registry.PushBlobRequest\x1a\x1a.registry.PushBlobResponse\x12A\n" +
+	"\bPullBlob\x12\x19.registry.PullBlobRequest\x1a\x1a.registry.PullBlobResponse\x12G\n" +
+	"\n" +
+	"DeleteBlob\x12\x1b.registry.DeleteBlobRequest\x1a\x1c.registry.DeleteBlobResponse\x12D\n" +
+	"\tListBlobs\x12\x1a.registry.ListBlobsRequest\x1a\x1b.registry.ListBlobsResponse\x12D\n" +
 	"\tPushImage\x12\x1a.registry.PushImageRequest\x1a\x1b.registry.PushImageResponse\x12D\n" +
 	"\tPullImage\x12\x1a.registry.PullImageRequest\x1a\x1b.registry.PullImageResponse\x12G\n" +
 	"\n" +
 	"ListImages\x12\x1b.registry.ListImagesRequest\x1a\x1c.registry.ListImagesResponse\x12J\n" +
-	"\vDeleteImage\x12\x1c.registry.DeleteImageRequest\x1a\x1d.registry.DeleteImageResponse\x12S\n" +
-	"\x0eDeleteImageTag\x12\x1f.registry.DeleteImageTagRequest\x1a .registry.DeleteImageTagResponseB>Z<github.com/dkr290/peridot-app/grpc-docker-registry/proto/genb\x06proto3"
+	"\vDeleteImage\x12\x1c.registry.DeleteImageRequest\x1a\x1d.registry.DeleteImageResponse\x12A\n" +
+	"\bListTags\x12\x19.registry.ListTagsRequest\x1a\x1a.registry.ListTagsResponse\x12D\n" +
+	"\tDeleteTag\x12\x1a.registry.DeleteTagRequest\x1a\x1b.registry.DeleteTagResponseB>Z<github.com/dkr290/peridot-app/grpc-docker-registry/proto/genb\x06proto3"
 
 var (
 	file_registry_proto_rawDescOnce sync.Once
@@ -588,34 +1182,54 @@ func file_registry_proto_rawDescGZIP() []byte {
 	return file_registry_proto_rawDescData
 }
 
-var file_registry_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_registry_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_registry_proto_goTypes = []any{
-	(*PushImageRequest)(nil),       // 0: registry.PushImageRequest
-	(*PushImageResponse)(nil),      // 1: registry.PushImageResponse
-	(*PullImageRequest)(nil),       // 2: registry.PullImageRequest
-	(*PullImageResponse)(nil),      // 3: registry.PullImageResponse
-	(*ListImagesRequest)(nil),      // 4: registry.ListImagesRequest
-	(*ImageInfo)(nil),              // 5: registry.ImageInfo
-	(*ListImagesResponse)(nil),     // 6: registry.ListImagesResponse
-	(*DeleteImageRequest)(nil),     // 7: registry.DeleteImageRequest
-	(*DeleteImageResponse)(nil),    // 8: registry.DeleteImageResponse
-	(*DeleteImageTagRequest)(nil),  // 9: registry.DeleteImageTagRequest
-	(*DeleteImageTagResponse)(nil), // 10: registry.DeleteImageTagResponse
+	(*PushBlobRequest)(nil),     // 0: registry.PushBlobRequest
+	(*PushBlobResponse)(nil),    // 1: registry.PushBlobResponse
+	(*PullBlobRequest)(nil),     // 2: registry.PullBlobRequest
+	(*PullBlobResponse)(nil),    // 3: registry.PullBlobResponse
+	(*DeleteBlobRequest)(nil),   // 4: registry.DeleteBlobRequest
+	(*DeleteBlobResponse)(nil),  // 5: registry.DeleteBlobResponse
+	(*ListBlobsRequest)(nil),    // 6: registry.ListBlobsRequest
+	(*ListBlobsResponse)(nil),   // 7: registry.ListBlobsResponse
+	(*PushImageRequest)(nil),    // 8: registry.PushImageRequest
+	(*PushImageResponse)(nil),   // 9: registry.PushImageResponse
+	(*PullImageRequest)(nil),    // 10: registry.PullImageRequest
+	(*PullImageResponse)(nil),   // 11: registry.PullImageResponse
+	(*ListImagesRequest)(nil),   // 12: registry.ListImagesRequest
+	(*ImageInfo)(nil),           // 13: registry.ImageInfo
+	(*ListImagesResponse)(nil),  // 14: registry.ListImagesResponse
+	(*DeleteImageRequest)(nil),  // 15: registry.DeleteImageRequest
+	(*DeleteImageResponse)(nil), // 16: registry.DeleteImageResponse
+	(*ListTagsRequest)(nil),     // 17: registry.ListTagsRequest
+	(*ListTagsResponse)(nil),    // 18: registry.ListTagsResponse
+	(*DeleteTagRequest)(nil),    // 19: registry.DeleteTagRequest
+	(*DeleteTagResponse)(nil),   // 20: registry.DeleteTagResponse
 }
 var file_registry_proto_depIdxs = []int32{
-	5,  // 0: registry.ListImagesResponse.images:type_name -> registry.ImageInfo
-	0,  // 1: registry.ImageRegistryService.PushImage:input_type -> registry.PushImageRequest
-	2,  // 2: registry.ImageRegistryService.PullImage:input_type -> registry.PullImageRequest
-	4,  // 3: registry.ImageRegistryService.ListImages:input_type -> registry.ListImagesRequest
-	7,  // 4: registry.ImageRegistryService.DeleteImage:input_type -> registry.DeleteImageRequest
-	9,  // 5: registry.ImageRegistryService.DeleteImageTag:input_type -> registry.DeleteImageTagRequest
-	1,  // 6: registry.ImageRegistryService.PushImage:output_type -> registry.PushImageResponse
-	3,  // 7: registry.ImageRegistryService.PullImage:output_type -> registry.PullImageResponse
-	6,  // 8: registry.ImageRegistryService.ListImages:output_type -> registry.ListImagesResponse
-	8,  // 9: registry.ImageRegistryService.DeleteImage:output_type -> registry.DeleteImageResponse
-	10, // 10: registry.ImageRegistryService.DeleteImageTag:output_type -> registry.DeleteImageTagResponse
-	6,  // [6:11] is the sub-list for method output_type
-	1,  // [1:6] is the sub-list for method input_type
+	13, // 0: registry.ListImagesResponse.images:type_name -> registry.ImageInfo
+	0,  // 1: registry.ImageRegistryService.PushBlob:input_type -> registry.PushBlobRequest
+	2,  // 2: registry.ImageRegistryService.PullBlob:input_type -> registry.PullBlobRequest
+	4,  // 3: registry.ImageRegistryService.DeleteBlob:input_type -> registry.DeleteBlobRequest
+	6,  // 4: registry.ImageRegistryService.ListBlobs:input_type -> registry.ListBlobsRequest
+	8,  // 5: registry.ImageRegistryService.PushImage:input_type -> registry.PushImageRequest
+	10, // 6: registry.ImageRegistryService.PullImage:input_type -> registry.PullImageRequest
+	12, // 7: registry.ImageRegistryService.ListImages:input_type -> registry.ListImagesRequest
+	15, // 8: registry.ImageRegistryService.DeleteImage:input_type -> registry.DeleteImageRequest
+	17, // 9: registry.ImageRegistryService.ListTags:input_type -> registry.ListTagsRequest
+	19, // 10: registry.ImageRegistryService.DeleteTag:input_type -> registry.DeleteTagRequest
+	1,  // 11: registry.ImageRegistryService.PushBlob:output_type -> registry.PushBlobResponse
+	3,  // 12: registry.ImageRegistryService.PullBlob:output_type -> registry.PullBlobResponse
+	5,  // 13: registry.ImageRegistryService.DeleteBlob:output_type -> registry.DeleteBlobResponse
+	7,  // 14: registry.ImageRegistryService.ListBlobs:output_type -> registry.ListBlobsResponse
+	9,  // 15: registry.ImageRegistryService.PushImage:output_type -> registry.PushImageResponse
+	11, // 16: registry.ImageRegistryService.PullImage:output_type -> registry.PullImageResponse
+	14, // 17: registry.ImageRegistryService.ListImages:output_type -> registry.ListImagesResponse
+	16, // 18: registry.ImageRegistryService.DeleteImage:output_type -> registry.DeleteImageResponse
+	18, // 19: registry.ImageRegistryService.ListTags:output_type -> registry.ListTagsResponse
+	20, // 20: registry.ImageRegistryService.DeleteTag:output_type -> registry.DeleteTagResponse
+	11, // [11:21] is the sub-list for method output_type
+	1,  // [1:11] is the sub-list for method input_type
 	1,  // [1:1] is the sub-list for extension type_name
 	1,  // [1:1] is the sub-list for extension extendee
 	0,  // [0:1] is the sub-list for field type_name
@@ -632,7 +1246,7 @@ func file_registry_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_registry_proto_rawDesc), len(file_registry_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   11,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

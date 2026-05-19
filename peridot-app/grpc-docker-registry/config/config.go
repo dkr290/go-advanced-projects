@@ -18,7 +18,7 @@ func LoadConfig() (*Config, error) {
 	cfg := &Config{
 		ServerPort:  50051, // default gRPC port
 		DebugFlag:   false,
-		StoragePath: "/data",
+		StoragePath: "./data",
 	}
 
 	if v := os.Getenv("SERVER_PORT"); v != "" {

@@ -21,22 +21,34 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ImageRegistryService_PushImage_FullMethodName      = "/registry.ImageRegistryService/PushImage"
-	ImageRegistryService_PullImage_FullMethodName      = "/registry.ImageRegistryService/PullImage"
-	ImageRegistryService_ListImages_FullMethodName     = "/registry.ImageRegistryService/ListImages"
-	ImageRegistryService_DeleteImage_FullMethodName    = "/registry.ImageRegistryService/DeleteImage"
-	ImageRegistryService_DeleteImageTag_FullMethodName = "/registry.ImageRegistryService/DeleteImageTag"
+	ImageRegistryService_PushBlob_FullMethodName    = "/registry.ImageRegistryService/PushBlob"
+	ImageRegistryService_PullBlob_FullMethodName    = "/registry.ImageRegistryService/PullBlob"
+	ImageRegistryService_DeleteBlob_FullMethodName  = "/registry.ImageRegistryService/DeleteBlob"
+	ImageRegistryService_ListBlobs_FullMethodName   = "/registry.ImageRegistryService/ListBlobs"
+	ImageRegistryService_PushImage_FullMethodName   = "/registry.ImageRegistryService/PushImage"
+	ImageRegistryService_PullImage_FullMethodName   = "/registry.ImageRegistryService/PullImage"
+	ImageRegistryService_ListImages_FullMethodName  = "/registry.ImageRegistryService/ListImages"
+	ImageRegistryService_DeleteImage_FullMethodName = "/registry.ImageRegistryService/DeleteImage"
+	ImageRegistryService_ListTags_FullMethodName    = "/registry.ImageRegistryService/ListTags"
+	ImageRegistryService_DeleteTag_FullMethodName   = "/registry.ImageRegistryService/DeleteTag"
 )
 
 // ImageRegistryServiceClient is the client API for ImageRegistryService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ImageRegistryServiceClient interface {
+	// Blob operations (content-addressed by SHA256)
+	PushBlob(ctx context.Context, in *PushBlobRequest, opts ...grpc.CallOption) (*PushBlobResponse, error)
+	PullBlob(ctx context.Context, in *PullBlobRequest, opts ...grpc.CallOption) (*PullBlobResponse, error)
+	DeleteBlob(ctx context.Context, in *DeleteBlobRequest, opts ...grpc.CallOption) (*DeleteBlobResponse, error)
+	ListBlobs(ctx context.Context, in *ListBlobsRequest, opts ...grpc.CallOption) (*ListBlobsResponse, error)
+	// Image operations (manifest + layers)
 	PushImage(ctx context.Context, in *PushImageRequest, opts ...grpc.CallOption) (*PushImageResponse, error)
 	PullImage(ctx context.Context, in *PullImageRequest, opts ...grpc.CallOption) (*PullImageResponse, error)
 	ListImages(ctx context.Context, in *ListImagesRequest, opts ...grpc.CallOption) (*ListImagesResponse, error)
 	DeleteImage(ctx context.Context, in *DeleteImageRequest, opts ...grpc.CallOption) (*DeleteImageResponse, error)
-	DeleteImageTag(ctx context.Context, in *DeleteImageTagRequest, opts ...grpc.CallOption) (*DeleteImageTagResponse, error)
+	ListTags(ctx context.Context, in *ListTagsRequest, opts ...grpc.CallOption) (*ListTagsResponse, error)
+	DeleteTag(ctx context.Context, in *DeleteTagRequest, opts ...grpc.CallOption) (*DeleteTagResponse, error)
 }
 
 type imageRegistryServiceClient struct {
@@ -45,6 +57,46 @@ type imageRegistryServiceClient struct {
 
 func NewImageRegistryServiceClient(cc grpc.ClientConnInterface) ImageRegistryServiceClient {
 	return &imageRegistryServiceClient{cc}
+}
+
+func (c *imageRegistryServiceClient) PushBlob(ctx context.Context, in *PushBlobRequest, opts ...grpc.CallOption) (*PushBlobResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PushBlobResponse)
+	err := c.cc.Invoke(ctx, ImageRegistryService_PushBlob_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *imageRegistryServiceClient) PullBlob(ctx context.Context, in *PullBlobRequest, opts ...grpc.CallOption) (*PullBlobResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PullBlobResponse)
+	err := c.cc.Invoke(ctx, ImageRegistryService_PullBlob_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *imageRegistryServiceClient) DeleteBlob(ctx context.Context, in *DeleteBlobRequest, opts ...grpc.CallOption) (*DeleteBlobResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteBlobResponse)
+	err := c.cc.Invoke(ctx, ImageRegistryService_DeleteBlob_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *imageRegistryServiceClient) ListBlobs(ctx context.Context, in *ListBlobsRequest, opts ...grpc.CallOption) (*ListBlobsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListBlobsResponse)
+	err := c.cc.Invoke(ctx, ImageRegistryService_ListBlobs_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *imageRegistryServiceClient) PushImage(ctx context.Context, in *PushImageRequest, opts ...grpc.CallOption) (*PushImageResponse, error) {
@@ -87,10 +139,20 @@ func (c *imageRegistryServiceClient) DeleteImage(ctx context.Context, in *Delete
 	return out, nil
 }
 
-func (c *imageRegistryServiceClient) DeleteImageTag(ctx context.Context, in *DeleteImageTagRequest, opts ...grpc.CallOption) (*DeleteImageTagResponse, error) {
+func (c *imageRegistryServiceClient) ListTags(ctx context.Context, in *ListTagsRequest, opts ...grpc.CallOption) (*ListTagsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DeleteImageTagResponse)
-	err := c.cc.Invoke(ctx, ImageRegistryService_DeleteImageTag_FullMethodName, in, out, cOpts...)
+	out := new(ListTagsResponse)
+	err := c.cc.Invoke(ctx, ImageRegistryService_ListTags_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *imageRegistryServiceClient) DeleteTag(ctx context.Context, in *DeleteTagRequest, opts ...grpc.CallOption) (*DeleteTagResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteTagResponse)
+	err := c.cc.Invoke(ctx, ImageRegistryService_DeleteTag_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -101,11 +163,18 @@ func (c *imageRegistryServiceClient) DeleteImageTag(ctx context.Context, in *Del
 // All implementations must embed UnimplementedImageRegistryServiceServer
 // for forward compatibility.
 type ImageRegistryServiceServer interface {
+	// Blob operations (content-addressed by SHA256)
+	PushBlob(context.Context, *PushBlobRequest) (*PushBlobResponse, error)
+	PullBlob(context.Context, *PullBlobRequest) (*PullBlobResponse, error)
+	DeleteBlob(context.Context, *DeleteBlobRequest) (*DeleteBlobResponse, error)
+	ListBlobs(context.Context, *ListBlobsRequest) (*ListBlobsResponse, error)
+	// Image operations (manifest + layers)
 	PushImage(context.Context, *PushImageRequest) (*PushImageResponse, error)
 	PullImage(context.Context, *PullImageRequest) (*PullImageResponse, error)
 	ListImages(context.Context, *ListImagesRequest) (*ListImagesResponse, error)
 	DeleteImage(context.Context, *DeleteImageRequest) (*DeleteImageResponse, error)
-	DeleteImageTag(context.Context, *DeleteImageTagRequest) (*DeleteImageTagResponse, error)
+	ListTags(context.Context, *ListTagsRequest) (*ListTagsResponse, error)
+	DeleteTag(context.Context, *DeleteTagRequest) (*DeleteTagResponse, error)
 	mustEmbedUnimplementedImageRegistryServiceServer()
 }
 
@@ -116,6 +185,18 @@ type ImageRegistryServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedImageRegistryServiceServer struct{}
 
+func (UnimplementedImageRegistryServiceServer) PushBlob(context.Context, *PushBlobRequest) (*PushBlobResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method PushBlob not implemented")
+}
+func (UnimplementedImageRegistryServiceServer) PullBlob(context.Context, *PullBlobRequest) (*PullBlobResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method PullBlob not implemented")
+}
+func (UnimplementedImageRegistryServiceServer) DeleteBlob(context.Context, *DeleteBlobRequest) (*DeleteBlobResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteBlob not implemented")
+}
+func (UnimplementedImageRegistryServiceServer) ListBlobs(context.Context, *ListBlobsRequest) (*ListBlobsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListBlobs not implemented")
+}
 func (UnimplementedImageRegistryServiceServer) PushImage(context.Context, *PushImageRequest) (*PushImageResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method PushImage not implemented")
 }
@@ -128,8 +209,11 @@ func (UnimplementedImageRegistryServiceServer) ListImages(context.Context, *List
 func (UnimplementedImageRegistryServiceServer) DeleteImage(context.Context, *DeleteImageRequest) (*DeleteImageResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteImage not implemented")
 }
-func (UnimplementedImageRegistryServiceServer) DeleteImageTag(context.Context, *DeleteImageTagRequest) (*DeleteImageTagResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method DeleteImageTag not implemented")
+func (UnimplementedImageRegistryServiceServer) ListTags(context.Context, *ListTagsRequest) (*ListTagsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListTags not implemented")
+}
+func (UnimplementedImageRegistryServiceServer) DeleteTag(context.Context, *DeleteTagRequest) (*DeleteTagResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteTag not implemented")
 }
 func (UnimplementedImageRegistryServiceServer) mustEmbedUnimplementedImageRegistryServiceServer() {}
 func (UnimplementedImageRegistryServiceServer) testEmbeddedByValue()                              {}
@@ -150,6 +234,78 @@ func RegisterImageRegistryServiceServer(s grpc.ServiceRegistrar, srv ImageRegist
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&ImageRegistryService_ServiceDesc, srv)
+}
+
+func _ImageRegistryService_PushBlob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PushBlobRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ImageRegistryServiceServer).PushBlob(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ImageRegistryService_PushBlob_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ImageRegistryServiceServer).PushBlob(ctx, req.(*PushBlobRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ImageRegistryService_PullBlob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PullBlobRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ImageRegistryServiceServer).PullBlob(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ImageRegistryService_PullBlob_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ImageRegistryServiceServer).PullBlob(ctx, req.(*PullBlobRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ImageRegistryService_DeleteBlob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteBlobRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ImageRegistryServiceServer).DeleteBlob(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ImageRegistryService_DeleteBlob_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ImageRegistryServiceServer).DeleteBlob(ctx, req.(*DeleteBlobRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ImageRegistryService_ListBlobs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListBlobsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ImageRegistryServiceServer).ListBlobs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ImageRegistryService_ListBlobs_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ImageRegistryServiceServer).ListBlobs(ctx, req.(*ListBlobsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _ImageRegistryService_PushImage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -224,20 +380,38 @@ func _ImageRegistryService_DeleteImage_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ImageRegistryService_DeleteImageTag_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteImageTagRequest)
+func _ImageRegistryService_ListTags_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListTagsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ImageRegistryServiceServer).DeleteImageTag(ctx, in)
+		return srv.(ImageRegistryServiceServer).ListTags(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ImageRegistryService_DeleteImageTag_FullMethodName,
+		FullMethod: ImageRegistryService_ListTags_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ImageRegistryServiceServer).DeleteImageTag(ctx, req.(*DeleteImageTagRequest))
+		return srv.(ImageRegistryServiceServer).ListTags(ctx, req.(*ListTagsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ImageRegistryService_DeleteTag_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteTagRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ImageRegistryServiceServer).DeleteTag(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ImageRegistryService_DeleteTag_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ImageRegistryServiceServer).DeleteTag(ctx, req.(*DeleteTagRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -249,6 +423,22 @@ var ImageRegistryService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "registry.ImageRegistryService",
 	HandlerType: (*ImageRegistryServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "PushBlob",
+			Handler:    _ImageRegistryService_PushBlob_Handler,
+		},
+		{
+			MethodName: "PullBlob",
+			Handler:    _ImageRegistryService_PullBlob_Handler,
+		},
+		{
+			MethodName: "DeleteBlob",
+			Handler:    _ImageRegistryService_DeleteBlob_Handler,
+		},
+		{
+			MethodName: "ListBlobs",
+			Handler:    _ImageRegistryService_ListBlobs_Handler,
+		},
 		{
 			MethodName: "PushImage",
 			Handler:    _ImageRegistryService_PushImage_Handler,
@@ -266,8 +456,12 @@ var ImageRegistryService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ImageRegistryService_DeleteImage_Handler,
 		},
 		{
-			MethodName: "DeleteImageTag",
-			Handler:    _ImageRegistryService_DeleteImageTag_Handler,
+			MethodName: "ListTags",
+			Handler:    _ImageRegistryService_ListTags_Handler,
+		},
+		{
+			MethodName: "DeleteTag",
+			Handler:    _ImageRegistryService_DeleteTag_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -58,3 +58,7 @@ gen-proto: ## Generate pb go files
 .PHONY: run-server
 run-server: ## run the server
 	go run server/*.go
+
+.PHONY: run-client
+run-client: ## run the client
+	go run client/*.go

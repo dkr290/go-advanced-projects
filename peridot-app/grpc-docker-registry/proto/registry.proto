@@ -6,38 +6,93 @@ option go_package = "github.com/dkr290/peridot-app/grpc-docker-registry/proto/ge
 package registry;
 
 service ImageRegistryService {
+    // Blob operations (content-addressed by SHA256)
+    rpc PushBlob (PushBlobRequest) returns (PushBlobResponse);
+    rpc PullBlob (PullBlobRequest) returns (PullBlobResponse);
+    rpc DeleteBlob (DeleteBlobRequest) returns (DeleteBlobResponse);
+    rpc ListBlobs (ListBlobsRequest) returns (ListBlobsResponse);
+    
+    // Image operations (manifest + layers)
     rpc PushImage (PushImageRequest) returns (PushImageResponse);
     rpc PullImage (PullImageRequest) returns (PullImageResponse);
     rpc ListImages (ListImagesRequest) returns (ListImagesResponse);
     rpc DeleteImage (DeleteImageRequest) returns (DeleteImageResponse);
-    rpc DeleteImageTag (DeleteImageTagRequest) returns (DeleteImageTagResponse);
+    rpc ListTags (ListTagsRequest) returns (ListTagsResponse);
+    rpc DeleteTag (DeleteTagRequest) returns (DeleteTagResponse);
 }
 
-message PushImageRequest {
-    string image_name = 1;
-    bytes image_data = 2;
-    string tag = 3;
+// ==================== Blob Operations ====================
+
+message PushBlobRequest {
+    bytes data = 1;
+    string digest = 2; // SHA256 hash (optional, will be computed if empty)
 }
 
-message PushImageResponse {
+message PushBlobResponse {
+    string digest = 1;
+    int64 size = 2;
+}
+
+message PullBlobRequest {
+    string digest = 1;
+}
+
+message PullBlobResponse {
+    bytes data = 1;
+}
+
+message DeleteBlobRequest {
+    string digest = 1;
+    string repository = 2; // optional, for scoped deletion
+}
+
+message DeleteBlobResponse {
     string message = 1;
 }
 
+message ListBlobsRequest {
+    string repository = 1; // optional, for scoped listing
+    string digest_prefix = 2; // optional, for filtering
+}
+
+message ListBlobsResponse {
+    repeated string digests = 1;
+}
+
+// ==================== Image Operations ====================
+
+message PushImageRequest {
+    string repository = 1;
+    string tag = 2;
+    bytes manifest = 3;
+    bytes config = 4;
+    repeated string layer_digests = 5;
+}
+
+message PushImageResponse {
+    string reference = 1;
+    string manifest_digest = 2;
+}
+
 message PullImageRequest {
-    string image_name = 1;
+    string repository = 1;
+    string tag = 2;
 }
 
 message PullImageResponse {
-    bytes image_data = 1;
+    bytes manifest = 1;
+    bytes config = 2;
+    repeated string layer_digests = 3;
 }
 
 message ListImagesRequest {
-    // No additional fields needed
+    string repository = 1; // optional, for scoped listing
 }
 
 message ImageInfo {
-    string image_name = 1;
-    repeated string tags = 2;
+    string repository = 1;
+    string tag = 2;
+    string manifest_digest = 3;
 }
 
 message ListImagesResponse {
@@ -45,18 +100,28 @@ message ListImagesResponse {
 }
 
 message DeleteImageRequest {
-    string image_name = 1;
+    string repository = 1;
+    string tag = 2;
 }
 
 message DeleteImageResponse {
     string message = 1;
 }
 
-message DeleteImageTagRequest {
-    string image_name = 1;
+message ListTagsRequest {
+    string repository = 1;
+}
+
+message ListTagsResponse {
+    repeated string tags = 1;
+}
+
+message DeleteTagRequest {
+    string repository = 1;
     string tag = 2;
 }
 
-message DeleteImageTagResponse {
+message DeleteTagResponse {
     string message = 1;
 }
+

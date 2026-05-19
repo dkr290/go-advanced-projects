@@ -27,12 +27,18 @@ func main() {
 		log.Error(fmt.Sprintf("Failed to listen: %v", err))
 		return
 	}
-	store := storage.NewFileStorage(cfg.StoragePath)
+
+// Initialize content-addressable blob store
+	blobStore := storage.NewFileBlobStore(cfg.StoragePath)
+
+// Initialize manifest store
+	manifestStore := storage.NewFileManifestStore(cfg.StoragePath)
 
 	srv := &services.ImageService{
-		Log:    log,
-		Cfg:    cfg,
-		Storage: store,
+		Log:           log,
+		Cfg:           cfg,
+		BlobStore:     blobStore,
+		ManifestStore: manifestStore,
 	}
 
 	s := grpc.NewServer()
