@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/dkr290/peridot-app/grpc-docker-registry/internal/storage"
+	"github.com/dkr290/peridot-app/grpc-docker-registry/internal/upstream"
 	pb "github.com/dkr290/peridot-app/grpc-docker-registry/proto/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -44,32 +45,25 @@ func (c *RegistryClient) DownloadImage(imageRef string) error {
 	fmt.Printf("📥 Downloading image: %s\n", imageRef)
 
 	// Parse image reference
-	repo, tag := parseImageRef(imageRef)
-	if tag == "" {
-		tag = "latest"
-	}
-	// Step 0: Get auth token
-	token, err := c.getDockerToken(repo)
+	reg, repo, reference, err := upstream.NewFromRef(imageRef, c.client)
 	if err != nil {
-		return fmt.Errorf("failed to get auth token: %v", err)
+		return err
 	}
 
 	// Step 1: Get the manifest
-	manifestURL := fmt.Sprintf("https://registry-1.docker.io/v2/%s/manifests/%s", repo, tag)
-	manifest, manifestDigest, mediaType, err := c.getManifest(manifestURL, token)
+	manifest, manifestDigest, mediaType, err := reg.GetManifest(repo, reference)
 	if err != nil {
 		return fmt.Errorf("failed to get manifest: %v", err)
 	}
 	// If manifest list, resolve to linux/amd64 platform manifest
 	if mediaType == "application/vnd.docker.distribution.manifest.list.v2+json" ||
 		mediaType == "application/vnd.oci.image.index.v1+json" {
-		digest, err := resolvePlatformDigest(manifest, "linux", "amd64")
+		digest, err := upstream.ResolvePlatformDigest(manifest, "linux", "amd64")
 		if err != nil {
 			return fmt.Errorf("failed to resolve platform manifest: %v", err)
 		}
 		fmt.Printf("   Resolved linux/amd64 manifest: %s\n", digest)
-		platformURL := fmt.Sprintf("https://registry-1.docker.io/v2/%s/manifests/%s", repo, digest)
-		manifest, manifestDigest, _, err = c.getManifest(platformURL, token)
+		manifest, manifestDigest, _, err = reg.GetManifest(repo, digest)
 		if err != nil {
 			return fmt.Errorf("failed to get platform manifest: %v", err)
 		}
@@ -85,14 +79,11 @@ func (c *RegistryClient) DownloadImage(imageRef string) error {
 
 	type ManifestConfig struct {
 		Digest string `json:"digest"`
-		Size   int64  `json:"size"`
 	}
 
 	type Manifest struct {
-		SchemaVersion int             `json:"schemaVersion"`
-		MediaType     string          `json:"mediaType"`
-		Config        ManifestConfig  `json:"config"`
-		Layers        []ManifestLayer `json:"layers"`
+		Config ManifestConfig  `json:"config"`
+		Layers []ManifestLayer `json:"layers"`
 	}
 
 	var m Manifest
@@ -101,22 +92,15 @@ func (c *RegistryClient) DownloadImage(imageRef string) error {
 	}
 
 	fmt.Printf("   Layers: %d, Config: %s\n", len(m.Layers), m.Config.Digest)
-
-	// Step 3: Download and push config blob
 	fmt.Println("   Downloading config...")
-	config, err := c.downloadBlobWithToken(
-		"https://registry-1.docker.io/v2/"+repo+"/blobs/"+m.Config.Digest, token,
-	)
+	config, err := reg.GetBlob(repo, m.Config.Digest)
 	if err != nil {
 		return fmt.Errorf("failed to download config: %v", err)
 	}
-
-	// Push config to registry
-	_, err = c.grpcClient.PushBlob(context.Background(), &pb.PushBlobRequest{
+	if _, err = c.grpcClient.PushBlob(context.Background(), &pb.PushBlobRequest{
 		Data:   config,
 		Digest: m.Config.Digest,
-	})
-	if err != nil {
+	}); err != nil {
 		return fmt.Errorf("failed to push config: %v", err)
 	}
 	fmt.Printf("   Config pushed: %s\n", m.Config.Digest)
@@ -125,9 +109,7 @@ func (c *RegistryClient) DownloadImage(imageRef string) error {
 	var layerDigests []string
 	for i, layer := range m.Layers {
 		fmt.Printf("   Downloading layer %d/%d...\n", i+1, len(m.Layers))
-		layerData, err := c.downloadBlobWithToken(
-			"https://registry-1.docker.io/v2/"+repo+"/blobs/"+layer.Digest, token,
-		)
+		layerData, err := reg.GetBlob(repo, layer.Digest)
 		if err != nil {
 			return fmt.Errorf("failed to download layer %s: %v", layer.Digest, err)
 		}
@@ -148,8 +130,7 @@ func (c *RegistryClient) DownloadImage(imageRef string) error {
 	fmt.Println("   Pushing image manifest...")
 	_, err = c.grpcClient.PushImage(context.Background(), &pb.PushImageRequest{
 		Repository:   repo,
-		Tag:          tag,
-		Manifest:     manifest,
+		Tag:          reference,
 		Config:       config,
 		LayerDigests: layerDigests,
 	})
@@ -157,7 +138,7 @@ func (c *RegistryClient) DownloadImage(imageRef string) error {
 		return fmt.Errorf("failed to push image: %v", err)
 	}
 
-	fmt.Printf("   ✅ Image pushed successfully: %s:%s\n", repo, tag)
+	fmt.Printf("   ✅ Image pushed successfully: %s:%s\n", repo, reference)
 	return nil
 }
 
