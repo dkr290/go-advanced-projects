@@ -4,6 +4,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"math"
 	"net"
 
 	"github.com/dkr290/peridot-app/grpc-docker-registry/config"
@@ -28,10 +29,10 @@ func main() {
 		return
 	}
 
-// Initialize content-addressable blob store
+	// Initialize content-addressable blob store
 	blobStore := storage.NewFileBlobStore(cfg.StoragePath)
 
-// Initialize manifest store
+	// Initialize manifest store
 	manifestStore := storage.NewFileManifestStore(cfg.StoragePath)
 
 	srv := &services.ImageService{
@@ -40,8 +41,9 @@ func main() {
 		BlobStore:     blobStore,
 		ManifestStore: manifestStore,
 	}
+	maxMsgSize := grpc.MaxRecvMsgSize(math.MaxInt32)
 
-	s := grpc.NewServer()
+	s := grpc.NewServer(maxMsgSize)
 	pb.RegisterImageRegistryServiceServer(s, srv)
 	log.Info(fmt.Sprintf("Server listening at %v", lis.Addr()))
 	if err := s.Serve(lis); err != nil {

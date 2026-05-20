@@ -1,0 +1,41 @@
+# --- Go Binaries & Built Files ---
+# Compiled binaries (common names)
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+out/
+
+# Output of go build (if you name your binary main or server)
+main
+server
+
+# --- Go Test & Tooling Artifacts ---
+# Test binaries and coverage files
+*.test
+*.out
+c.out
+coverage.txt
+
+# --- Dependency Management ---
+# Go modules vendoring (uncomment if you DO NOT want to commit your vendor folder)
+# vendor/
+
+# --- IDEs and Text Editors ---
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# --- OS Specific Files ---
+.DS_Store
+Thumbs.db
+
+# --- Project Specific Data (Your Request) ---
+# Ignore the entire data folder and everything inside it
+data/*

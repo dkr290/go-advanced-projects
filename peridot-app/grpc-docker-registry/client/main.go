@@ -9,7 +9,7 @@ func main() {
 
 	// Example usage:
 	// 1. Download an image from Docker Hub
-	 err := client.DownloadImage("alpine:latest")
+	 err := client.DownloadImage("ubuntu:latest")
 	if err != nil {
 		fmt.Printf("❌ Failed to download image: %v\n", err)
 		return
@@ -17,7 +17,7 @@ func main() {
 
 
 	// 2. List images
-	 	images, err := client.ListImages("alpine")
+	 	images, err := client.ListImages("*")
 	if err != nil {
 		fmt.Printf("❌ Failed to list images: %v\n", err)
 		return
