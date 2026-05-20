@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/dkr290/peridot-app/grpc-docker-registry/internal/storage"
@@ -50,12 +48,31 @@ func (c *RegistryClient) DownloadImage(imageRef string) error {
 	if tag == "" {
 		tag = "latest"
 	}
+	// Step 0: Get auth token
+	token, err := c.getDockerToken(repo)
+	if err != nil {
+		return fmt.Errorf("failed to get auth token: %v", err)
+	}
 
 	// Step 1: Get the manifest
 	manifestURL := fmt.Sprintf("https://registry-1.docker.io/v2/%s/manifests/%s", repo, tag)
-	manifest, manifestDigest, err := c.getManifest(manifestURL)
+	manifest, manifestDigest, mediaType, err := c.getManifest(manifestURL, token)
 	if err != nil {
 		return fmt.Errorf("failed to get manifest: %v", err)
+	}
+	// If manifest list, resolve to linux/amd64 platform manifest
+	if mediaType == "application/vnd.docker.distribution.manifest.list.v2+json" ||
+		mediaType == "application/vnd.oci.image.index.v1+json" {
+		digest, err := resolvePlatformDigest(manifest, "linux", "amd64")
+		if err != nil {
+			return fmt.Errorf("failed to resolve platform manifest: %v", err)
+		}
+		fmt.Printf("   Resolved linux/amd64 manifest: %s\n", digest)
+		platformURL := fmt.Sprintf("https://registry-1.docker.io/v2/%s/manifests/%s", repo, digest)
+		manifest, manifestDigest, _, err = c.getManifest(platformURL, token)
+		if err != nil {
+			return fmt.Errorf("failed to get platform manifest: %v", err)
+		}
 	}
 
 	fmt.Printf("   Manifest downloaded: %s\n", manifestDigest)
@@ -87,8 +104,8 @@ func (c *RegistryClient) DownloadImage(imageRef string) error {
 
 	// Step 3: Download and push config blob
 	fmt.Println("   Downloading config...")
-	config, err := c.downloadBlob(
-		"https://registry-1.docker.io/v2/" + repo + "/blobs/" + m.Config.Digest,
+	config, err := c.downloadBlobWithToken(
+		"https://registry-1.docker.io/v2/"+repo+"/blobs/"+m.Config.Digest, token,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to download config: %v", err)
@@ -108,8 +125,8 @@ func (c *RegistryClient) DownloadImage(imageRef string) error {
 	var layerDigests []string
 	for i, layer := range m.Layers {
 		fmt.Printf("   Downloading layer %d/%d...\n", i+1, len(m.Layers))
-		layerData, err := c.downloadBlob(
-			"https://registry-1.docker.io/v2/" + repo + "/blobs/" + layer.Digest,
+		layerData, err := c.downloadBlobWithToken(
+			"https://registry-1.docker.io/v2/"+repo+"/blobs/"+layer.Digest, token,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to download layer %s: %v", layer.Digest, err)
@@ -145,44 +162,57 @@ func (c *RegistryClient) DownloadImage(imageRef string) error {
 }
 
 // ==================== Helper Methods ====================
-
-func (c *RegistryClient) downloadBlob(url string) ([]byte, error) {
-	resp, err := c.client.Get(url)
+func (c *RegistryClient) downloadBlobWithToken(url, token string) ([]byte, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
+	resp, err := c.client.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
-
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("HTTP %d for %s", resp.StatusCode, url)
 	}
-
 	return io.ReadAll(resp.Body)
 }
 
-func (c *RegistryClient) getManifest(url string) ([]byte, string, error) {
+func (c *RegistryClient) getManifest(url string, token string) ([]byte, string, string, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return nil, "", err
+		return nil, "", "", err
 	}
 
 	// Add authorization header if needed
-	req.Header.Set("Accept", "application/vnd.docker.distribution.manifest.v2+json")
+	req.Header.Set("Accept", strings.Join([]string{
+		"application/vnd.docker.distribution.manifest.v2+json",
+		"application/vnd.docker.distribution.manifest.list.v2+json",
+		"application/vnd.oci.image.index.v1+json",
+		"application/vnd.oci.image.manifest.v1+json",
+	}, ","))
+
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
 
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return nil, "", err
+		return nil, "", "", err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, "", fmt.Errorf("HTTP %d for manifest", resp.StatusCode)
+		return nil, "", "", fmt.Errorf("HTTP %d for manifest", resp.StatusCode)
 	}
 
 	// Read manifest
 	manifest, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, "", err
+		return nil, "", "", err
 	}
 
 	// Get digest from response header
@@ -190,8 +220,9 @@ func (c *RegistryClient) getManifest(url string) ([]byte, string, error) {
 	if digest == "" {
 		digest = storage.ComputeDigest(manifest)
 	}
+	mediaType := resp.Header.Get("Content-Type")
 
-	return manifest, digest, nil
+	return manifest, digest, mediaType, nil
 }
 
 func parseImageRef(ref string) (string, string) {
@@ -288,56 +319,46 @@ func (c *RegistryClient) ListBlobs(prefix string) ([]string, error) {
 	return resp.GetDigests(), nil
 }
 
-// ==================== Save Image Locally ====================
-
-func (c *RegistryClient) SaveImageLocally(repo, tag, outputDir string) error {
-	manifest, config, layerDigests, err := c.PullImage(repo, tag)
+func (c *RegistryClient) getDockerToken(repo string) (string, error) {
+	url := fmt.Sprintf(
+		"https://auth.docker.io/token?service=registry.docker.io&scope=repository:%s:pull",
+		repo,
+	)
+	resp, err := c.client.Get(url)
 	if err != nil {
-		return err
+		return "", err
 	}
+	defer resp.Body.Close()
 
-	// Create output directory
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
-		return err
+	var result struct {
+		Token string `json:"token"`
 	}
-
-	// Save manifest
-	manifestPath := filepath.Join(outputDir, "manifest.json")
-	if err := os.WriteFile(manifestPath, manifest, 0644); err != nil {
-		return err
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", err
 	}
-	fmt.Printf("   Saved manifest to: %s\n", manifestPath)
-
-	// Save config
-	configPath := filepath.Join(outputDir, "config.json")
-	if err := os.WriteFile(configPath, config, 0644); err != nil {
-		return err
+	if result.Token == "" {
+		return "", fmt.Errorf("empty token received")
 	}
-	fmt.Printf("   Saved config to: %s\n", configPath)
+	return result.Token, nil
+}
 
-	// Save layers
-	layersDir := filepath.Join(outputDir, "layers")
-	if err := os.MkdirAll(layersDir, 0755); err != nil {
-		return err
+func resolvePlatformDigest(manifestList []byte, os, arch string) (string, error) {
+	var ml struct {
+		Manifests []struct {
+			Digest   string `json:"digest"`
+			Platform struct {
+				OS           string `json:"os"`
+				Architecture string `json:"architecture"`
+			} `json:"platform"`
+		} `json:"manifests"`
 	}
-
-	for _, digest := range layerDigests {
-		// Get layer data
-		layerResp, err := c.grpcClient.PullBlob(context.Background(), &pb.PullBlobRequest{
-			Digest: digest,
-		})
-		if err != nil {
-			return fmt.Errorf("failed to pull layer %s: %v", digest, err)
+	if err := json.Unmarshal(manifestList, &ml); err != nil {
+		return "", err
+	}
+	for _, m := range ml.Manifests {
+		if m.Platform.OS == os && m.Platform.Architecture == arch {
+			return m.Digest, nil
 		}
-
-		// Save layer
-		layerPath := filepath.Join(layersDir, digest)
-		if err := os.WriteFile(layerPath, layerResp.GetData(), 0644); err != nil {
-			return err
-		}
-		fmt.Printf("   Saved layer: %s\n", layerPath)
 	}
-
-	fmt.Printf("   ✅ Image saved locally to: %s\n", outputDir)
-	return nil
+	return "", fmt.Errorf("no manifest found for %s/%s", os, arch)
 }
