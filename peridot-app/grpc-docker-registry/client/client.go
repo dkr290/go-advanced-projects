@@ -5,11 +5,9 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"strings"
 
-	"github.com/dkr290/peridot-app/grpc-docker-registry/internal/storage"
 	"github.com/dkr290/peridot-app/grpc-docker-registry/internal/upstream"
 	pb "github.com/dkr290/peridot-app/grpc-docker-registry/proto/gen"
 	"google.golang.org/grpc"
@@ -143,68 +141,6 @@ func (c *RegistryClient) DownloadImage(imageRef string) error {
 }
 
 // ==================== Helper Methods ====================
-func (c *RegistryClient) downloadBlobWithToken(url, token string) ([]byte, error) {
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, err
-	}
-	if token != "" {
-		req.Header.Set("Authorization", "Bearer "+token)
-	}
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("HTTP %d for %s", resp.StatusCode, url)
-	}
-	return io.ReadAll(resp.Body)
-}
-
-func (c *RegistryClient) getManifest(url string, token string) ([]byte, string, string, error) {
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, "", "", err
-	}
-
-	// Add authorization header if needed
-	req.Header.Set("Accept", strings.Join([]string{
-		"application/vnd.docker.distribution.manifest.v2+json",
-		"application/vnd.docker.distribution.manifest.list.v2+json",
-		"application/vnd.oci.image.index.v1+json",
-		"application/vnd.oci.image.manifest.v1+json",
-	}, ","))
-
-	if token != "" {
-		req.Header.Set("Authorization", "Bearer "+token)
-	}
-
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return nil, "", "", err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, "", "", fmt.Errorf("HTTP %d for manifest", resp.StatusCode)
-	}
-
-	// Read manifest
-	manifest, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, "", "", err
-	}
-
-	// Get digest from response header
-	digest := resp.Header.Get("Docker-Content-Digest")
-	if digest == "" {
-		digest = storage.ComputeDigest(manifest)
-	}
-	mediaType := resp.Header.Get("Content-Type")
-
-	return manifest, digest, mediaType, nil
-}
 
 func parseImageRef(ref string) (string, string) {
 	parts := strings.Split(ref, ":")
@@ -298,48 +234,4 @@ func (c *RegistryClient) ListBlobs(prefix string) ([]string, error) {
 		return nil, fmt.Errorf("list blobs failed: %v", err)
 	}
 	return resp.GetDigests(), nil
-}
-
-func (c *RegistryClient) getDockerToken(repo string) (string, error) {
-	url := fmt.Sprintf(
-		"https://auth.docker.io/token?service=registry.docker.io&scope=repository:%s:pull",
-		repo,
-	)
-	resp, err := c.client.Get(url)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	var result struct {
-		Token string `json:"token"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", err
-	}
-	if result.Token == "" {
-		return "", fmt.Errorf("empty token received")
-	}
-	return result.Token, nil
-}
-
-func resolvePlatformDigest(manifestList []byte, os, arch string) (string, error) {
-	var ml struct {
-		Manifests []struct {
-			Digest   string `json:"digest"`
-			Platform struct {
-				OS           string `json:"os"`
-				Architecture string `json:"architecture"`
-			} `json:"platform"`
-		} `json:"manifests"`
-	}
-	if err := json.Unmarshal(manifestList, &ml); err != nil {
-		return "", err
-	}
-	for _, m := range ml.Manifests {
-		if m.Platform.OS == os && m.Platform.Architecture == arch {
-			return m.Digest, nil
-		}
-	}
-	return "", fmt.Errorf("no manifest found for %s/%s", os, arch)
 }
