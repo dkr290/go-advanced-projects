@@ -110,6 +110,12 @@ func (r *BcredisReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		logger.Error(err, "failed to reconcile ConfigMap")
 		return ctrl.Result{}, err
 	}
+// Reconcile headless service for Sentinel discovery
+	if err := r.reconcileHeadlessService(ctx, bcredis, spec); err != nil {
+		logger.Error(err, "failed to reconcile headless service")
+		return ctrl.Result{}, err
+	}
+
 	// Reconcile statefullsets for both instances
 	for _, idx := range []int{0, 1} {
 

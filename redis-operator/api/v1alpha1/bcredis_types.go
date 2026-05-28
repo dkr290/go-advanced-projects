@@ -68,6 +68,11 @@ type BcredisStatus struct {
 	Phase string `json:"phase,omitempty"`
 	// Conditions repesent the lates available obervation of the Bcredis state.
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
+	// FailedOver indicates if a failover has occurred.
+	FailedOver bool `json:"failedOver,omitempty"`
+
+	// LastFailoverTime is the timestamp of the last failover event.
+	LastFailoverTime metav1.Time `json:"lastFailoverTime,omitempty"`
 }
 
 // +kubebuilder:object:root=true

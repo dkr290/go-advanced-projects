@@ -76,7 +76,7 @@ func (r *BcredisReconciler) reconcileStatefulSet(
 			})
 		}
 
-		sts.Spec = getSpec(s, env, volumeMounts)
+		sts.Spec = getSpec(s, env, volumeMounts,idx)
 		return nil
 	})
 	if err == nil {
@@ -89,8 +89,13 @@ func getSpec(
 	s stsSpecification,
 	env []corev1.EnvVar,
 	volumeMounts []corev1.VolumeMount,
+	idx int,
 ) appsv1.StatefulSetSpec {
 	storageClass := s.spec.StorageClassName
+configFile := "/etc/redis/master.conf"
+if idx == 1 {
+    configFile = "/etc/redis/replica.conf"
+}
 
 	specInfo := appsv1.StatefulSetSpec{
 		Replicas:    &s.replicas,
@@ -108,7 +113,7 @@ func getSpec(
 						Name:  "redis",
 						Image: s.spec.RedisImage,
 						// Start with a basic config; role is managed dynamically via exec
-						Command: []string{"redis-server", "/etc/redis/master.conf"},
+						Command: []string{"redis-server", configFile},
 						Ports: []corev1.ContainerPort{
 							{ContainerPort: 6379, Name: "redis"},
 						},
@@ -133,6 +138,26 @@ func getSpec(
 							PeriodSeconds:       10,
 						},
 					},
+					{
+						Name:    "sentinel",
+						Image:   s.spec.RedisImage,
+						Command: []string{"redis-sentinel", "/etc/redis/sentinel.conf"},
+						Ports: []corev1.ContainerPort{
+							{ContainerPort: 26379, Name: "sentinel"},
+						},
+						VolumeMounts: []corev1.VolumeMount{
+							{Name: "sentinel-config", MountPath: "/etc/redis"},
+						},
+						ReadinessProbe: &corev1.Probe{
+							ProbeHandler: corev1.ProbeHandler{
+								Exec: &corev1.ExecAction{
+									Command: []string{"redis-cli", "-p", "26379", "ping"},
+								},
+							},
+							InitialDelaySeconds: 5,
+							PeriodSeconds:       10,
+						},
+					},
 				},
 				Volumes: []corev1.Volume{
 					{
@@ -141,6 +166,16 @@ func getSpec(
 							ConfigMap: &corev1.ConfigMapVolumeSource{
 								LocalObjectReference: corev1.LocalObjectReference{
 									Name: s.bcredisName + "-redis-config",
+								},
+							},
+						},
+					},
+					{
+						Name: "sentinel-config",
+						VolumeSource: corev1.VolumeSource{
+							ConfigMap: &corev1.ConfigMapVolumeSource{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: s.bcredisName + "-sentinel-config",
 								},
 							},
 						},
