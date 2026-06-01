@@ -38,6 +38,7 @@ sentinel parallel-syncs mymaster 1
 func (r *BcredisReconciler) reconcileConfigMap(
 	ctx context.Context,
 	bcredis *bcredisv1alpha1.Bcredis,
+	currentMasterSvc string,
 ) error {
 	cm := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
@@ -72,17 +73,22 @@ sentinelCM := &corev1.ConfigMap{
 			},
 		},
 	}
-_, err = controllerutil.CreateOrUpdate(ctx, r.Client, sentinelCM, func() error {
+	_, sentinelErr := controllerutil.CreateOrUpdate(ctx, r.Client, sentinelCM, func() error {
 		if err := controllerutil.SetControllerReference(bcredis, sentinelCM, r.Scheme); err != nil {
 			return err
 		}
+
 	// Use master-0 as the monitored master hostname
-		masterHostname := fmt.Sprintf("%s-redis-0.%s.svc.cluster.local", bcredis.Name, bcredis.Namespace)
+		masterHostname := fmt.Sprintf("%s.%s.svc.cluster.local", currentMasterSvc, bcredis.Namespace)
 		sentinelCM.Data = map[string]string{
 			"sentinel.conf": fmt.Sprintf(sentinelConf, masterHostname),
 		}
 		return nil
 	})
+	if sentinelErr != nil {
+		return sentinelErr
+	}
+
 	return err
 
 

@@ -40,8 +40,8 @@ func (r *BcredisReconciler) reconcileService(
 			Ports: []corev1.ServicePort{
 				{
 					Name:       "redis",
-					Port:       6379,
-					TargetPort: intstr.FromInt(6379),
+					Port:       int32(spec.ServicePort),
+					TargetPort: intstr.FromInt(int(spec.ServicePort)),
 					Protocol:   corev1.ProtocolTCP,
 				},
 				{

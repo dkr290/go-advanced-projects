@@ -3,6 +3,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -16,6 +17,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	policyv1 "k8s.io/api/policy/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	bcredisv1alpha1 "github.com/example/redis-operator/api/v1alpha1"
 )
@@ -77,15 +81,17 @@ func (r *BcredisReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		"image",
 		bcredis.Spec.RedisImage,
 	)
-	// handle finalizer
-	if bcredis.DeletionTimestamp != nil {
-		if controllerutil.ContainsFinalizer(bcredis, finalizerName) {
-			controllerutil.RemoveFinalizer(bcredis, finalizerName)
-			if err := r.Update(ctx, bcredis); err != nil {
-				return ctrl.Result{}, err
-			}
-		}
-	}
+	// Delete all owned resources before removing the finalizer
+if bcredis.DeletionTimestamp != nil {
+    if controllerutil.ContainsFinalizer(bcredis, finalizerName) {
+        // Delete all owned resources
+        r.deleteOwnedResources(ctx, bcredis)
+        controllerutil.RemoveFinalizer(bcredis, finalizerName)
+        if err := r.Update(ctx, bcredis); err != nil {
+            return ctrl.Result{}, err
+        }
+    }
+}
 	// Apply defaults
 	spec := bcredis.Spec
 	if spec.RedisImage == "" {
@@ -106,7 +112,11 @@ func (r *BcredisReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	// Reconcile ConfigMap for Redis configuration
 
-	if err := r.reconcileConfigMap(ctx, bcredis); err != nil {
+	currentMasterSvc := bcredis.Status.CurrentMasterService
+	if currentMasterSvc == "" {
+		currentMasterSvc = fmt.Sprintf("%s-redis-0", bcredis.Name)
+	}
+	if err := r.reconcileConfigMap(ctx, bcredis, currentMasterSvc); err != nil {
 		logger.Error(err, "failed to reconcile ConfigMap")
 		return ctrl.Result{}, err
 	}
@@ -135,6 +145,30 @@ func (r *BcredisReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		logger.Error(err, "failed to reconcile Gateway")
 		return ctrl.Result{}, err
 	}
+	// Reconcile PDB
+	pdb := &policyv1.PodDisruptionBudget{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      bcredis.Name + "-redis-pdb",
+			Namespace: bcredis.Namespace,
+		},
+	}
+	_, pdbErr := controllerutil.CreateOrUpdate(ctx, r.Client, pdb, func() error {
+		if err := controllerutil.SetControllerReference(bcredis, pdb, r.Scheme); err != nil {
+			return err
+		}
+		pdb.Spec.MinAvailable = &intstr.IntOrString{IntVal: 1}
+		pdb.Spec.Selector = &metav1.LabelSelector{
+			MatchLabels: map[string]string{
+				"app": bcredis.Name + "-redis",
+			},
+		}
+		return nil
+	})
+	if pdbErr != nil {
+		logger.Error(pdbErr, "failed to reconcile PDB")
+		return ctrl.Result{}, pdbErr
+	}
+
 	// Determine current master/replica state and perform failover if needed
 	requeue, err := r.reconcileRoles(ctx, bcredis, spec)
 	if err != nil {
@@ -150,11 +184,15 @@ func (r *BcredisReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, err
 	}
 
+
+
 	_ = name
 	if requeue {
 		return ctrl.Result{RequeueAfter: requeAfter}, nil
 	}
 	return ctrl.Result{RequeueAfter: requeAfter}, nil
+
+
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -167,3 +205,5 @@ func (r *BcredisReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&corev1.ConfigMap{}).
 		Complete(r)
 }
+
+
