@@ -48,7 +48,7 @@ func (r *BcredisReconciler) reconcileStatefulSet(
 			Namespace: bcredis.Namespace,
 		},
 	}
-	logger.Info("Create or update of statefullset", stsName)
+	logger.Info("Create or update of statefullset", "statefullset", stsName)
 	result, err := controllerutil.CreateOrUpdate(ctx, r.Client, sts, func() error {
 		if err := controllerutil.SetControllerReference(bcredis, sts, r.Scheme); err != nil {
 			return err
@@ -76,7 +76,7 @@ func (r *BcredisReconciler) reconcileStatefulSet(
 			})
 		}
 
-		sts.Spec = getSpec(s, env, volumeMounts,idx)
+		sts.Spec = getSpec(s, env, volumeMounts, idx)
 		return nil
 	})
 	if err == nil {
@@ -92,14 +92,14 @@ func getSpec(
 	idx int,
 ) appsv1.StatefulSetSpec {
 	storageClass := s.spec.StorageClassName
-configFile := "/etc/redis/master.conf"
-if idx == 1 {
-    configFile = "/etc/redis/replica.conf"
-}
+	configFile := "/etc/redis/master.conf"
+	if idx == 1 {
+		configFile = "/etc/redis/replica.conf"
+	}
 
 	specInfo := appsv1.StatefulSetSpec{
 		Replicas:    &s.replicas,
-		ServiceName: s.stsName + "-headless",
+		ServiceName: fmt.Sprintf("%s-redis-headless", s.bcredisName),
 		Selector: &metav1.LabelSelector{
 			MatchLabels: s.labels,
 		},
@@ -141,13 +141,23 @@ if idx == 1 {
 					{
 						Name:    "sentinel",
 						Image:   s.spec.RedisImage,
-						Command: []string{"redis-sentinel", "/etc/redis/sentinel.conf"},
+						Command: []string{"sh", "-c"},
+						Args: []string{
+							"cp /etc/redis-config/sentinel.conf /etc/redis-runtime/sentinel.conf && exec redis-server /etc/redis-runtime/sentinel.conf --sentinel",
+						},
+
 						Ports: []corev1.ContainerPort{
 							{ContainerPort: 26379, Name: "sentinel"},
 						},
 						VolumeMounts: []corev1.VolumeMount{
-							{Name: "sentinel-config", MountPath: "/etc/redis"},
+							{
+								Name:      "sentinel-config",
+								MountPath: "/etc/redis-config",
+								ReadOnly:  true,
+							},
+							{Name: "sentinel-runtime", MountPath: "/etc/redis-runtime"},
 						},
+
 						ReadinessProbe: &corev1.Probe{
 							ProbeHandler: corev1.ProbeHandler{
 								Exec: &corev1.ExecAction{
@@ -180,6 +190,12 @@ if idx == 1 {
 							},
 						},
 					},
+					{
+						Name: "sentinel-runtime",
+						VolumeSource: corev1.VolumeSource{
+							EmptyDir: &corev1.EmptyDirVolumeSource{},
+						},
+					},
 				},
 			},
 		},
@@ -189,7 +205,7 @@ if idx == 1 {
 					Name: "redis-data",
 				},
 				Spec: corev1.PersistentVolumeClaimSpec{
-					AccessModes:      []corev1.PersistentVolumeAccessMode{corev1.ReadWriteMany},
+					AccessModes:      []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
 					StorageClassName: &storageClass,
 					Resources: corev1.VolumeResourceRequirements{
 						Requests: corev1.ResourceList{

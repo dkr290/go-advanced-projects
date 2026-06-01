@@ -39,6 +39,7 @@ func (r *BcredisReconciler) reconcileHeadlessService(
 		svc.Spec = corev1.ServiceSpec{
 			ClusterIP: corev1.ClusterIPNone, // Headless service
 			Selector:  labels,
+			PublishNotReadyAddresses: true,                 // optional, helps early DNS for pod discovery
 			Ports: []corev1.ServicePort{
 				{
 					Name:       "redis",

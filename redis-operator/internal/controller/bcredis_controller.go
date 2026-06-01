@@ -8,18 +8,20 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	policyv1 "k8s.io/api/policy/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	policyv1 "k8s.io/api/policy/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
+	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 
 	bcredisv1alpha1 "github.com/example/redis-operator/api/v1alpha1"
 )
@@ -45,9 +47,10 @@ type BcredisReconciler struct {
 // +kubebuilder:rbac:groups=bcredis.bankingcircle.net,resources=bcredis/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=bcredis.bankingcircle.net,resources=bcredis/finalizers,verbs=update
 // +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups="",resources=services;pods;persistentvolumeclaims;configmaps,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=pods/exec,verbs=create
 // +kubebuilder:rbac:groups=gateway.networking.k8s.io,resources=gateways;tcproutes,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=policy,resources=poddisruptionbudgets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=services;pods;persistentvolumeclaims;configmaps;secrets,verbs=get;list;watch;create;update;patch;delete
 // BcredisReconciler reconciles a Bcredis object
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
@@ -82,16 +85,19 @@ func (r *BcredisReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		bcredis.Spec.RedisImage,
 	)
 	// Delete all owned resources before removing the finalizer
-if bcredis.DeletionTimestamp != nil {
-    if controllerutil.ContainsFinalizer(bcredis, finalizerName) {
-        // Delete all owned resources
-        r.deleteOwnedResources(ctx, bcredis)
-        controllerutil.RemoveFinalizer(bcredis, finalizerName)
-        if err := r.Update(ctx, bcredis); err != nil {
-            return ctrl.Result{}, err
-        }
-    }
-}
+	if bcredis.DeletionTimestamp != nil {
+		if controllerutil.ContainsFinalizer(bcredis, finalizerName) {
+			// Delete all owned resources
+			if err := r.deleteOwnedResources(ctx, bcredis); err != nil {
+				return ctrl.Result{}, err
+			}
+			controllerutil.RemoveFinalizer(bcredis, finalizerName)
+			if err := r.Update(ctx, bcredis); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+		return ctrl.Result{}, nil
+	}
 	// Apply defaults
 	spec := bcredis.Spec
 	if spec.RedisImage == "" {
@@ -111,6 +117,10 @@ if bcredis.DeletionTimestamp != nil {
 	//	ns := bcredis.Namespace
 
 	// Reconcile ConfigMap for Redis configuration
+	if err := r.reconcilePasswordSecret(ctx, bcredis); err != nil {
+		logger.Error(err, "failed to reconcile redis password secret")
+		return ctrl.Result{}, err
+	}
 
 	currentMasterSvc := bcredis.Status.CurrentMasterService
 	if currentMasterSvc == "" {
@@ -120,7 +130,8 @@ if bcredis.DeletionTimestamp != nil {
 		logger.Error(err, "failed to reconcile ConfigMap")
 		return ctrl.Result{}, err
 	}
-// Reconcile headless service for Sentinel discovery
+
+	// Reconcile headless service for Sentinel discovery
 	if err := r.reconcileHeadlessService(ctx, bcredis, spec); err != nil {
 		logger.Error(err, "failed to reconcile headless service")
 		return ctrl.Result{}, err
@@ -173,7 +184,7 @@ if bcredis.DeletionTimestamp != nil {
 	requeue, err := r.reconcileRoles(ctx, bcredis, spec)
 	if err != nil {
 		logger.Error(err, "failed to reconcile roles")
-		return ctrl.Result{RequeueAfter: heathCheckRetry}, err
+		return ctrl.Result{}, err
 	}
 
 	// Update status
@@ -184,14 +195,11 @@ if bcredis.DeletionTimestamp != nil {
 		return ctrl.Result{}, err
 	}
 
-
-
 	_ = name
 	if requeue {
 		return ctrl.Result{RequeueAfter: requeAfter}, nil
 	}
 	return ctrl.Result{RequeueAfter: requeAfter}, nil
-
 
 }
 
@@ -203,7 +211,6 @@ func (r *BcredisReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&appsv1.StatefulSet{}).
 		Owns(&corev1.Service{}).
 		Owns(&corev1.ConfigMap{}).
+		Owns(&gatewayv1.Gateway{}).Owns(&gatewayv1alpha2.TCPRoute{}).
 		Complete(r)
 }
-
-

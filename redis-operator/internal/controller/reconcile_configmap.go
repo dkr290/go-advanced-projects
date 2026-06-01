@@ -27,6 +27,8 @@ var sentinelConf = `bind 0.0.0.0
 protected-mode no
 daemonize no
 port 26379
+sentinel resolve-hostnames yes
+sentinel announce-hostnames yes
 sentinel monitor mymaster %s 6379 2
 sentinel down-after-milliseconds mymaster 5000
 sentinel failover-timeout mymaster 60000
@@ -79,7 +81,7 @@ sentinelCM := &corev1.ConfigMap{
 		}
 
 	// Use master-0 as the monitored master hostname
-		masterHostname := fmt.Sprintf("%s.%s.svc.cluster.local", currentMasterSvc, bcredis.Namespace)
+		masterHostname := fmt.Sprintf("%s.%s.svc", currentMasterSvc, bcredis.Namespace)
 		sentinelCM.Data = map[string]string{
 			"sentinel.conf": fmt.Sprintf(sentinelConf, masterHostname),
 		}

@@ -13,6 +13,7 @@ import (
 	"k8s.io/client-go/tools/remotecommand"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 // promoteToMaster runs REPLICAOF NO ONE on the target pod.
@@ -122,30 +123,94 @@ func sectionNamePtr(s string) *gatewayv1.SectionName {
 	sn := gatewayv1.SectionName(s)
 	return &sn
 }
-func (r *BcredisReconciler) deleteOwnedResources(ctx context.Context, bcredis *bcredisv1alpha1.Bcredis) {
+func (r *BcredisReconciler) deleteOwnedResources(ctx context.Context, bcredis *bcredisv1alpha1.Bcredis) error{
     // Delete StatefulSets
     for _, idx := range []int{0, 1} {
-        ss := &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("%s-redis-%d", bcredis.Name, idx), Namespace: bcredis.Namespace}}
-        r.Delete(ctx, ss)
-    }
-    // Delete Services
-    for _, idx := range []int{0, 1} {
-        svc := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("%s-redis-%d", bcredis.Name, idx), Namespace: bcredis.Namespace}}
-        r.Delete(ctx, svc)
-    }
-    // Delete headless service
-    headless := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("%s-redis-headless", bcredis.Name), Namespace: bcredis.Namespace}}
-    r.Delete(ctx, headless)
-    // Delete ConfigMaps
-    cm1 := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: bcredis.Name + "-redis-config", Namespace: bcredis.Namespace}}
-    r.Delete(ctx, cm1)
-    cm2 := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: bcredis.Name + "-sentinel-config", Namespace: bcredis.Namespace}}
-    r.Delete(ctx, cm2)
-    // Delete Gateway and TCPRoute
-    gw := &gatewayv1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: bcredis.Name + "-redis-gateway", Namespace: bcredis.Namespace}}
-    r.Delete(ctx, gw)
-		tr := &gatewayv1alpha2.TCPRoute{
-      ObjectMeta: metav1.ObjectMeta{Name: bcredis.Name+"-tcproute",Namespace: bcredis.Namespace},
+		ss := &appsv1.StatefulSet{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      fmt.Sprintf("%s-redis-%d", bcredis.Name, idx),
+				Namespace: bcredis.Namespace,
+			},
 		}
-    r.Delete(ctx, tr)
+		if err := r.Delete(ctx, ss); err != nil && !apierrors.IsNotFound(err) {
+			return err
+		}
+	}
+    // Delete Services
+	for _, idx := range []int{0, 1} {
+		svc := &corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      fmt.Sprintf("%s-redis-%d", bcredis.Name, idx),
+				Namespace: bcredis.Namespace,
+			},
+		}
+		if err := r.Delete(ctx, svc); err != nil && !apierrors.IsNotFound(err) {
+			return err
+		}
+	}
+	// Delete PVCs created by volumeClaimTemplates (claim name: redis-data)
+	for _, idx := range []int{0, 1} {
+		pvc := &corev1.PersistentVolumeClaim{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      fmt.Sprintf("redis-data-%s-redis-%d-0", bcredis.Name, idx),
+				Namespace: bcredis.Namespace,
+			},
+		}
+		if err := r.Delete(ctx, pvc); err != nil && !apierrors.IsNotFound(err) {
+			return err
+		}
+	}
+
+	// Delete headless service
+	headless := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-redis-headless", bcredis.Name),
+			Namespace: bcredis.Namespace,
+		},
+	}
+	if err := r.Delete(ctx, headless); err != nil && !apierrors.IsNotFound(err) {
+		return err
+	}
+    // Delete ConfigMaps
+	cm1 := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      bcredis.Name + "-redis-config",
+			Namespace: bcredis.Namespace,
+		},
+	}
+	if err := r.Delete(ctx, cm1); err != nil && !apierrors.IsNotFound(err) {
+		return err
+	}
+
+	cm2 := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      bcredis.Name + "-sentinel-config",
+			Namespace: bcredis.Namespace,
+		},
+	}
+	if err := r.Delete(ctx, cm2); err != nil && !apierrors.IsNotFound(err) {
+		return err
+	}
+    // Delete Gateway and TCPRoute
+    // Delete Gateway and TCPRoute
+	gw := &gatewayv1.Gateway{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      bcredis.Name + "-redis-gateway",
+			Namespace: bcredis.Namespace,
+		},
+	}
+	if err := r.Delete(ctx, gw); err != nil && !apierrors.IsNotFound(err) {
+		return err
+	}
+
+	tr := &gatewayv1alpha2.TCPRoute{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      bcredis.Name + "-tcproute",
+			Namespace: bcredis.Namespace,
+		},
+	}
+	if err := r.Delete(ctx, tr); err != nil && !apierrors.IsNotFound(err) {
+		return err
+	}
+	return nil
 }

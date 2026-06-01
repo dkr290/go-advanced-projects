@@ -5,10 +5,12 @@ metadata:
     app.kubernetes.io/name: redis-operator
     app.kubernetes.io/managed-by: kustomize
   name: bcredis-sample
+  namespace: default
+
 spec:
   redisImage: "redis:7.2-alpine"
   storageClassName: "managed-premium"
-  envoyGatewayClassName: "envoy-gateway"
+  envoyGatewayClassName: "eg"
   storageSize: "10Gi"
   redisPasswordSecret: "redis-password-secret"
   servicePort: 6379

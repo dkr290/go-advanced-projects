@@ -8,17 +8,32 @@ import (
 	"time"
 
 	bcredisv1alpha1 "github.com/example/redis-operator/api/v1alpha1"
+
 	"github.com/go-logr/logr"
 	"k8s.io/client-go/tools/remotecommand"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes/scheme"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 const (
 	masterStatus  = "master"
 	replicaStatus = "slave"
 )
+
+func redisPodName(crName string, idx int) string {
+	return fmt.Sprintf("%s-redis-%d-0", crName, idx)
+}
+
+func redisServiceName(crName string, idx int) string {
+	return fmt.Sprintf("%s-redis-%d", crName, idx)
+}
 
 // reconcileRoles checks Redis replication status and triggers automatic failover
 func (r *BcredisReconciler) reconcileRoles(
@@ -27,6 +42,30 @@ func (r *BcredisReconciler) reconcileRoles(
 	spec bcredisv1alpha1.BcredisSpec,
 ) (bool, error) {
 	logger := logf.FromContext(ctx).WithValues("bcredis", bcredis.Name)
+	masterReady, err := r.isPodExecReady(ctx, bcredis.Namespace, redisPodName(bcredis.Name, 0))
+	if err != nil {
+		return false, err
+	}
+	replicaReady, err := r.isPodExecReady(ctx, bcredis.Namespace, redisPodName(bcredis.Name, 1))
+	if err != nil {
+		return false, err
+	}
+	if !replicaReady {
+		logger.Info("Skipping role reconciliation until replica pod is exec-ready")
+		return false, nil
+	}
+
+	if !masterReady {
+		// Startup/bootstrap: master may still be scheduling.
+		// Do not treat this as failover yet.
+		if bcredis.Status.MasterPod == "" && !bcredis.Status.FailedOver {
+			logger.Info("Master not ready during bootstrap, waiting")
+			return false, nil
+		}
+
+		logger.Info("Master pod is not exec-ready, triggering automatic failover")
+		return true, r.performFailover(ctx, bcredis, spec, logger)
+	}
 
 	// Check if master (redis-0) is reachable
 	masterReachable, err := r.checkRedisReachable(ctx, bcredis, 0, logger)
@@ -71,6 +110,34 @@ func (r *BcredisReconciler) reconcileRoles(
 	return false, nil
 }
 
+func (r *BcredisReconciler) isPodExecReady(
+	ctx context.Context,
+	namespace, podName string,
+) (bool, error) {
+	pod := &corev1.Pod{}
+	if err := r.Get(
+		ctx,
+		types.NamespacedName{Namespace: namespace, Name: podName},
+		pod,
+	); err != nil {
+		if apierrors.IsNotFound(err) {
+			return false, nil
+		}
+		return false, err
+	}
+
+	if pod.Spec.NodeName == "" || pod.Status.Phase != corev1.PodRunning {
+		return false, nil
+	}
+
+	for _, cond := range pod.Status.Conditions {
+		if cond.Type == corev1.PodReady && cond.Status == corev1.ConditionTrue {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 // checkRedisReachable checks if Redis is reachable via ping
 func (r *BcredisReconciler) checkRedisReachable(
 	ctx context.Context,
@@ -78,10 +145,10 @@ func (r *BcredisReconciler) checkRedisReachable(
 	idx int,
 	logger logr.Logger,
 ) (bool, error) {
-	podName := fmt.Sprintf("%s-redis-%d", bcredis.Name, idx)
+	podName := redisPodName(bcredis.Name, idx)
 	cmd := []string{"redis-cli", "ping"}
 
-	output, err := r.execPodCommand(ctx, podName, "redis", cmd)
+	output, err := r.execPodCommand(ctx, bcredis.Namespace, podName, "redis", cmd)
 	if err != nil {
 		logger.Error(err, "failed to ping redis", "pod", podName)
 		return false, err
@@ -97,10 +164,10 @@ func (r *BcredisReconciler) getRedisRole(
 	idx int,
 	logger logr.Logger,
 ) (string, error) {
-	podName := fmt.Sprintf("%s-redis-%d", bcredis.Name, idx)
+	podName := redisPodName(bcredis.Name, idx)
 	cmd := []string{"redis-cli", "info", "replication"}
 
-	output, err := r.execPodCommand(ctx, podName, "redis", cmd)
+	output, err := r.execPodCommand(ctx, bcredis.Namespace, podName, "redis", cmd)
 	if err != nil {
 		logger.Error(err, "failed to get redis info", "pod", podName)
 		return "", err
@@ -108,8 +175,8 @@ func (r *BcredisReconciler) getRedisRole(
 
 	// Parse role from output
 	for _, line := range splitLines(output) {
-		if len(line) >= 6 && line[:6] == "role:" {
-			return line[7:], nil
+		if strings.HasPrefix(line, "role:") {
+			return strings.TrimSpace(strings.TrimPrefix(line, "role:")), nil
 		}
 	}
 	return "", fmt.Errorf("role not found in output")
@@ -125,10 +192,10 @@ func (r *BcredisReconciler) performFailover(
 	logger.Info("Starting automatic failover")
 
 	// Step 1: Promote replica (redis-1) to master
-	replicaPod := fmt.Sprintf("%s-redis-1", bcredis.Name)
+	replicaPod := fmt.Sprintf("%s-redis-1-0", bcredis.Name)
 	promoteCmd := []string{"redis-cli", "SLAVEOF", "NO", "ONE"}
 
-	_, err := r.execPodCommand(ctx, replicaPod, "redis", promoteCmd)
+	_, err := r.execPodCommand(ctx, bcredis.Namespace, replicaPod, "redis", promoteCmd)
 	if err != nil {
 		logger.Error(err, "failed to promote replica to master")
 		return err
@@ -141,7 +208,7 @@ func (r *BcredisReconciler) performFailover(
 
 	// Step 3: Update status to indicate failover occurred
 	bcredis.Status.MasterPod = replicaPod
-	bcredis.Status.ReplicaPod = fmt.Sprintf("%s-redis-0", bcredis.Name)
+	bcredis.Status.ReplicaPod = fmt.Sprintf("%s-redis-0-0", bcredis.Name)
 	bcredis.Status.FailedOver = true
 	bcredis.Status.LastFailoverTime = metav1.Now()
 
@@ -155,13 +222,13 @@ func (r *BcredisReconciler) reconfigureReplica(
 	spec bcredisv1alpha1.BcredisSpec,
 	logger logr.Logger,
 ) error {
-	replicaPod := fmt.Sprintf("%s-redis-1", bcredis.Name)
-	masterService := fmt.Sprintf("%s-redis-0.%s.svc.cluster.local", bcredis.Name, bcredis.Namespace)
+	replicaPod := fmt.Sprintf("%s-redis-1-0", bcredis.Name)
+	masterService := fmt.Sprintf("%s-redis-0.%s.svc", bcredis.Name, bcredis.Namespace)
 
 	// Reconfigure replica to point to master
 	slaveOfCmd := []string{"redis-cli", "SLAVEOF", masterService, "6379"}
 
-	_, err := r.execPodCommand(ctx, replicaPod, "redis", slaveOfCmd)
+	_, err := r.execPodCommand(ctx, bcredis.Namespace, replicaPod, "redis", slaveOfCmd)
 	if err != nil {
 		logger.Error(err, "failed to reconfigure replica")
 		return err
@@ -172,7 +239,7 @@ func (r *BcredisReconciler) reconfigureReplica(
 
 // execPodCommand executes a command inside a pod container
 func (r *BcredisReconciler) execPodCommand(
-	ctx context.Context,
+	ctx context.Context, namespace,
 	podName, containerName string,
 	command []string,
 ) (string, error) {
@@ -185,13 +252,18 @@ func (r *BcredisReconciler) execPodCommand(
 	req := r.KubeClient.CoreV1().RESTClient().Post().
 		Resource("pods").
 		Name(podName).
-		Namespace("default").
-		SubResource("exec")
+		Namespace(namespace).
+		SubResource("exec").VersionedParams(
+		&corev1.PodExecOptions{
+			Container: containerName,
+			Command:   command,
+			Stdin:     false,
+			Stdout:    true,
+			Stderr:    true,
+			TTY:       false,
+		}, scheme.ParameterCodec,
+	)
 
-	// Add command as path parameters
-	for _, cmd := range command {
-		req = req.Suffix(cmd)
-	}
 	exec, err := remotecommand.NewSPDYExecutor(config, "POST", req.URL())
 	if err != nil {
 		return "", err
@@ -201,11 +273,9 @@ func (r *BcredisReconciler) execPodCommand(
 	stderr := &bytes.Buffer{}
 
 	err = exec.StreamWithContext(ctx, remotecommand.StreamOptions{
-		Stdin:             nil,
-		Stdout:            stdout,
-		Stderr:            stderr,
-		Tty:               false,
-		TerminalSizeQueue: nil,
+		Stdout: stdout,
+		Stderr: stderr,
+		Tty:    false,
 	})
 	if err != nil {
 		return "", fmt.Errorf("command failed: %v, stderr: %s", err, stderr.String())
