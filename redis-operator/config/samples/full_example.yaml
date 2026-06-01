@@ -1,0 +1,15 @@
+apiVersion: bcredis.bankingcircle.net/v1alpha1
+kind: Bcredis
+metadata:
+  labels:
+    app.kubernetes.io/name: redis-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: bcredis-sample
+spec:
+  redisImage: "redis:7.2-alpine"
+  storageClassName: "managed-premium"
+  envoyGatewayClassName: "envoy-gateway"
+  storageSize: "10Gi"
+  redisPasswordSecret: "redis-password-secret"
+  servicePort: 6379
+
