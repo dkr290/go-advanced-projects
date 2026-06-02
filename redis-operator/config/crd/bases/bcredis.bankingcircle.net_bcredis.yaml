@@ -72,6 +72,12 @@ spec:
                 description: RedisPasswordSecret is the name of the k8s secret containing
                   the Redis password
                 type: string
+              replicas:
+                default: 3
+                description: Replicas is the number of Redis/Sentinel pods.
+                format: int32
+                minimum: 3
+                type: integer
               servicePort:
                 default: 6379
                 description: ServicePort is the port exposed by the Envoy Gateway

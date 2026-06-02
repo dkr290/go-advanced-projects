@@ -2,6 +2,8 @@ package controller
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 
 	bcredisv1alpha1 "github.com/example/redis-operator/api/v1alpha1"
@@ -13,11 +15,12 @@ import (
 )
 
 type stsSpecification struct {
-	replicas    int32
-	stsName     string
-	labels      map[string]string
-	spec        bcredisv1alpha1.BcredisSpec
-	bcredisName string
+	replicas             int32
+	stsName              string
+	labels               map[string]string
+	spec                 bcredisv1alpha1.BcredisSpec
+	bcredisName          string
+	currentMasterService string
 }
 
 // reconcileStatefulSet creates/updates a StatefulSet for a Redis instance.
@@ -40,8 +43,40 @@ func (r *BcredisReconciler) reconcileStatefulSet(
 		labels:      labels,
 		spec:        spec,
 		bcredisName: bcredis.Name,
+		currentMasterService: func() string {
+			if bcredis.Status.CurrentMasterService != "" {
+				return bcredis.Status.CurrentMasterService
+			}
+			return fmt.Sprintf("%s-redis-0", bcredis.Name)
+		}(),
+	}
+	volumeMounts := []corev1.VolumeMount{
+		{Name: "redis-data", MountPath: "/data"},
+		{Name: "redis-config", MountPath: "/etc/redis"},
 	}
 
+	env := []corev1.EnvVar{
+		{Name: "REDIS_INSTANCE_INDEX", Value: fmt.Sprintf("%d", idx)},
+	}
+	if spec.RedisPasswordSecret != "" {
+		env = append(env, corev1.EnvVar{
+			Name: "REDIS_PASSWORD",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: spec.RedisPasswordSecret,
+					},
+					Key: "password",
+				},
+			},
+		})
+	}
+
+	desiredSpec := getSpec(s, env, volumeMounts, idx)
+
+	// Compute hash of desired spec
+	specBytes, _ := json.Marshal(desiredSpec)
+	hash := fmt.Sprintf("%x", sha256.Sum256(specBytes))
 	sts := &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      stsName,
@@ -53,30 +88,18 @@ func (r *BcredisReconciler) reconcileStatefulSet(
 		if err := controllerutil.SetControllerReference(bcredis, sts, r.Scheme); err != nil {
 			return err
 		}
-
-		volumeMounts := []corev1.VolumeMount{
-			{Name: "redis-data", MountPath: "/data"},
-			{Name: "redis-config", MountPath: "/etc/redis"},
+		// Only update spec if hash changed
+		currentHash := ""
+		if sts.Annotations != nil {
+			currentHash = sts.Annotations["bcredis/spec-hash"]
 		}
-
-		env := []corev1.EnvVar{
-			{Name: "REDIS_INSTANCE_INDEX", Value: fmt.Sprintf("%d", idx)},
+		if currentHash != hash {
+			sts.Spec = desiredSpec
+			if sts.Annotations == nil {
+				sts.Annotations = map[string]string{}
+			}
+			sts.Annotations["bcredis/spec-hash"] = hash
 		}
-		if spec.RedisPasswordSecret != "" {
-			env = append(env, corev1.EnvVar{
-				Name: "REDIS_PASSWORD",
-				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: spec.RedisPasswordSecret,
-						},
-						Key: "password",
-					},
-				},
-			})
-		}
-
-		sts.Spec = getSpec(s, env, volumeMounts, idx)
 		return nil
 	})
 	if err == nil {
@@ -93,10 +116,40 @@ func getSpec(
 ) appsv1.StatefulSetSpec {
 	storageClass := s.spec.StorageClassName
 	configFile := "/etc/redis/master.conf"
-	if idx == 1 {
+	if idx > 0 {
 		configFile = "/etc/redis/replica.conf"
 	}
+	redisCommand := []string{"redis-server", configFile}
+	redisArgs := []string(nil)
 
+	redisProbeCmd := []string{"redis-cli", "ping"}
+
+	if s.spec.RedisPasswordSecret != "" {
+		redisCommand = []string{"sh", "-c"}
+		redisArgs = []string{
+			fmt.Sprintf(
+				`exec redis-server %s --requirepass "$REDIS_PASSWORD" --masterauth "$REDIS_PASSWORD"`,
+				configFile,
+			),
+		}
+		redisProbeCmd = []string{
+			"sh",
+			"-c",
+			`if [ -n "$REDIS_PASSWORD" ]; then redis-cli -a "$REDIS_PASSWORD" ping; else redis-cli ping; fi`,
+		}
+	}
+
+	sentinelArgs := []string{
+		`if [ ! -f /data/sentinel.conf ]; then cp /etc/redis-config/sentinel.conf /data/sentinel.conf; fi && \
+			if [ -n "$REDIS_PASSWORD" ]; then \
+				if grep -q '^sentinel auth-pass mymaster ' /data/sentinel.conf; then \
+					sed -i "s#^sentinel auth-pass mymaster .*#sentinel auth-pass mymaster $REDIS_PASSWORD#" /data/sentinel.conf; \
+				else \
+					echo "sentinel auth-pass mymaster $REDIS_PASSWORD" >> /data/sentinel.conf; \
+				fi; \
+			fi && \
+    exec redis-server /data/sentinel.conf --sentinel`,
+	}
 	specInfo := appsv1.StatefulSetSpec{
 		Replicas:    &s.replicas,
 		ServiceName: fmt.Sprintf("%s-redis-headless", s.bcredisName),
@@ -108,12 +161,28 @@ func getSpec(
 				Labels: s.labels,
 			},
 			Spec: corev1.PodSpec{
+				Affinity: &corev1.Affinity{
+					PodAntiAffinity: &corev1.PodAntiAffinity{
+						RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+							{
+								LabelSelector: &metav1.LabelSelector{
+									MatchLabels: map[string]string{
+										"bcredis": s.bcredisName,
+									},
+								},
+								TopologyKey: "kubernetes.io/hostname",
+							},
+						},
+					},
+				},
+
 				Containers: []corev1.Container{
 					{
 						Name:  "redis",
 						Image: s.spec.RedisImage,
 						// Start with a basic config; role is managed dynamically via exec
-						Command: []string{"redis-server", configFile},
+						Command: redisCommand,
+						Args:    redisArgs,
 						Ports: []corev1.ContainerPort{
 							{ContainerPort: 6379, Name: "redis"},
 						},
@@ -122,7 +191,7 @@ func getSpec(
 						ReadinessProbe: &corev1.Probe{
 							ProbeHandler: corev1.ProbeHandler{
 								Exec: &corev1.ExecAction{
-									Command: []string{"redis-cli", "ping"},
+									Command: redisProbeCmd,
 								},
 							},
 							InitialDelaySeconds: 5,
@@ -131,7 +200,7 @@ func getSpec(
 						LivenessProbe: &corev1.Probe{
 							ProbeHandler: corev1.ProbeHandler{
 								Exec: &corev1.ExecAction{
-									Command: []string{"redis-cli", "ping"},
+									Command: redisProbeCmd,
 								},
 							},
 							InitialDelaySeconds: 15,
@@ -142,10 +211,8 @@ func getSpec(
 						Name:    "sentinel",
 						Image:   s.spec.RedisImage,
 						Command: []string{"sh", "-c"},
-						Args: []string{
-							"cp /etc/redis-config/sentinel.conf /etc/redis-runtime/sentinel.conf && exec redis-server /etc/redis-runtime/sentinel.conf --sentinel",
-						},
-
+						Args:    sentinelArgs,
+						Env:     env,
 						Ports: []corev1.ContainerPort{
 							{ContainerPort: 26379, Name: "sentinel"},
 						},
@@ -155,7 +222,7 @@ func getSpec(
 								MountPath: "/etc/redis-config",
 								ReadOnly:  true,
 							},
-							{Name: "sentinel-runtime", MountPath: "/etc/redis-runtime"},
+							{Name: "redis-data", MountPath: "/data"},
 						},
 
 						ReadinessProbe: &corev1.Probe{
@@ -188,12 +255,6 @@ func getSpec(
 									Name: s.bcredisName + "-sentinel-config",
 								},
 							},
-						},
-					},
-					{
-						Name: "sentinel-runtime",
-						VolumeSource: corev1.VolumeSource{
-							EmptyDir: &corev1.EmptyDirVolumeSource{},
 						},
 					},
 				},

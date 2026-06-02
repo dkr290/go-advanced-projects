@@ -47,6 +47,10 @@ type BcredisSpec struct {
 	// Example (AKS internal LB):
 	// service.beta.kubernetes.io/azure-load-balancer-internal: "true"
 	GatewayAnnotations map[string]string `json:"gatewayAnnotations,omitempty"`
+	// Replicas is the number of Redis/Sentinel pods.
+	// +kubebuilder:default=3
+	// +kubebuilder:validation:Minimum=3
+	Replicas int32 `json:"replicas,omitempty"`
 }
 
 // RedisRole represents the role of a Redis instance.

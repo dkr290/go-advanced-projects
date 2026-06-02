@@ -28,10 +28,7 @@ import (
 
 const (
 	finalizerName   = "bcredis.bankingcircle.net/finalizer"
-	instanceZero    = "redis-0"
-	instanceOne     = "redis-1"
 	requeAfter      = 15 * time.Second
-	heathCheckRetry = 3 * time.Second
 )
 
 // BcredisReconciler reconciles a Bcredis object
@@ -76,6 +73,8 @@ func (r *BcredisReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		logger.Error(err, "Failed to get bcredis")
 		return ctrl.Result{}, err
 	}
+
+
 	logger = logger.WithValues(
 		"name",
 		bcredis.Name,
@@ -100,6 +99,8 @@ func (r *BcredisReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 	// Apply defaults
 	spec := bcredis.Spec
+	replicas := spec.Replicas
+
 	if spec.RedisImage == "" {
 		spec.RedisImage = "redis:7.2"
 	}
@@ -112,6 +113,10 @@ func (r *BcredisReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	if spec.ServicePort == 0 {
 		spec.ServicePort = 6379
 	}
+	if replicas < 3 {
+		replicas = 3
+	}
+	spec.Replicas = replicas
 
 	name := bcredis.Name
 	//	ns := bcredis.Namespace
@@ -138,7 +143,7 @@ func (r *BcredisReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	// Reconcile statefullsets for both instances
-	for _, idx := range []int{0, 1} {
+	for idx := 0; idx < int(replicas); idx++ {
 
 		if err := r.reconcileStatefulSet(ctx, bcredis, spec, idx, logger); err != nil {
 			logger.Error(err, "failed to reconcile StatefulSet", "index", idx)
@@ -200,7 +205,6 @@ func (r *BcredisReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{RequeueAfter: requeAfter}, nil
 	}
 	return ctrl.Result{RequeueAfter: requeAfter}, nil
-
 }
 
 // SetupWithManager sets up the controller with the Manager.

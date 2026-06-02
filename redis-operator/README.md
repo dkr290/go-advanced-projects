@@ -133,3 +133,14 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
+## some test
+
+docker run --rm redis:7.2-alpine sh -lc '
+i=0
+while true; do
+  redis-cli -h 10.56.48.135 -p 6379 -a "xx" SET failover:key "$i" >/dev/null
+  v=$(redis-cli -h 10.56.48.135 -p 6379 -a "xx" GET failover:key 2>/dev/null || echo "ERR")
+  echo "$(date +%T) set=$i get=$v"
+  i=$((i+1))
+  sleep 1
+done'

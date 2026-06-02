@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	bcredisv1alpha1 "github.com/example/redis-operator/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -67,8 +68,11 @@ func (r *BcredisReconciler) reconcileGateway(
 	}
 	// Determine master service name from status
 	masterSvc := bcredis.Status.CurrentMasterService
+	if masterSvc == "" && bcredis.Status.MasterPod != "" {
+		masterSvc = strings.TrimSuffix(bcredis.Status.MasterPod, "-0")
+	}
 	if masterSvc == "" {
-		// Default to instance 0 on first creation
+		// only first creation fallback
 		masterSvc = fmt.Sprintf("%s-redis-0", bcredis.Name)
 	}
 

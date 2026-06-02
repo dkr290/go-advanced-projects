@@ -23,18 +23,18 @@ appendonly yes
 daemonize no
 port 6379
 `
+
 var sentinelConf = `bind 0.0.0.0
 protected-mode no
 daemonize no
 port 26379
 sentinel resolve-hostnames yes
 sentinel announce-hostnames yes
-sentinel monitor mymaster %s 6379 2
+sentinel monitor mymaster %s 6379 %d
 sentinel down-after-milliseconds mymaster 5000
 sentinel failover-timeout mymaster 60000
 sentinel parallel-syncs mymaster 1
 `
-
 
 // reconcileConfigMap creates/updates the Redis configuration ConfigMap.
 func (r *BcredisReconciler) reconcileConfigMap(
@@ -65,8 +65,8 @@ func (r *BcredisReconciler) reconcileConfigMap(
 	if err != nil {
 		return err
 	}
-// reconcile sentinel ConfigMap with master hostname placeholder 
-sentinelCM := &corev1.ConfigMap{
+	// reconcile sentinel ConfigMap with master hostname placeholder
+	sentinelCM := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      bcredis.Name + "-sentinel-config",
 			Namespace: bcredis.Namespace,
@@ -80,10 +80,16 @@ sentinelCM := &corev1.ConfigMap{
 			return err
 		}
 
-	// Use master-0 as the monitored master hostname
+		// Use master-0 as the monitored master hostname
 		masterHostname := fmt.Sprintf("%s.%s.svc", currentMasterSvc, bcredis.Namespace)
+		replicas := bcredis.Spec.Replicas
+		if replicas < 3 {
+			replicas = 3
+		}
+		quorum := (replicas / 2) + 1
+
 		sentinelCM.Data = map[string]string{
-			"sentinel.conf": fmt.Sprintf(sentinelConf, masterHostname),
+			"sentinel.conf": fmt.Sprintf(sentinelConf, masterHostname,quorum),
 		}
 		return nil
 	})
@@ -92,6 +98,4 @@ sentinelCM := &corev1.ConfigMap{
 	}
 
 	return err
-
-
 }
