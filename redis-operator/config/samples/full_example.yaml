@@ -8,6 +8,8 @@ metadata:
   namespace: default
 
 spec:
+  gatewayAnnotations:
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
   redisImage: "redis:7.2-alpine"
   storageClassName: "managed-premium"
   envoyGatewayClassName: "eg"

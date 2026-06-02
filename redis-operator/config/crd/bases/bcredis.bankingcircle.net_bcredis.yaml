@@ -57,6 +57,14 @@ spec:
                 description: EnvoyGatewayClassName is the name of the Envoy GatewayClass
                   to use.
                 type: string
+              gatewayAnnotations:
+                additionalProperties:
+                  type: string
+                description: |-
+                  GatewayAnnotations are applied to the created Gateway metadata.annotations.
+                  Example (AKS internal LB):
+                  service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+                type: object
               redisImage:
                 description: REdis image is the deocker image to use for Redis pods
                 type: string

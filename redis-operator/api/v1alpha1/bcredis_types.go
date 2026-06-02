@@ -43,6 +43,10 @@ type BcredisSpec struct {
 	// ServicePort is the port exposed by the Envoy Gateway for Redis TCP traffic.
 	// +kubebuilder:default=6379
 	ServicePort int32 `json:"servicePort,omitempty"`
+	// GatewayAnnotations are applied to the created Gateway metadata.annotations.
+	// Example (AKS internal LB):
+	// service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+	GatewayAnnotations map[string]string `json:"gatewayAnnotations,omitempty"`
 }
 
 // RedisRole represents the role of a Redis instance.

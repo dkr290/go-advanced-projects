@@ -32,8 +32,26 @@ func (r *BcredisReconciler) reconcileGateway(
 		if err := controllerutil.SetControllerReference(bcredis, gw, r.Scheme); err != nil {
 			return err
 		}
+
+		var infra *gatewayv1.GatewayInfrastructure
+		if len(spec.GatewayAnnotations) > 0 {
+			infraAnnotations := make(
+				map[gatewayv1.AnnotationKey]gatewayv1.AnnotationValue,
+				len(spec.GatewayAnnotations),
+			)
+			for k, v := range spec.GatewayAnnotations {
+				infraAnnotations[gatewayv1.AnnotationKey(k)] = gatewayv1.AnnotationValue(v)
+			}
+			infra = &gatewayv1.GatewayInfrastructure{
+				Annotations: infraAnnotations,
+			}
+
+		}
+
+
 		gw.Spec = gatewayv1.GatewaySpec{
 			GatewayClassName: gwClass,
+			Infrastructure:   infra,
 			Listeners: []gatewayv1.Listener{
 				{
 					Name:     "redis-tcp",
