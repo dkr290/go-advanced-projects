@@ -115,9 +115,9 @@ func getSpec(
 	idx int,
 ) appsv1.StatefulSetSpec {
 	storageClass := s.spec.StorageClassName
-	configFile := "/etc/redis/master.conf"
-	if idx > 0 {
-		configFile = "/etc/redis/replica.conf"
+	configFile := "/etc/redis/replica.conf"
+	if idx == 0 {
+		configFile = "/etc/redis/master.conf"
 	}
 	redisCommand := []string{"redis-server", configFile}
 	redisArgs := []string(nil)

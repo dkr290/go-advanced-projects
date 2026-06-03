@@ -24,8 +24,9 @@ import (
 )
 
 const (
-	masterStatus  = "master"
-	replicaStatus = "slave"
+	masterStatus     = "master"
+	replicaStatus    = "slave"
+	failoverCooldown = 60 * time.Second
 )
 
 func redisPodName(crName string, idx int) string {
@@ -97,13 +98,32 @@ func (r *BcredisReconciler) reconcileRoles(
 	}
 	if !masterReady {
 		logger.Info(
-			"Current master pod is not exec-ready, triggering automatic failover",
+			"Current master pod is not exec-ready, scanning for existing master",
 			"masterIdx",
 			mIdx,
 		)
-		return true, r.performFailover(ctx, bcredis, spec, logger)
+		// Sentinel may have already promoted someone — check before acting
+		existingMaster := r.findCurrentMaster(ctx, bcredis, spec, logger)
+		if existingMaster >= 0 && existingMaster != mIdx {
+			logger.Info(
+				"Sentinel already promoted a new master, updating status",
+				"newMasterIdx",
+				existingMaster,
+			)
+			bcredis.Status.MasterPod = redisPodName(bcredis.Name, existingMaster)
+			bcredis.Status.CurrentMasterService = redisServiceName(bcredis.Name, existingMaster)
+			bcredis.Status.FailedOver = true
+			bcredis.Status.LastFailoverTime = metav1.Now()
+			return true, nil
+		}
+		if existingMaster < 0 {
+			logger.Info("No master found anywhere, triggering operator failover", "masterIdx", mIdx)
+			return true, r.performFailover(ctx, bcredis, spec, logger)
+		}
+		// existingMaster == mIdx means pod is coming back up, just requeue
+		return true, nil
 	}
-	
+
 	masterRole, err := r.getRedisRole(ctx, bcredis, spec, mIdx, logger)
 	if err != nil {
 		// Role check failed transiently — log and requeue, don't failover
@@ -112,15 +132,34 @@ func (r *BcredisReconciler) reconcileRoles(
 	}
 	if masterRole != masterStatus {
 		logger.Info(
-			"Current master pod is not master, triggering automatic failover",
+			"Tracked master is no longer master, scanning for current master",
 			"masterIdx",
 			mIdx,
 			"role",
 			masterRole,
 		)
-		return true, r.performFailover(ctx, bcredis, spec, logger)
+		existingMaster := r.findCurrentMaster(ctx, bcredis, spec, logger)
+		if existingMaster >= 0 && existingMaster != mIdx {
+			// Sentinel already elected a new master — just track it
+			logger.Info(
+				"Sentinel already elected a new master, syncing status",
+				"newMasterIdx",
+				existingMaster,
+			)
+			bcredis.Status.MasterPod = redisPodName(bcredis.Name, existingMaster)
+			bcredis.Status.CurrentMasterService = redisServiceName(bcredis.Name, existingMaster)
+			bcredis.Status.FailedOver = true
+			bcredis.Status.LastFailoverTime = metav1.Now()
+			return true, nil
+		}
+		if existingMaster < 0 {
+			logger.Info("No master found, triggering operator failover")
+			return true, r.performFailover(ctx, bcredis, spec, logger)
+		}
+		// existingMaster == mIdx: role check was transient, do nothing
+		return true, nil
 	}
-// Initialize status if not set yet
+	// Initialize status if not set yet
 	if bcredis.Status.MasterPod == "" || bcredis.Status.CurrentMasterService == "" {
 		bcredis.Status.MasterPod = redisPodName(bcredis.Name, mIdx)
 		bcredis.Status.CurrentMasterService = redisServiceName(bcredis.Name, mIdx)
@@ -175,7 +214,6 @@ func (r *BcredisReconciler) isPodExecReady(
 		return false, nil
 	}
 
-
 	// Check if the redis container specifically is ready
 	for _, cs := range pod.Status.ContainerStatuses {
 		if cs.Name == "redis" {
@@ -191,24 +229,72 @@ func (r *BcredisReconciler) isPodExecReady(
 	return false, nil
 }
 
-// checkRedisReachable checks if Redis is reachable via ping
-func (r *BcredisReconciler) checkRedisReachable(
+// findCurrentMaster scans all pods and returns the index of whichever is currently master (-1 if none).
+// Prefers the master that has connected replicas to avoid picking a stale standalone master after pod restart.
+func (r *BcredisReconciler) findCurrentMaster(
+	ctx context.Context,
+	bcredis *bcredisv1alpha1.Bcredis,
+	spec bcredisv1alpha1.BcredisSpec,
+	logger logr.Logger,
+) int {
+	replicas := max(spec.Replicas, int32(3))
+	bestIdx := -1
+	bestSlaves := -1
+
+	for i := 0; i < int(replicas); i++ {
+		ready, err := r.isPodExecReady(ctx, bcredis.Namespace, redisPodName(bcredis.Name, i))
+		if err != nil || !ready {
+			continue
+		}
+		role, slaves, err := r.getRedisRoleAndSlaves(ctx, bcredis, spec, i, logger)
+		if err != nil {
+			continue
+		}
+		if role != masterStatus {
+			continue
+		}
+		// Prefer the master with the most connected replicas
+		if slaves > bestSlaves {
+			bestSlaves = slaves
+			bestIdx = i
+		}
+	}
+	return bestIdx
+}
+
+// getRedisRoleAndSlaves returns role and number of connected_slaves from INFO replication
+func (r *BcredisReconciler) getRedisRoleAndSlaves(
 	ctx context.Context,
 	bcredis *bcredisv1alpha1.Bcredis,
 	spec bcredisv1alpha1.BcredisSpec,
 	idx int,
 	logger logr.Logger,
-) (bool, error) {
+) (string, int, error) {
 	podName := redisPodName(bcredis.Name, idx)
-	cmd := redisCmd(spec, "ping")
+	cmd := redisCmd(spec, "info", "replication")
 
 	output, err := r.execPodCommand(ctx, bcredis.Namespace, podName, "redis", cmd)
 	if err != nil {
-		logger.Error(err, "failed to ping redis", "pod", podName)
-		return false, err
+		return "", 0, err
 	}
 
-	return  strings.TrimSpace(output) == "PONG", nil
+	var role string
+	slaves := 0
+	for _, line := range splitLines(output) {
+		if strings.HasPrefix(line, "role:") {
+			role = strings.TrimSpace(strings.TrimPrefix(line, "role:"))
+		}
+		if strings.HasPrefix(line, "connected_slaves:") {
+			val := strings.TrimSpace(strings.TrimPrefix(line, "connected_slaves:"))
+			if n, err := strconv.Atoi(val); err == nil {
+				slaves = n
+			}
+		}
+	}
+	if role == "" {
+		return "", 0, fmt.Errorf("role not found in output")
+	}
+	return role, slaves, nil
 }
 
 // getRedisRole returns the Redis role (master or slave)
@@ -219,22 +305,8 @@ func (r *BcredisReconciler) getRedisRole(
 	idx int,
 	logger logr.Logger,
 ) (string, error) {
-	podName := redisPodName(bcredis.Name, idx)
-	cmd := redisCmd(spec, "info", "replication")
-
-	output, err := r.execPodCommand(ctx, bcredis.Namespace, podName, "redis", cmd)
-	if err != nil {
-		logger.Error(err, "failed to get redis info", "pod", podName)
-		return "", err
-	}
-
-	// Parse role from output
-	for _, line := range splitLines(output) {
-		if strings.HasPrefix(line, "role:") {
-			return strings.TrimSpace(strings.TrimPrefix(line, "role:")), nil
-		}
-	}
-	return "", fmt.Errorf("role not found in output")
+	role, _, err := r.getRedisRoleAndSlaves(ctx, bcredis, spec, idx, logger)
+	return role, err
 }
 
 // performFailover promotes replica to master when master is unreachable
@@ -244,11 +316,24 @@ func (r *BcredisReconciler) performFailover(
 	spec bcredisv1alpha1.BcredisSpec,
 	logger logr.Logger,
 ) error {
+	// Cooldown guard — avoid rapid successive failovers
+	if !bcredis.Status.LastFailoverTime.IsZero() {
+		elapsed := time.Since(bcredis.Status.LastFailoverTime.Time)
+		if elapsed < failoverCooldown {
+			logger.Info(
+				"Failover skipped — cooldown active",
+				"elapsed", elapsed.Round(time.Second),
+				"cooldown", failoverCooldown,
+			)
+			return nil
+		}
+	}
+
 	logger.Info("Starting automatic failover")
 
 	// Step 1: Promote replica (redis-1) to master
 	currentMasterIdx := masterIndex(bcredis)
-	candidateIdx,found, err := findReplicaCandidate(ctx, r, bcredis, spec, currentMasterIdx)
+	candidateIdx, found, err := findReplicaCandidate(ctx, r, bcredis, spec, currentMasterIdx)
 	if err != nil {
 		return err
 	}

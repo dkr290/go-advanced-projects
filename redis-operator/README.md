@@ -144,3 +144,7 @@ while true; do
   i=$((i+1))
   sleep 1
 done'
+
+## some commands to watch who is master etc 
+watch -n1 'kubectl -n default get bcredis bcredis-sample -o yaml | grep -E "masterPod|currentMasterService"'
+watch -n1 'kubectl describe tcproutes.gateway.networking.k8s.io bcredis-sample-tcproute | grep -C5 "Backend"'
