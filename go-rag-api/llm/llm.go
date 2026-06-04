@@ -54,7 +54,7 @@ func (c *Client) ChatStream(
 	for stream.Next() {
 		chunk := stream.Current()
 
-		if chunk.Choices != nil && len(chunk.Choices) > 0 {
+		if len(chunk.Choices) > 0 {
 			delta := chunk.Choices[0].Delta
 			if delta.Role != "" {
 				role = delta.Role
