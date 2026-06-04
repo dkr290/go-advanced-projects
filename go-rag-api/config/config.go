@@ -24,10 +24,13 @@ func Load() Config {
 	}
 
 	if cfg.BaseURL == "" {
-		cfg.BaseURL = "https://localai:8080"
+		cfg.BaseURL = "http://localai:8080"
 	}
 	if cfg.Model == "" {
 		cfg.Model = "supergemma4-26b-uncensored-v2"
+	}
+	if cfg.SystemPromptFile == "" {
+		cfg.SystemPromptFile = "./prompts/system-custom.md"
 	}
 
 	return cfg
