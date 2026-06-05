@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -24,14 +25,15 @@ func RunREPL(ctx context.Context, client *llm.Client, opts Options) error {
 
 	history, err := seedHistory(opts.SystemPromptFile)
 	if err != nil {
-		return err
+		return fmt.Errorf("initialize chat history %w", err)
 	}
 	fmt.Println("Chat session started. Type Q/q to quit")
+
 	for {
 		fmt.Print("\n> ")
 		if !in.Scan() {
 			if err := in.Err(); err != nil {
-				return err
+				return fmt.Errorf("read input: %w", err)
 			}
 			return nil
 		}
@@ -39,15 +41,16 @@ func RunREPL(ctx context.Context, client *llm.Client, opts Options) error {
 		if input == "" {
 			continue
 		}
-		if strings.ToLower(input) == "q" || strings.EqualFold(input, "/exit") ||
-			strings.EqualFold(input, "exit") ||
-			strings.EqualFold(input, "quit") {
-			fmt.Println("Goodbye.")
+
+		// Check for quit command
+		if isQuitCommand(input) {
+			fmt.Println("GoodBye.")
 			return nil
 		}
 
 		// add message to the history
 		history = append(history, llm.Message{Role: "user", Content: input})
+
 		// Stream response
 		spin := startSpinner("thinking")
 		var stopOnce sync.Once
@@ -68,6 +71,14 @@ func RunREPL(ctx context.Context, client *llm.Client, opts Options) error {
 		history = append(history, reply)
 
 	}
+}
+
+func isQuitCommand(input string) bool {
+	quitCommands := []string{"q", "/exit", "exit", "quit"}
+	lowerInput := strings.ToLower(input)
+
+	return slices.Contains(quitCommands, lowerInput)
+
 }
 
 type spinner struct {
