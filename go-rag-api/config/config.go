@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"strconv"
 
 	"github.com/joho/godotenv"
 )
@@ -11,6 +12,8 @@ type Config struct {
 	APIKey           string
 	Model            string
 	SystemPromptFile string
+	DatabaseURL      string
+	EmbeddingDIM     int
 }
 
 func Load() Config {
@@ -21,6 +24,8 @@ func Load() Config {
 		APIKey:           os.Getenv("API_KEY"),
 		Model:            os.Getenv("MODEL"),
 		SystemPromptFile: os.Getenv("SYSTEM_PROMPT_FILE"),
+		DatabaseURL:      os.Getenv("DATABASE_URL"),
+		EmbeddingDIM:     atoiOr(os.Getenv("EMBEDDING_DIM"), 0),
 	}
 
 	if cfg.BaseURL == "" {
@@ -32,6 +37,24 @@ func Load() Config {
 	if cfg.SystemPromptFile == "" {
 		cfg.SystemPromptFile = "./prompts/system-custom.md"
 	}
+	if cfg.DatabaseURL == "" {
+		cfg.DatabaseURL = "postgresql://rag:rag@localhost:5432/rag?sslmode=disable"
+	}
+	if cfg.EmbeddingDIM == 0 {
+
+		cfg.EmbeddingDIM = 768
+	}
 
 	return cfg
+}
+
+func atoiOr(s string, fallback int) int {
+	if s == "" {
+		return fallback
+	}
+	n, err := strconv.Atoi(s)
+	if err != nil {
+		return fallback
+	}
+	return n
 }

@@ -39,9 +39,18 @@ func New(ctx context.Context, opts Options) (*Store, error) {
 	maxRetries := 10
 	delay := 1 * time.Second
 
+	poolConfig, err := pgxpool.ParseConfig(opts.DSN)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse DSN: %w", err)
+	}
+
+	poolConfig.AfterConnect = func(ctx context.Context, c *pgx.Conn) error {
+		return pgxvec.RegisterTypes(ctx, c)
+	}
+
 	for i := range maxRetries {
 
-		pool, err = pgxpool.New(ctx, opts.DSN)
+		pool, err = pgxpool.NewWithConfig(ctx, poolConfig)
 		if err != nil {
 			if i == maxRetries-1 {
 				return nil, fmt.Errorf(
@@ -75,9 +84,6 @@ func New(ctx context.Context, opts Options) (*Store, error) {
 		}
 		break
 	}
-	pool.Config().AfterConnect = func(ctx context.Context, c *pgx.Conn) error {
-		return pgxvec.RegisterTypes(ctx, c)
-	}
 
 	s := &Store{pool: pool}
 	if err = s.migrate(ctx, opts.EmbeddingDim); err != nil {
@@ -91,11 +97,11 @@ func New(ctx context.Context, opts Options) (*Store, error) {
 func checkPgVectorExtension(ctx context.Context, pool *pgxpool.Pool) error {
 	const checkExtensionSQL = `
 		SELECT
-			extension_name
+			extname
 		FROM
 			pg_extension
 		WHERE
-			extension_name = 'vector'
+			extname = 'vector'
 	`
 
 	var extensionName string
@@ -119,7 +125,7 @@ func (s *Store) migrate(ctx context.Context, embeddingDim int) error {
 			content TEXT NOT NULL,
 			metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
 			embedding VECTOR(%d) NOT NULL,
-			created_at TIMESTAMPZ NOT NULL DEFAULT NOW()
+			created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 		);
 		CREATE INDEX IF NOT EXISTS idx_documents_embedding ON documents USING hnsw (embedding vector_cosine_ops);
 CREATE INDEX IF NOT EXISTS idx_documents_metadata ON documents USING GIN (metadata);
@@ -135,4 +141,10 @@ func marshalMetadata(m map[string]string) ([]byte, error) {
 	}
 
 	return json.Marshal(m)
+}
+
+// Close releases any resources held by the store
+func (s *Store) Close() error {
+	s.pool.Close()
+	return nil
 }
