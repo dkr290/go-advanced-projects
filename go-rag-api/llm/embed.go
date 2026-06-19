@@ -24,9 +24,9 @@ func (c *Client) Embed(ctx context.Context, texts []string, isQuery bool) ([][]f
 
 	for i, t := range texts {
 		if isNomic && isQuery {
-			prefixedTexts[i] = "Search Query: " + t
+			prefixedTexts[i] = "search_query: " + t
 		} else if isNomic && !isQuery {
-			prefixedTexts[i] = "Search Article: " + t
+			prefixedTexts[i] = "search_document: " + t
 		} else {
 			prefixedTexts[i] = t
 		}
@@ -34,7 +34,7 @@ func (c *Client) Embed(ctx context.Context, texts []string, isQuery bool) ([][]f
 
 	resp, err := c.embeddingSDK.Embeddings.New(ctx, openai.EmbeddingNewParams{
 		Model: c.cfg.EmbeddingModel,
-		Input: openai.EmbeddingNewParamsInputUnion{OfArrayOfStrings: texts},
+		Input: openai.EmbeddingNewParamsInputUnion{OfArrayOfStrings: prefixedTexts},
 	})
 	if err != nil {
 		return nil, err
