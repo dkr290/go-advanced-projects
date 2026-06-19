@@ -32,7 +32,7 @@ func (c *Client) Embed(ctx context.Context, texts []string, isQuery bool) ([][]f
 		}
 	}
 
-	resp, err := c.sdk.Embeddings.New(ctx, openai.EmbeddingNewParams{
+	resp, err := c.embeddingSDK.Embeddings.New(ctx, openai.EmbeddingNewParams{
 		Model: c.cfg.EmbeddingModel,
 		Input: openai.EmbeddingNewParamsInputUnion{OfArrayOfStrings: texts},
 	})

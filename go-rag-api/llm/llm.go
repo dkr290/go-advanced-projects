@@ -17,23 +17,35 @@ type Message struct {
 
 type Client struct {
 	cfg config.Config
-	sdk openai.Client
+	chatSDK openai.Client
+	embeddingSDK openai.Client
 }
 
 func New(cfg config.Config) *Client {
-	opts := []option.RequestOption{}
-	if cfg.BaseURL != "" {
-		opts = append(opts, option.WithBaseURL(cfg.BaseURL))
+	chatOpts := []option.RequestOption{}
+	if cfg.ChatBaseURL != "" {
+		chatOpts = append(chatOpts, option.WithBaseURL(cfg.ChatBaseURL))
 	}
-	if cfg.APIKey != "" {
-		opts = append(opts, option.WithAPIKey(cfg.APIKey))
+	if cfg.ChatAPIKey != "" {
+		chatOpts = append(chatOpts, option.WithAPIKey(cfg.ChatAPIKey))
 	}
 
-	sdk := openai.NewClient(opts...)
+	chatSDK := openai.NewClient(chatOpts...)
+
+	embOpts := []option.RequestOption{}
+    if cfg.EmbeddingBaseURL != "" {
+        embOpts = append(embOpts, option.WithBaseURL(cfg.EmbeddingBaseURL))
+    }
+    if cfg.EmbeddingAPIKey != "" {
+        embOpts = append(embOpts, option.WithAPIKey(cfg.EmbeddingAPIKey))
+    }
+    embeddingSDK := openai.NewClient(embOpts...)
+
 
 	return &Client{
 		cfg: cfg,
-		sdk: sdk,
+		chatSDK: chatSDK,
+		embeddingSDK: embeddingSDK,
 	}
 }
 
@@ -42,8 +54,8 @@ func (c *Client) ChatStream(
 	messages []Message,
 	onDelta func(string),
 ) (Message, error) {
-	stream := c.sdk.Chat.Completions.NewStreaming(ctx, openai.ChatCompletionNewParams{
-		Model:    c.cfg.Model,
+	stream := c.chatSDK.Chat.Completions.NewStreaming(ctx, openai.ChatCompletionNewParams{
+		Model:    c.cfg.ChatModel,
 		Messages: chatMessages(messages),
 	})
 	defer stream.Close()
@@ -89,5 +101,5 @@ func chatMessages(messages []Message) []openai.ChatCompletionMessageParamUnion {
        out = append(out, openai.UserMessage(msg.Content))
 		}
 	}
-	return out
+return out
 }
