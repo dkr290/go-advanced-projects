@@ -1,0 +1,52 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+
+# Build artifacts
+*.a
+*.out
+bin/
+dist/
+build/
+
+# Go workspace
+go.sum (optional - usually you want to track this)
+
+# IDE and editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Temp files
+tmp/
+temp/
+
+# Test coverage
+*.cover
+coverage.out
+
+# Env files
+.env
+.env.local
+
+# Vendor (if not using vendoring)
+vendor/
+
+# Ignore all .txt files
+*.txt
+
