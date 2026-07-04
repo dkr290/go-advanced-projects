@@ -13,13 +13,19 @@ import (
 	"time"
 
 	"github.com/dkr290/go-advanced-projects/go-rag-api/llm"
+	"github.com/dkr290/go-advanced-projects/go-rag-api/rag"
 )
 
 type Options struct {
 	SystemPromptFile string
 }
 
-func RunREPL(ctx context.Context, client *llm.Client, opts Options) error {
+func RunREPL(
+	ctx context.Context,
+	client *llm.Client,
+	retreiver *rag.Retriever,
+	opts Options,
+) error {
 	in := bufio.NewScanner(os.Stdin)
 	in.Buffer(make([]byte, 0, 64*1024), 1024*1024)
 
@@ -50,12 +56,21 @@ func RunREPL(ctx context.Context, client *llm.Client, opts Options) error {
 
 		// add message to the history
 		history = append(history, llm.Message{Role: "user", Content: input})
+		turn := history
+		if retreiver != nil {
+           contextText ,retrErr := retreiver.Retrieve(ctx, history)
+					 if retrErr != nil {
+					 	  fmt.Fprintln(os.Stderr, "retreival error",  retrErr)
+					 } else if contextText != ""{
+               turn = withInlineContext(turn, contextText)
+					 }
+		}
 
 		// Stream response
 		spin := startSpinner("thinking")
 		var stopOnce sync.Once
 		fmt.Print("🤖 ")
-		reply, err := client.ChatStream(ctx, history, func(s string) {
+		reply, err := client.ChatStream(ctx, turn, func(s string) {
 			stopOnce.Do(spin.Stop)
 			fmt.Print(s)
 		})
@@ -78,9 +93,24 @@ func isQuitCommand(input string) bool {
 	lowerInput := strings.ToLower(input)
 
 	return slices.Contains(quitCommands, lowerInput)
-
 }
 
+func withInlineContext(history []llm.Message, contextText string) []llm.Message {
+	if len(history) == 0 || contextText == "" {
+		return history
+	}
+	last := history[len(history)-1]
+	if last.Role != "user" {
+		return history
+	}
+	out := make([]llm.Message, len(history))
+	copy(out, history)
+	out[len(out)-1] = llm.Message{
+		Role:    "user",
+		Content: contextText + "\n\n--- Question ---\n\n" + last.Content,
+	}
+	return out
+}
 type spinner struct {
 	stop chan struct{}
 	done chan struct{}
@@ -111,6 +141,7 @@ func startSpinner(label string) *spinner {
 	}()
 	return s
 }
+
 
 func (s *spinner) Stop() {
 	s.once.Do(func() { close(s.stop) })
