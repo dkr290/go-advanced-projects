@@ -19,7 +19,7 @@ func (s *Store) Query(ctx context.Context, embedding []float32, topK int) ([]vec
 			id,
 			content,
 			metadata,
-			embedding <=> $1) AS distance
+			embedding <=> $1 AS distance
 		FROM documents 
 		ORDER BY embedding <=> $1
 		LIMIT $2

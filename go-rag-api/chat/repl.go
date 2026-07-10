@@ -56,6 +56,8 @@ func RunREPL(
 
 		// add message to the history
 		history = append(history, llm.Message{Role: "user", Content: input})
+		spin := startSpinner("thinking")
+		var stopOnce sync.Once
 		turn := history
 		if retreiver != nil {
            contextText ,retrErr := retreiver.Retrieve(ctx, history)
@@ -67,8 +69,6 @@ func RunREPL(
 		}
 
 		// Stream response
-		spin := startSpinner("thinking")
-		var stopOnce sync.Once
 		fmt.Print("🤖 ")
 		reply, err := client.ChatStream(ctx, turn, func(s string) {
 			stopOnce.Do(spin.Stop)

@@ -11,6 +11,7 @@ import (
 	"github.com/dkr290/go-advanced-projects/go-rag-api/chunk"
 	"github.com/dkr290/go-advanced-projects/go-rag-api/config"
 	"github.com/dkr290/go-advanced-projects/go-rag-api/llm"
+	"github.com/dkr290/go-advanced-projects/go-rag-api/rag"
 	"github.com/dkr290/go-advanced-projects/go-rag-api/vector"
 	"github.com/dkr290/go-advanced-projects/go-rag-api/vector/pgvector"
 )
@@ -36,7 +37,8 @@ func Run(parentCtx context.Context, cfg config.Config) error {
 
 	var wg sync.WaitGroup
 	if store != nil {
-		wg.Go(func() {
+		wg.Add(1)
+		go func() {
 			opts := chunk.Options{
 				SourceDir:    cfg.IngestDir,
 				ProcessedDir: cfg.ProcessedDir,
@@ -51,11 +53,22 @@ func Run(parentCtx context.Context, cfg config.Config) error {
 				ctx.Err() == nil {
 				logger.Printf("watcher stopped: %v", err)
 			}
-		})
+
+			defer wg.Done()
+		}()
 		logger.Printf("watching %s for new documents", cfg.IngestDir)
 	}
+	// get a retreiver , which means we need a rewriter.
 
-	replErr := chat.RunREPL(ctx, client, chat.Options{
+	var retriever *rag.Retriever
+	if store != nil {
+		retriever = rag.New(client, store, rag.Options{
+			TopK:     5,
+			Rewriter: rag.NewRewriter(client),
+		})
+	}
+
+	replErr := chat.RunREPL(ctx, client, retriever, chat.Options{
 		SystemPromptFile: cfg.SystemPromptFile,
 	})
 	cancel()
