@@ -48,7 +48,7 @@ func processOne(ctx context.Context,path string,opts Options,embedder llm.Embedd
 		return fmt.Errorf("read %w", err)
 	}
 	// Delegate to the core pipeline, passing only the base filename as the source identifier
-	n, err := processContent(ctx, filepath.Base(path), raw, opts, embedder, store)
+	n, err := ProcessContent(ctx, filepath.Base(path), raw, opts, embedder, store)
 	if err != nil {
 		return fmt.Errorf("process %s: %w", path, err)
 	}
@@ -57,10 +57,10 @@ func processOne(ctx context.Context,path string,opts Options,embedder llm.Embedd
 	return nil
 }
 
-// preocessContent is the core ingestion pipeline.
+// ProcessContent is the core ingestion pipeline.
 // It takes the source basename and raw content, then executes CHUNK → EMBED → DELETE → UPSERT.
 // ingest document from some source directoy
-func processContent(
+func ProcessContent(
 	ctx context.Context,
 	source string,
 	content []byte,

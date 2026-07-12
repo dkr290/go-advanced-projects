@@ -23,6 +23,10 @@ type Config struct {
 	EmbeddingDIM     int
 	IngestDir        string
 	ProcessedDir     string
+	
+	HttpAddr string
+  ImageDir string
+	VisionModel string
 }
 
 func Load() Config {
@@ -34,6 +38,9 @@ func Load() Config {
 	embBaseURL := envOrDefault("EMBEDDING_BASE_URL", "", "")
 	embAPIKey := envOrDefault("EMBEDDING_API_KEY", "", "")
 	embModel := envOrDefault("EMBEDDING_MODEL", "", "")
+  httpAddr := envOrDefault("HTTP_ADDR", "", "")
+	imagesDir := envOrDefault("IMAGES_DIR", "", "")
+	visionModel := envOrDefault("VISION_MODEL", "", "")
 
 	cfg := Config{
 		ChatBaseURL:      chatBaseURL,
@@ -47,6 +54,9 @@ func Load() Config {
 		EmbeddingDIM:     atoiOr(os.Getenv("EMBEDDING_DIM"), 0),
 		IngestDir:        os.Getenv("INGEST_DIR"),
 		ProcessedDir:     os.Getenv("PROCESSED_DIR"),
+		HttpAddr: httpAddr,
+		ImageDir: imagesDir,
+		VisionModel: visionModel,
 	}
 
 	// Chat defaults
@@ -87,6 +97,16 @@ func Load() Config {
 	}
 	if cfg.ProcessedDir == "" {
 		cfg.ProcessedDir = "./documents/processed"
+	}
+
+	if cfg.HttpAddr == "" {
+		cfg.HttpAddr = ":9090"
+	}
+	if cfg.ImageDir == "" {
+		cfg.ImageDir = "./documents/images"
+	}
+	if cfg.VisionModel == "" {
+		cfg.VisionModel = "image-model"
 	}
 
 	return cfg

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"sync"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/dkr290/go-advanced-projects/go-rag-api/rag"
 	"github.com/dkr290/go-advanced-projects/go-rag-api/vector"
 	"github.com/dkr290/go-advanced-projects/go-rag-api/vector/pgvector"
+	"github.com/dkr290/go-advanced-projects/go-rag-api/web"
 )
 
 func Run(parentCtx context.Context, cfg config.Config) error {
@@ -67,6 +69,28 @@ func Run(parentCtx context.Context, cfg config.Config) error {
 			Rewriter: rag.NewRewriter(client),
 		})
 	}
+
+	srv, err := web.New(client, retriever, web.Options{
+		Addr:             cfg.HttpAddr,
+		SystemPromptFile: cfg.SystemPromptFile,
+		Store:            store,
+		ProcessDir:       cfg.ProcessedDir,
+		ImagesDir:        cfg.ImageDir,
+	})
+	if err != nil {
+		return fmt.Errorf("web.New %w", err)
+	}
+	app := srv.Routes()
+
+	lis, err := net.Listen("tcp", cfg.HttpAddr)
+	if err != nil {
+		return fmt.Errorf("listen: %w", err)
+	}
+
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- app.Listener(lis)
+	}()
 
 	replErr := chat.RunREPL(ctx, client, retriever, chat.Options{
 		SystemPromptFile: cfg.SystemPromptFile,
