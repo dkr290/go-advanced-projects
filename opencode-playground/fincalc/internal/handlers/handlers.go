@@ -30,6 +30,19 @@ func init() {
 		"toString": func(v int) string {
 			return strconv.Itoa(v)
 		},
+		"compoundFreqLabel": func(v string) string {
+			labels := map[string]string{
+				"1":   "Annually",
+				"2":   "Semi-Annually",
+				"4":   "Quarterly",
+				"12":  "Monthly",
+				"365": "Daily",
+			}
+			if l, ok := labels[v]; ok {
+				return l
+			}
+			return v
+		},
 	}
 	var err error
 	templates, err = template.New("").Funcs(funcMap).ParseGlob("templates/*.html")
@@ -44,6 +57,31 @@ type AmortisationRow struct {
 	PrincipalPaid float64
 	InterestPaid  float64
 	EndBalance    float64
+}
+
+type CompoundInterestRow struct {
+	Year           int
+	StartBalance   float64
+	Contributions  float64
+	InterestEarned float64
+	EndBalance     float64
+}
+
+type CompoundData struct {
+	Title                string
+	Currency             string
+	InitialInvestment    string
+	InterestRate         string
+	CompoundingFrequency string
+	InvestmentTerm       string
+	MonthlyContribution  string
+	HasResults           bool
+	FinalBalance         float64
+	TotalContributions   float64
+	TotalInterestEarned  float64
+	GrowthPercentage     float64
+	Schedule             []CompoundInterestRow
+	Error                string
 }
 
 type MortgageData struct {
@@ -192,4 +230,115 @@ func MortgageCalculate(c fiber.Ctx) error {
 
 	c.Set("Content-Type", "text/html")
 	return templates.ExecuteTemplate(c.Response().BodyWriter(), "mortgage.html", data)
+}
+
+func Compound(c fiber.Ctx) error {
+	data := CompoundData{
+		Title:                "Compound Interest Calculator",
+		Currency:             "USD",
+		CompoundingFrequency: "12",
+	}
+	c.Set("Content-Type", "text/html")
+	return templates.ExecuteTemplate(c.Response().BodyWriter(), "compound.html", data)
+}
+
+func CompoundCalculate(c fiber.Ctx) error {
+	data := CompoundData{
+		Title:                "Compound Interest Calculator",
+		Currency:             c.FormValue("currency"),
+		InitialInvestment:    c.FormValue("initial_investment"),
+		InterestRate:         c.FormValue("interest_rate"),
+		CompoundingFrequency: c.FormValue("compounding_frequency"),
+		InvestmentTerm:       c.FormValue("investment_term"),
+		MonthlyContribution:  c.FormValue("monthly_contribution"),
+	}
+
+	if data.Currency == "" {
+		data.Currency = "USD"
+	}
+	if data.CompoundingFrequency == "" {
+		data.CompoundingFrequency = "12"
+	}
+
+	initial, err := strconv.ParseFloat(data.InitialInvestment, 64)
+	if err != nil || initial < 0 {
+		data.Error = "Initial investment must be zero or a positive number."
+		c.Set("Content-Type", "text/html")
+		return templates.ExecuteTemplate(c.Response().BodyWriter(), "compound.html", data)
+	}
+
+	rate, err := strconv.ParseFloat(data.InterestRate, 64)
+	if err != nil || rate <= 0 || rate > 30 {
+		data.Error = "Interest rate must be between 0 and 30%."
+		c.Set("Content-Type", "text/html")
+		return templates.ExecuteTemplate(c.Response().BodyWriter(), "compound.html", data)
+	}
+
+	compoundFreq, err := strconv.Atoi(data.CompoundingFrequency)
+	if err != nil || (compoundFreq != 1 && compoundFreq != 2 && compoundFreq != 4 && compoundFreq != 12 && compoundFreq != 365) {
+		data.Error = "Compounding frequency must be annually, semi-annually, quarterly, monthly, or daily."
+		c.Set("Content-Type", "text/html")
+		return templates.ExecuteTemplate(c.Response().BodyWriter(), "compound.html", data)
+	}
+
+	term, err := strconv.Atoi(data.InvestmentTerm)
+	if err != nil || term < 1 || term > 50 {
+		data.Error = "Investment term must be between 1 and 50 years."
+		c.Set("Content-Type", "text/html")
+		return templates.ExecuteTemplate(c.Response().BodyWriter(), "compound.html", data)
+	}
+
+	monthlyContrib := 0.0
+	if data.MonthlyContribution != "" {
+		monthlyContrib, err = strconv.ParseFloat(data.MonthlyContribution, 64)
+		if err != nil || monthlyContrib < 0 {
+			data.Error = "Monthly contribution must be zero or a positive number."
+			c.Set("Content-Type", "text/html")
+			return templates.ExecuteTemplate(c.Response().BodyWriter(), "compound.html", data)
+		}
+	}
+
+	compoundIntervalMonths := 12 / compoundFreq
+
+	balance := initial
+	totalContributions := 0.0
+	schedule := make([]CompoundInterestRow, 0, term)
+
+	for year := 1; year <= term; year++ {
+		startBalance := balance
+		yearContributions := 0.0
+		yearInterest := 0.0
+
+		for month := 1; month <= 12; month++ {
+			balance += monthlyContrib
+			yearContributions += monthlyContrib
+			totalContributions += monthlyContrib
+
+			if month%compoundIntervalMonths == 0 {
+				interest := balance * (rate / 100.0) / float64(compoundFreq)
+				balance += interest
+				yearInterest += interest
+			}
+		}
+
+		schedule = append(schedule, CompoundInterestRow{
+			Year:           year,
+			StartBalance:   startBalance,
+			Contributions:  yearContributions,
+			InterestEarned: yearInterest,
+			EndBalance:     balance,
+		})
+	}
+
+	data.FinalBalance = balance
+	data.TotalContributions = totalContributions
+	data.TotalInterestEarned = balance - initial - totalContributions
+	if initial > 0 {
+		data.GrowthPercentage = ((balance - initial) / initial) * 100
+	}
+	data.HasResults = true
+	data.Schedule = schedule
+
+	c.Set("Content-Type", "text/html")
+	return templates.ExecuteTemplate(c.Response().BodyWriter(), "compound.html", data)
 }

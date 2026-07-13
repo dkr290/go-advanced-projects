@@ -15,6 +15,8 @@ func main() {
 	app.Get("/test", handlers.Test)
 	app.Get("/mortgage", handlers.Mortgage)
 	app.Post("/mortgage", handlers.MortgageCalculate)
+	app.Get("/compound", handlers.Compound)
+	app.Post("/compound", handlers.CompoundCalculate)
 
 	log.Fatal(app.Listen(":3000"))
 }

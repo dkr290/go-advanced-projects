@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{.Title}}</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --accent: #6366f1;
+        --accent-light: #818cf8;
+        --accent-dark: #4f46e5;
+      }
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+      }
+      .page-header {
+        background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+        color: #fff;
+        padding: 3rem 0 2.5rem;
+      }
+      .page-header h1 {
+        font-size: 2.25rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      .page-header p {
+        opacity: 0.85;
+        max-width: 520px;
+      }
+      .calc-card {
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 1rem;
+        padding: 2rem;
+        background: #fff;
+      }
+      .result-highlight {
+        background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+        color: #fff;
+        border-radius: 1rem;
+        padding: 2rem;
+      }
+      .result-highlight .monthly-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      .result-highlight .monthly-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .result-stat {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 0.75rem;
+        padding: 1rem 1.25rem;
+      }
+      .result-stat .stat-val {
+        font-size: 1.25rem;
+        font-weight: 600;
+      }
+      .result-stat .stat-lbl {
+        font-size: 0.8rem;
+        opacity: 0.75;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .schedule-table th {
+        background: #f1f5f9;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #64748b;
+        font-weight: 600;
+      }
+      .schedule-table td {
+        font-size: 0.9rem;
+      }
+      footer {
+        background: #0f172a;
+        color: rgba(255, 255, 255, 0.6);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav
+      class="navbar navbar-expand-lg bg-white border-bottom border-light-subtle sticky-top"
+    >
+      <div class="container">
+        <a class="navbar-brand fw-bold text-dark" href="/">
+          <i class="bi bi-calculator-fill text-primary me-2"></i>Fincalc
+        </a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="/mortgage">Mortgage</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" href="/compound">Compound Interest</a>
+            </li>
+          </ul>
+          <a href="/" class="btn btn-outline-primary btn-sm ms-lg-3"
+            >Home</a
+          >
+        </div>
+      </div>
+    </nav>
+
+    <!-- Page Header -->
+    <section class="page-header">
+      <div class="container">
+        <div class="d-flex align-items-center mb-2">
+          <div
+            class="d-inline-flex align-items-center justify-content-center rounded-3 me-3"
+            style="
+              width: 48px;
+              height: 48px;
+              background: rgba(255, 255, 255, 0.15);
+            "
+          >
+            <i class="bi bi-graph-up-arrow fs-4"></i>
+          </div>
+          <span class="text-white-50 small fw-semibold text-uppercase"
+            >Calculator</span
+          >
+        </div>
+        <h1 class="mb-2">Compound Interest Calculator</h1>
+        <p class="mb-0">
+          See how your money grows over time with the power of compound interest.
+          Model different contribution strategies and compounding frequencies to
+          maximise your returns.
+        </p>
+      </div>
+    </section>
+
+    <!-- Calculator Section -->
+    <section class="py-5">
+      <div class="container">
+        {{if .Error}}
+        <div
+          class="alert alert-danger d-flex align-items-center mb-4"
+          role="alert"
+        >
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          {{.Error}}
+        </div>
+        {{end}}
+
+        <div class="row g-4">
+          <!-- Input Form -->
+          <div class="col-lg-5">
+            <div class="calc-card h-100">
+              <h5 class="fw-bold mb-4">
+                <i class="bi bi-pencil-square text-primary me-2"></i>Investment
+                Details
+              </h5>
+              <form method="POST" action="/compound" novalidate>
+                <!-- Currency Selector -->
+                <div class="mb-3">
+                  <label for="currency" class="form-label fw-semibold"
+                    >Currency</label
+                  >
+                  <select
+                    class="form-select"
+                    id="currency"
+                    name="currency"
+                    required
+                  >
+                    <option
+                      value="USD"
+                      {{if eq .Currency "USD"}}selected{{end}}
+                    >
+                      USD ($)
+                    </option>
+                    <option
+                      value="EUR"
+                      {{if eq .Currency "EUR"}}selected{{end}}
+                    >
+                      EUR (&euro;)
+                    </option>
+                    <option
+                      value="GBP"
+                      {{if eq .Currency "GBP"}}selected{{end}}
+                    >
+                      GBP (&pound;)
+                    </option>
+                  </select>
+                </div>
+
+                <div class="mb-3">
+                  <label for="initial_investment" class="form-label fw-semibold"
+                    >Initial Investment</label
+                  >
+                  <div class="input-group">
+                    <span class="input-group-text currency-symbol"
+                      >$</span
+                    >
+                    <input
+                      type="number"
+                      class="form-control"
+                      id="initial_investment"
+                      name="initial_investment"
+                      placeholder="e.g. 10000"
+                      min="0"
+                      step="1000"
+                      value="{{.InitialInvestment}}"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="interest_rate" class="form-label fw-semibold"
+                    >Annual Interest Rate</label
+                  >
+                  <div class="input-group">
+                    <input
+                      type="number"
+                      class="form-control"
+                      id="interest_rate"
+                      name="interest_rate"
+                      placeholder="e.g. 7.5"
+                      min="0.01"
+                      max="30"
+                      step="0.01"
+                      value="{{.InterestRate}}"
+                      required
+                    />
+                    <span class="input-group-text">%</span>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label
+                    for="compounding_frequency"
+                    class="form-label fw-semibold"
+                    >Compounding Frequency</label
+                  >
+                  <select
+                    class="form-select"
+                    id="compounding_frequency"
+                    name="compounding_frequency"
+                    required
+                  >
+                    <option
+                      value="1"
+                      {{if eq .CompoundingFrequency "1"}}selected{{end}}
+                    >
+                      Annually
+                    </option>
+                    <option
+                      value="2"
+                      {{if eq .CompoundingFrequency "2"}}selected{{end}}
+                    >
+                      Semi-Annually
+                    </option>
+                    <option
+                      value="4"
+                      {{if eq .CompoundingFrequency "4"}}selected{{end}}
+                    >
+                      Quarterly
+                    </option>
+                    <option
+                      value="12"
+                      {{if eq .CompoundingFrequency "12"}}selected{{end}}
+                    >
+                      Monthly
+                    </option>
+                    <option
+                      value="365"
+                      {{if eq .CompoundingFrequency "365"}}selected{{end}}
+                    >
+                      Daily
+                    </option>
+                  </select>
+                </div>
+
+                <div class="mb-3">
+                  <label
+                    for="investment_term"
+                    class="form-label fw-semibold"
+                    >Investment Duration (Years)</label
+                  >
+                  <select
+                    class="form-select"
+                    id="investment_term"
+                    name="investment_term"
+                    required
+                  >
+                    <option value="" disabled
+                      >{{if .InvestmentTerm}}{{.InvestmentTerm}}
+                      years{{else}}Select duration{{end}}</option
+                    >
+                    {{range $y := seq 1 50}}
+                    <option
+                      value="{{$y}}"
+                      {{if eq $.InvestmentTerm (toString $y)}}selected{{end}}
+                    >
+                      {{$y}} years
+                    </option>
+                    {{end}}
+                  </select>
+                </div>
+
+                <div class="mb-4">
+                  <label
+                    for="monthly_contribution"
+                    class="form-label fw-semibold"
+                    >Monthly Contribution
+                    <span class="text-muted fw-normal">(optional)</span></label
+                  >
+                  <div class="input-group">
+                    <span class="input-group-text currency-symbol"
+                      >$</span
+                    >
+                    <input
+                      type="number"
+                      class="form-control"
+                      id="monthly_contribution"
+                      name="monthly_contribution"
+                      placeholder="e.g. 500"
+                      min="0"
+                      step="100"
+                      value="{{.MonthlyContribution}}"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  class="btn btn-primary w-100 py-2 fw-semibold"
+                >
+                  <i class="bi bi-calculator me-1"></i>Calculate Growth
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Results -->
+          <div class="col-lg-7">
+            {{if .HasResults}}
+            <div class="result-highlight mb-4">
+              <div class="row">
+                <div class="col-12 mb-3">
+                  <div class="monthly-label">Final Balance</div>
+                  <div class="monthly-value">
+                    {{if eq .Currency "USD"}}${{else if eq .Currency "EUR"}}&euro;{{else}}&pound;{{end}}{{formatMoney .FinalBalance}}
+                  </div>
+                </div>
+                <div class="col-sm-4 mb-2">
+                  <div class="result-stat">
+                    <div class="stat-lbl">Total Contributions</div>
+                    <div class="stat-val">
+                      {{if eq .Currency "USD"}}${{else if eq .Currency "EUR"}}&euro;{{else}}&pound;{{end}}{{formatMoneyInt .TotalContributions}}
+                    </div>
+                  </div>
+                </div>
+                <div class="col-sm-4 mb-2">
+                  <div class="result-stat">
+                    <div class="stat-lbl">Interest Earned</div>
+                    <div class="stat-val">
+                      {{if eq .Currency "USD"}}${{else if eq .Currency "EUR"}}&euro;{{else}}&pound;{{end}}{{formatMoneyInt .TotalInterestEarned}}
+                    </div>
+                  </div>
+                </div>
+                <div class="col-sm-4 mb-2">
+                  <div class="result-stat">
+                    <div class="stat-lbl">Growth</div>
+                    <div class="stat-val">
+                      {{printf "%.1f" .GrowthPercentage}}%
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {{if .Schedule}}
+            <div class="calc-card mb-4">
+              <h5 class="fw-bold mb-3">
+                <i class="bi bi-bar-chart-line text-primary me-2"></i>Growth
+                Overview
+              </h5>
+              <div style="height: 320px">
+                <canvas id="growthChart"></canvas>
+              </div>
+            </div>
+
+            <div class="calc-card">
+              <h5 class="fw-bold mb-3">
+                <i class="bi bi-table text-primary me-2"></i>Year-by-Year
+                Growth
+              </h5>
+              <div class="table-responsive">
+                <table class="table table-hover schedule-table mb-0">
+                  <thead>
+                    <tr>
+                      <th>Year</th>
+                      <th class="text-end">Start Balance</th>
+                      <th class="text-end">Contributions</th>
+                      <th class="text-end">Interest Earned</th>
+                      <th class="text-end">End Balance</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {{range .Schedule}}
+                    <tr>
+                      <td class="fw-semibold">{{.Year}}</td>
+                      <td class="text-end">
+                        {{if eq $.Currency "USD"}}${{else if eq $.Currency "EUR"}}&euro;{{else}}&pound;{{end}}{{formatMoney .StartBalance}}
+                      </td>
+                      <td class="text-end">
+                        {{if eq $.Currency "USD"}}${{else if eq $.Currency "EUR"}}&euro;{{else}}&pound;{{end}}{{formatMoney .Contributions}}
+                      </td>
+                      <td class="text-end">
+                        {{if eq $.Currency "USD"}}${{else if eq $.Currency "EUR"}}&euro;{{else}}&pound;{{end}}{{formatMoney .InterestEarned}}
+                      </td>
+                      <td class="text-end">
+                        {{if eq $.Currency "USD"}}${{else if eq $.Currency "EUR"}}&euro;{{else}}&pound;{{end}}{{formatMoney .EndBalance}}
+                      </td>
+                    </tr>
+                    {{end}}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            {{end}}
+
+            {{else}}
+            <div class="calc-card h-100 d-flex align-items-center justify-content-center text-center" style="min-height: 300px;">
+              <div>
+                <i
+                  class="bi bi-arrow-left-circle text-muted"
+                  style="font-size: 3rem"
+                ></i>
+                <p class="text-muted mt-3 mb-0">
+                  Enter your details on the left and click<br />
+                  <strong>Calculate Growth</strong> to see your results.
+                </p>
+              </div>
+            </div>
+            {{end}}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-4 mt-auto">
+      <div
+        class="container d-flex flex-column flex-md-row justify-content-between align-items-center"
+      >
+        <div class="mb-2 mb-md-0">
+          <span class="fw-semibold text-white">Fincalc</span> &copy; 2025. All
+          rights reserved.
+        </div>
+        <div>
+          <a
+            href="#"
+            class="text-decoration-none me-3"
+            style="color: rgba(255, 255, 255, 0.5)"
+            >Privacy</a
+          >
+          <a
+            href="#"
+            class="text-decoration-none"
+            style="color: rgba(255, 255, 255, 0.5)"
+            >Terms</a
+          >
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script>
+      (function () {
+        const symbols = { USD: "$", EUR: "\u20ac", GBP: "\u00a3" };
+        const currencySelect = document.getElementById("currency");
+        const symbolEls = document.querySelectorAll(".currency-symbol");
+
+        function updateSymbols() {
+          const sym = symbols[currencySelect.value] || "$";
+          symbolEls.forEach(function (el) {
+            el.textContent = sym;
+          });
+        }
+
+        currencySelect.addEventListener("change", updateSymbols);
+        updateSymbols();
+
+        {{if and .HasResults .Schedule}}
+        var schedData = [
+          {{range .Schedule}}{y:{{.Year}},c:{{.Contributions}},i:{{.InterestEarned}},b:{{.EndBalance}}},
+          {{end}}
+        ];
+        var labels = schedData.map(function (d) { return "Year " + d.y; });
+        var contribs = schedData.map(function (d) { return d.c; });
+        var interests = schedData.map(function (d) { return d.i; });
+        var balances = schedData.map(function (d) { return d.b; });
+        var sym = symbols["{{.Currency}}"] || "$";
+
+        var ctx = document.getElementById("growthChart").getContext("2d");
+        new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: "Contributions",
+                data: contribs,
+                backgroundColor: "rgba(99,102,241,0.7)",
+                borderRadius: 3,
+                stack: "main",
+                order: 2
+              },
+              {
+                label: "Interest Earned",
+                data: interests,
+                backgroundColor: "rgba(34,197,94,0.7)",
+                borderRadius: 3,
+                stack: "main",
+                order: 2
+              },
+              {
+                label: "Total Balance",
+                data: balances,
+                type: "line",
+                borderColor: "#1e3a5f",
+                backgroundColor: "rgba(30,58,95,0.08)",
+                fill: true,
+                tension: 0.3,
+                pointRadius: 3,
+                pointBackgroundColor: "#1e3a5f",
+                borderWidth: 2,
+                yAxisID: "y",
+                order: 1
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: "index", intersect: false },
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: { usePointStyle: true, padding: 16 }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function (ctx) {
+                    return ctx.dataset.label + ": " + sym + ctx.parsed.y.toLocaleString(undefined, {maximumFractionDigits: 0});
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                ticks: { font: { size: 11 } }
+              },
+              y: {
+                beginAtZero: true,
+                stacked: true,
+                grid: { color: "rgba(0,0,0,0.05)" },
+                ticks: {
+                  font: { size: 11 },
+                  callback: function (v) { return sym + v.toLocaleString(undefined, {maximumFractionDigits: 0}); }
+                }
+              }
+            }
+          }
+        });
+        {{end}}
+      })();
+    </script>
+  </body>
+</html>
