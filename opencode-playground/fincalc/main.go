@@ -13,6 +13,8 @@ func main() {
 
 	app.Get("/", handlers.Index)
 	app.Get("/test", handlers.Test)
+	app.Get("/mortgage", handlers.Mortgage)
+	app.Post("/mortgage", handlers.MortgageCalculate)
 
 	log.Fatal(app.Listen(":3000"))
 }
