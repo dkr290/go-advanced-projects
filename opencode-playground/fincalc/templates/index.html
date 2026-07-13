@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{.Title}}</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --accent: #6366f1;
+        --accent-light: #818cf8;
+        --accent-dark: #4f46e5;
+      }
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+      }
+      .hero {
+        background: linear-gradient(
+          135deg,
+          var(--accent-dark) 0%,
+          var(--accent) 50%,
+          var(--accent-light) 100%
+        );
+        color: #fff;
+        padding: 6rem 0;
+      }
+      .hero h1 {
+        font-size: 3rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      .hero p.lead {
+        font-size: 1.25rem;
+        opacity: 0.85;
+        max-width: 540px;
+      }
+      .feature-card {
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 1rem;
+        padding: 2.5rem 2rem;
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s;
+        height: 100%;
+      }
+      .feature-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+      }
+      .feature-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 0.75rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        color: #fff;
+      }
+      .icon-mortgage {
+        background: linear-gradient(135deg, #2563eb, #3b82f6);
+      }
+      .icon-compound {
+        background: linear-gradient(135deg, #16a34a, #22c55e);
+      }
+      .cta-section {
+        background: #f8fafc;
+      }
+      .stat-card {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 0.75rem;
+        padding: 1.25rem 1.5rem;
+        backdrop-filter: blur(4px);
+      }
+      .stat-card .stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+      }
+      .stat-card .stat-label {
+        font-size: 0.85rem;
+        opacity: 0.75;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      footer {
+        background: #0f172a;
+        color: rgba(255, 255, 255, 0.6);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav
+      class="navbar navbar-expand-lg bg-white border-bottom border-light-subtle sticky-top"
+    >
+      <div class="container">
+        <a class="navbar-brand fw-bold text-dark" href="#">
+          <i class="bi bi-calculator-fill text-primary me-2"></i>Fincalc
+        </a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="#features">Features</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#how-it-works">How It Works</a>
+            </li>
+          </ul>
+          <a href="#features" class="btn btn-primary btn-sm ms-lg-3"
+            >Get Started</a
+          >
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero text-center">
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-lg-8">
+            <h1 class="mb-3">Financial calculators<br />made simple.</h1>
+            <p class="lead mx-auto mb-4">
+              Take control of your finances with powerful, easy-to-use mortgage
+              and compound interest calculators. No sign-up required.
+            </p>
+            <div class="d-flex gap-3 justify-content-center">
+              <a href="#features" class="btn btn-light btn-lg px-4"
+                >Explore Tools</a
+              >
+              <a href="#how-it-works" class="btn btn-outline-light btn-lg px-4"
+                >See How It Works</a
+              >
+            </div>
+          </div>
+        </div>
+        <div class="row justify-content-center mt-5 pt-3">
+          <div class="col-auto">
+            <div class="d-flex gap-4 justify-content-center flex-wrap">
+              <div class="stat-card text-start">
+                <div class="stat-value">100%</div>
+                <div class="stat-label">Free to Use</div>
+              </div>
+              <div class="stat-card text-start">
+                <div class="stat-value">Instant</div>
+                <div class="stat-label">Results</div>
+              </div>
+              <div class="stat-card text-start">
+                <div class="stat-value">Private</div>
+                <div class="stat-label">No Data Stored</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section id="features" class="py-5">
+      <div class="container py-5">
+        <div class="text-center mb-5">
+          <h2 class="fw-bold">Powerful Calculators</h2>
+          <p class="text-muted mx-auto" style="max-width: 520px">
+            Everything you need to plan your financial future, right here in one
+            place.
+          </p>
+        </div>
+        <div class="row g-4">
+          <!-- Mortgage Calculator -->
+          <div class="col-md-6">
+            <div class="feature-card">
+              <div class="feature-icon icon-mortgage mb-3">
+                <i class="bi bi-house-door-fill"></i>
+              </div>
+              <h4 class="fw-bold mt-2">Mortgage Repayments Calculator</h4>
+              <p class="text-muted mb-4">
+                Calculate your monthly home loan repayments in seconds. Compare
+                different loan terms, interest rates, and repayment types to
+                find the plan that works for you.
+              </p>
+              <ul class="list-unstyled mb-4">
+                <li class="mb-2">
+                  <i class="bi bi-check-circle-fill text-success me-2"></i
+                  >Monthly & total repayment breakdown
+                </li>
+                <li class="mb-2">
+                  <i class="bi bi-check-circle-fill text-success me-2"></i
+                  >Compare fixed vs variable rates
+                </li>
+                <li class="mb-2">
+                  <i class="bi bi-check-circle-fill text-success me-2"></i
+                  >Amortisation schedule overview
+                </li>
+                <li class="mb-2">
+                  <i class="bi bi-check-circle-fill text-success me-2"></i
+                  >Support for different loan terms
+                </li>
+              </ul>
+              <a href="/mortgage" class="btn btn-primary">
+                <i class="bi bi-arrow-right-circle me-1"></i>Open Calculator
+              </a>
+            </div>
+          </div>
+
+          <!-- Compound Interest Calculator -->
+          <div class="col-md-6">
+            <div class="feature-card">
+              <div class="feature-icon icon-compound mb-3">
+                <i class="bi bi-graph-up-arrow"></i>
+              </div>
+              <h4 class="fw-bold mt-2">Compound Interest Calculator</h4>
+              <p class="text-muted mb-4">
+                See how your money grows over time with the power of compound
+                interest. Model different contribution strategies and interest
+                frequencies to maximise your returns.
+              </p>
+              <ul class="list-unstyled mb-4">
+                <li class="mb-2">
+                  <i class="bi bi-check-circle-fill text-success me-2"></i
+                  >Future value projections
+                </li>
+                <li class="mb-2">
+                  <i class="bi bi-check-circle-fill text-success me-2"></i
+                  >Flexible contribution options
+                </li>
+                <li class="mb-2">
+                  <i class="bi bi-check-circle-fill text-success me-2"></i
+                  >Annual, monthly, or daily compounding
+                </li>
+                <li class="mb-2">
+                  <i class="bi bi-check-circle-fill text-success me-2"></i
+                  >Side-by-side scenario comparison
+                </li>
+              </ul>
+              <a href="/compound" class="btn btn-success">
+                <i class="bi bi-arrow-right-circle me-1"></i>Open Calculator
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How It Works -->
+    <section id="how-it-works" class="cta-section py-5">
+      <div class="container py-5">
+        <div class="text-center mb-5">
+          <h2 class="fw-bold">How It Works</h2>
+          <p class="text-muted">
+            Three simple steps to smarter financial decisions.
+          </p>
+        </div>
+        <div class="row g-4 text-center">
+          <div class="col-md-4">
+            <div class="feature-card bg-white h-100">
+              <div class="display-6 fw-bold text-primary mb-3">1</div>
+              <h5 class="fw-bold">Enter Your Details</h5>
+              <p class="text-muted mb-0">
+                Input your loan amount, interest rate, term, or investment
+                figures into the calculator.
+              </p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="feature-card bg-white h-100">
+              <div class="display-6 fw-bold text-primary mb-3">2</div>
+              <h5 class="fw-bold">Get Instant Results</h5>
+              <p class="text-muted mb-0">
+                See your repayment amounts, total interest, or projected growth
+                calculated instantly.
+              </p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="feature-card bg-white h-100">
+              <div class="display-6 fw-bold text-primary mb-3">3</div>
+              <h5 class="fw-bold">Make Better Decisions</h5>
+              <p class="text-muted mb-0">
+                Use the insights to plan your budget, negotiate rates, or set
+                investment goals.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="py-5">
+      <div class="container py-4">
+        <div class="text-center">
+          <h3 class="fw-bold">Ready to take control of your finances?</h3>
+          <p class="text-muted mb-4">
+            Start using our free calculators today. No account required.
+          </p>
+          <a href="#features" class="btn btn-primary btn-lg px-5"
+            >Get Started Free</a
+          >
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-4 mt-auto">
+      <div
+        class="container d-flex flex-column flex-md-row justify-content-between align-items-center"
+      >
+        <div class="mb-2 mb-md-0">
+          <span class="fw-semibold text-white">Fincalc</span> &copy; 2025. All
+          rights reserved.
+        </div>
+        <div>
+          <a
+            href="#"
+            class="text-decoration-none me-3"
+            style="color: rgba(255, 255, 255, 0.5)"
+            >Privacy</a
+          >
+          <a
+            href="#"
+            class="text-decoration-none"
+            style="color: rgba(255, 255, 255, 0.5)"
+            >Terms</a
+          >
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
