@@ -100,3 +100,82 @@ go test ./...
 HTTP handler in-process, connects a real MCP client, and calls
 `duckduckgo_search` end-to-end against the live DuckDuckGo endpoint (skipped
 with `go test -short`).
+
+## Manual testing with curl
+
+You don't need a full MCP client to sanity-check the server — the
+streamable HTTP transport speaks plain JSON-RPC 2.0 over POST, so `curl`
+works fine. The server runs in **stateless** mode, so no `initialize`
+handshake or `Mcp-Session-Id` header is required; you can call
+`tools/list`/`tools/call` directly.
+
+1. Start the server:
+
+   ```bash
+   go build -o duckduckgo-mcp .
+   ./duckduckgo-mcp
+   ```
+
+2. Check the health endpoint:
+
+   ```bash
+   curl http://localhost:8080/healthz
+   # -> ok
+   ```
+
+3. List the available tools:
+
+   ```bash
+   curl -s -X POST http://localhost:8080/mcp \
+     -H "Content-Type: application/json" \
+     -H "Accept: application/json, text/event-stream" \
+     -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+   ```
+
+4. Call the `duckduckgo_search` tool:
+
+   ```bash
+   curl -s -X POST http://localhost:8080/mcp \
+     -H "Content-Type: application/json" \
+     -H "Accept: application/json, text/event-stream" \
+     -d '{
+       "jsonrpc": "2.0",
+       "id": 1,
+       "method": "tools/call",
+       "params": {
+         "name": "duckduckgo_search",
+         "arguments": { "query": "golang generics", "max_results": 3 }
+       }
+     }'
+   ```
+
+   The response comes back as a single Server-Sent Event
+   (`Content-Type: text/event-stream`), e.g.:
+
+   ```
+   event: message
+   data: {"jsonrpc":"2.0","id":1,"result":{"content":[{"type":"text","text":"{...}"}],"structuredContent":{"count":3,"query":"golang generics","results":[...]}}}
+   ```
+
+   To pretty-print just the JSON payload, strip the `data: ` prefix and pipe
+   through `jq`:
+
+   ```bash
+   curl -s -X POST http://localhost:8080/mcp \
+     -H "Content-Type: application/json" \
+     -H "Accept: application/json, text/event-stream" \
+     -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"duckduckgo_search","arguments":{"query":"golang generics","max_results":3}}}' \
+     | grep '^data: ' | sed 's/^data: //' | jq .
+   ```
+
+> Both the `Content-Type: application/json` request header and an `Accept`
+> header containing **both** `application/json` and `text/event-stream` are
+> required — the server rejects requests missing either with `400`/`415`.
+
+For a more interactive client, you can also use the official
+[MCP Inspector](https://github.com/modelcontextprotocol/inspector):
+
+```bash
+npx @modelcontextprotocol/inspector
+# then connect to http://localhost:8080/mcp using the "Streamable HTTP" transport
+```
